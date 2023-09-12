@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <queries>
+        <intent>
+            <action android:name="android.media.action.DISPLAY_AUDIO_EFFECT_CONTROL_PANEL" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.WEB_SEARCH" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".MainApplication"
+        android:allowBackup="true"
+        android:banner="@mipmap/ic_banner"
+        android:configChanges="colorMode|density|fontScale|keyboard|keyboardHidden|layoutDirection|locale|mcc|mnc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|touchscreen|uiMode"
+        android:hardwareAccelerated="true"
+        android:icon="@mipmap/ic_launcher_round"
+        android:label="${appName}"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="false"
+        android:theme="@style/Theme.ViMusic.NoActionBar">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.ViMusic.NoActionBar"
+            android:windowSoftInputMode="adjustResize">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="music.youtube.com"
+                    android:pathPrefix="/playlist"
+                    android:scheme="https" />
+                <data
+                    android:host="www.youtube.com"
+                    android:pathPrefix="/playlist"
+                    android:scheme="https" />
+                <data
+                    android:host="m.youtube.com"
+                    android:pathPrefix="/playlist"
+                    android:scheme="https" />
+                <data
+                    android:host="music.youtube.com"
+                    android:pathPrefix="/watch"
+                    android:scheme="https" />
+                <data
+                    android:host="www.youtube.com"
+                    android:pathPrefix="/watch"
+                    android:scheme="https" />
+                <data
+                    android:host="m.youtube.com"
+                    android:pathPrefix="/watch"
+                    android:scheme="https" />
+                <data
+                    android:host="youtu.be"
+                    android:pathPrefix="/"
+                    android:scheme="https" />
+                <data
+                    android:host="music.youtube.com"
+                    android:pathPrefix="/channel"
+                    android:scheme="https" />
+                <data
+                    android:host="www.youtube.com"
+                    android:pathPrefix="/channel"
+                    android:scheme="https" />
+                <data
+                    android:host="m.youtube.com"
+                    android:pathPrefix="/c"
+                    android:scheme="https" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".service.PlayerService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback">
+        </service>
+
+        <service android:name=".service.PlayerMediaBrowserService"
+            android:exported="true"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService"/>
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".service.PlayerService$NotificationDismissReceiver"
+            android:exported="false" />
+
+        <meta-data android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc"/>
+
+        <meta-data android:name="com.google.android.gms.car.notification.SmallIcon"
+            android:resource="@drawable/app_icon" />
+
+    </application>
+</manifest>
