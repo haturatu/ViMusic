@@ -12,30 +12,37 @@ import it.vfsfitvnm.innertube.models.bodies.BrowseBody
 import it.vfsfitvnm.innertube.models.bodies.ContinuationBody
 import it.vfsfitvnm.innertube.utils.from
 import it.vfsfitvnm.innertube.utils.runCatchingNonCancellable
+import it.vfsfitvnm.innertube.models.Continuation
+import it.vfsfitvnm.innertube.models.MusicResponsiveListItemRenderer
 
 suspend fun Innertube.playlistPage(body: BrowseBody) = runCatchingNonCancellable {
     val response = client.post(browse) {
         setBody(body)
-        mask("contents.singleColumnBrowseResultsRenderer.tabs.tabRenderer.content.sectionListRenderer.contents(musicPlaylistShelfRenderer(continuations,contents.$musicResponsiveListItemRendererMask),musicCarouselShelfRenderer.contents.$musicTwoRowItemRendererMask),header.musicDetailHeaderRenderer(title,subtitle,thumbnail),microformat")
+        mask("contents.twoColumnBrowseResultsRenderer(tabs.tabRenderer.content.sectionListRenderer.contents.musicResponsiveHeaderRenderer(title,subtitle,thumbnail),secondaryContents.sectionListRenderer.contents(musicPlaylistShelfRenderer(continuations,contents.$musicResponsiveListItemRendererMask),musicCarouselShelfRenderer.contents.$musicTwoRowItemRendererMask)),microformat")
     }.body<BrowseResponse>()
 
     val musicDetailHeaderRenderer = response
-        .header
-        ?.musicDetailHeaderRenderer
-
-    val sectionListRendererContents = response
         .contents
-        ?.singleColumnBrowseResultsRenderer
+        ?.twoColumnBrowseResultsRenderer
         ?.tabs
         ?.firstOrNull()
         ?.tabRenderer
         ?.content
         ?.sectionListRenderer
         ?.contents
+        ?.firstOrNull()
+        ?.musicResponsiveHeaderRenderer
+
+    val sectionListRendererContents = response
+        .contents
+        ?.twoColumnBrowseResultsRenderer
+        ?.secondaryContents
+        ?.sectionListRenderer
+        ?.contents
 
     val musicShelfRenderer = sectionListRendererContents
         ?.firstOrNull()
-        ?.musicShelfRenderer
+        ?.musicPlaylistShelfRenderer
 
     val musicCarouselShelfRenderer = sectionListRendererContents
         ?.getOrNull(1)

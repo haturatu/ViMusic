@@ -67,7 +67,7 @@ fun AlbumScreen(browseId: String) {
             .collect { (currentAlbum, tabIndex) ->
                 album = currentAlbum
 
-                if (albumPage == null && (currentAlbum?.timestamp == null || tabIndex == 1)) {
+                if (albumPage == null && (currentAlbum?.timestamp == null || currentAlbum.title == null || tabIndex == 1)) {
                     withContext(Dispatchers.IO) {
                         Innertube.albumPage(BrowseBody(browseId = browseId))
                             ?.onSuccess { currentAlbumPage ->

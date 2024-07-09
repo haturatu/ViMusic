@@ -37,7 +37,7 @@ suspend fun <T : Innertube.Item> Innertube.itemsPage(
 
     itemsPageFromMusicShelRendererOrGridRenderer(
         musicShelfRenderer = sectionListRendererContent
-            ?.musicShelfRenderer,
+            ?.musicPlaylistShelfRenderer,
         gridRenderer = sectionListRendererContent
             ?.gridRenderer,
         fromMusicResponsiveListItemRenderer = fromMusicResponsiveListItemRenderer,
