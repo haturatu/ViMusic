@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="format_minutes">%1$dm</string>
+    <string name="format_hours">%1$ds</string>
+    <string name="format_days">%1$ddan</string>
+    <string name="format_time_left">%1$s preostalo</string>
+    <string name="format_db">%1$s dB</string>
+    <string name="format_kbps">%1$s kbps</string>
+    <string name="format_ms">%1$s ms</string>
+    <string name="format_px">%1$spx</string>
+
+    <string name="format_go_to_artist">Više od %1$s</string>
+    <string name="format_top_playlist">Top %1$s</string>
+    <string name="format_my_top_playlist">Moj top %1$s</string>
+    <string name="format_view_top_of_header">Prikaži top %1$s od …</string>
+    <string name="format_multiplier">%1$sx</string>
+
+    <string name="past_24_hours">Poslednjih 24 sata</string>
+    <string name="past_week">Prošla nedelja</string>
+    <string name="past_month">Prošli mesec</string>
+    <string name="past_year">Prošla godina</string>
+    <string name="all_time">Sve vreme</string>
+
+    <string name="songs">Pesme</string>
+    <string name="playlists">Plejliste</string>
+    <string name="albums">Albumi</string>
+    <string name="artists">Izvođači</string>
+    <string name="singles">Singlovi</string>
+
+    <string name="favorites">Omiljeno</string>
+    <string name="offline">Van mreže</string>
+    <string name="history">Istorija</string>
+    <string name="overview">Pregled</string>
+    <string name="library">Knjižnica</string>
+    <string name="discover">Otkrij</string>
+    <string name="local">Lokalno</string>
+    <string name="quick_picks">Brzi izbor</string>
+    <string name="mood">Raspoloženje</string>
+    <string name="online">Na mreži</string>
+    <string name="videos">Video snimci</string>
+    <string name="about">O aplikaciji</string>
+    <string name="appearance">Izgled</string>
+    <string name="colors">Boje</string>
+    <string name="shapes">Oblici</string>
+
+    <string name="skip_back">Preskoči unazad</string>
+    <string name="skip_forward">Preskoči napred</string>
+    <string name="play">Pusti</string>
+    <string name="pause">Pauza</string>
+    <string name="like">Sviđa mi se</string>
+    <string name="shuffle">Izmešaj</string>
+    <string name="sync">Sinhronizuj</string>
+    <string name="start_radio">Pokreni radio</string>
+    <string name="play_next">Pusti sledeću</string>
+    <string name="enqueue">Dodaj u red</string>
+
+    <string name="sleep_timer">Tajmer za spavanje</string>
+    <string name="sleep_timer_ended">Tajmer za spavanje je istekao</string>
+    <string name="sleep_timer_until_song_end">Dok pesma ne završi</string>
+    <string name="stop_sleep_timer_prompt">Želite li da zaustavite tajmer za spavanje?</string>
+    <string name="equalizer">Ekvilajzer</string>
+    <string name="set_sleep_timer">Podesi tajmer za spavanje</string>
+
+    <string name="cancel">Otkaži</string>
+    <string name="done">Završeno</string>
+    <string name="confirm">Potvrdi</string>
+    <string name="no">Ne</string>
+    <string name="stop">Zaustavi</string>
+    <string name="set">Podesi</string>
+    <string name="hide">Sakrij</string>
+    <string name="rename">Preimenuj</string>
+    <string name="delete">Obriši</string>
+    <string name="reset">Resetuj</string>
+    <string name="clear">Počisti</string>
+    <string name="view_all">Pogledaj sve</string>
+
+    <string name="on_label">uključeno</string>
+    <string name="off_label">isključeno</string>
+    <string name="off_text">Isključeno</string>
+    <string name="unknown">Nepoznato</string>
+    <string name="now_playing">Trenutno se reprodukuje</string>
+
+    <string name="enter_playlist_name_prompt">Unesite ime plejliste</string>
+    <string name="new_playlist">Nova plejlista</string>
+    <string name="add_to_playlist">Dodaj u plejlistu</string>
+
+    <string name="go_to_album">Idi na album</string>
+
+    <string name="watch_on_youtube">Gledaj na YouTube-u</string>
+    <string name="open_in_youtube_music">Otvori u YouTube Music-u</string>
+    <string name="watch_playlist_on_youtube">Gledaj plejlistu na YouTube-u</string>
+    <string name="youtube_music_not_installed">YouTube Music nije instaliran na vašem uređaju!</string>
+
+    <string name="remove_from_queue">Ukloni iz reda</string>
+    <string name="remove_from_playlist">Ukloni iz plejliste</string>
+
+    <string name="hide_from_quick_picks">Sakrij iz "Brzi izbor"</string>
+    <string name="confirm_hide_song">Zaista želite da sakrijete ovu pesmu? Vreme reprodukcije i keš će biti obrisani.\nOva radnja je nepovratna.</string>
+    <string name="confirm_delete_playlist">Da li stvarno želite da obrišete ovu plejlistu?</string>
+    <string name="confirm_delete_piped_session">Da li zaista želite da obrišete ovu Piped sesiju?</string>
+
+    <string name="other_versions">Druge verzije</string>
+    <string name="no_alternative_version">Ovaj album nema alternativnu verziju</string>
+
+    <string name="from_wikipedia">Iz Wikipedije</string>
+    <string name="wikipedia_cc_by_sa">Iz Wikipedije pod Creative Commons Attribution CC-BY-SA 3.0 licencom</string>
+    <string name="quote_open">“</string>
+    <string name="quote_close">„</string>
+
+    <string name="moods_and_genres">Raspoloženja i žanrovi</string>
+    <string name="new_released_albums">Novi objavljeni albumi</string>
+    <string name="more">Više</string>
+
+    <string name="artist_has_no_albums">Ovaj umetnik još nije objavio album</string>
+    <string name="artist_has_no_singles">Ovaj umetnik još nije objavio singl</string>
+
+    <string name="error_message">Došlo je do greške</string>
+    <string name="error_local_music_deleted">Ova lokalna muzička datoteka više ne postoji</string>
+    <string name="error_network">Došlo je do mrežne greške</string>
+    <string name="error_unplayable">Nije pronađen dostupan audio format</string>
+    <string name="error_source_deleted">Originalni video izvor ove pesme je obrisan</string>
+    <string name="error_server_restrictions">Ova pesma se ne može reprodukovati zbog ograničenja servera</string>
+    <string name="error_id_mismatch">Vraćeni video ID se ne podudara sa traženim</string>
+    <string name="error_unknown_playback">Došlo je do nepoznate greške prilikom reprodukcije</string>
+    <string name="error_piped_link">Došlo je do nepoznate greške prilikom povezivanja sa vašim Piped nalogom. Pokušajte ponovo.</string>
+    <string name="error_piped_instances_unavailable">Lista Piped instanci trenutno nije dostupna</string>
+    <string name="error_bassboost_init">Došlo je do greške prilikom inicijalizacije Bass Boost-a. Verovatno ga vaš uređaj to ne podržava. Pokušajte da promenite nivo pojačanja basa ili pokušajte ponovo.</string>
+    <string name="error_pre_cache">Došlo je do nepoznate greške prilikom pred-keširanja. Pokušajte ponovo.</string>
+    <string name="error_url">Nije moguće otvoriti url URL %1$s</string>
+    <string name="media_permission_declined">Dozvola odbijena, molimo da omogućite medijske dozvole u podešavanjima uređaja.</string>
+    <string name="open_settings">Otvorite podešavanja</string>
+    <string name="no_items_found">Nema pronađenih stavki</string>
+    <string name="no_search_results">Nema rezultata pretrage. Molimo pokušajte sa drugačijim upitom ili kategorijom</string>
+
+    <string name="no_browser_installed">Nije pronađena aplikacija za pregledanje interneta</string>
+    <string name="no_equalizer_installed">Nije pronađena aplikacija za podešavanje ekvilajzera</string>
+    <string name="no_file_chooser_installed">Nije pronađena aplikacija za kreiranje dokumenata</string>
+    <string name="no_battery_optimization_settings_found">Nije pronađeno podešavanje za optimizaciju baterije, molimo da ručno dodate ViMusic na belu listu</string>
+
+    <string name="related_albums">Povezani albumi</string>
+    <string name="similar_artists">Slični umetnici</string>
+    <string name="recommended_playlists">Plejliste koje bi vam se mogle svideti</string>
+    <string name="format_subscribers">%s pretplatnika</string>
+
+    <string name="enter_lyrics">Unesite tekst pesme</string>
+    <string name="no_lyrics_found">Nije pronađen tekst pesme</string>
+    <string name="choose_lyric_track">Izaberite pesmu sa tekstom</string>
+    <string name="synchronized_lyrics_not_available">Sinhronizovani tekst nije dostupan za ovu pesmu</string>
+    <string name="lyrics_not_available">Tekst pesme nije dostupan</string>
+    <string name="invalid_synchronized_lyrics">Nevažeći sinhronizovani tekst, osvežite ili uredite tekst i pokušajte ponovo</string>
+    <string name="show_unsynchronized_lyrics">Prikaži nesinhronizovani tekst</string>
+    <string name="show_synchronized_lyrics">Prikaži sinhronizovani tekst</string>
+    <string name="provided_lyrics_by">Tekst pesme dostavljen od lrclib.net &amp; kugou.com</string>
+    <string name="edit_lyrics">Uredi tekst pesme</string>
+    <string name="search_lyrics_online">Pretraži tekst pesme na mreži</string>
+    <string name="refetch_lyrics">Ponovo preuzmi tekst pesme</string>
+    <string name="pick_from_lrclib">Izaberite tekst sa lrclib.net</string>
+    <string name="set_lyrics_start_offset">Podesi start ofset</string>
+    <string name="set_lyrics_start_offset_description">Ofsetuje sinhronizovani tekst pesme u odnosu na trenutno vreme reprodukcije</string>
+
+    <string name="playback_speed">Brzina reprodukcije</string>
+    <string name="playback_pitch">Ton</string>
+    <string name="playback_settings">Brzina &amp; ton</string>
+    <string name="minimum_speed_value">Zašto biste ovo radili?!</string>
+    <string name="volume_boost">Pojačanje zvuka</string>
+    <string name="queue_loop">Petlja</string>
+    <string name="add_queue_to_playlist">Dodaj red u plejlistu</string>
+
+    <string name="id">id</string>
+    <string name="itag">Itag</string>
+    <string name="bitrate">Bitrejt</string>
+    <string name="size">Veličina</string>
+    <string name="cached">Keširano</string>
+    <string name="loudness">Jačina zvuka</string>
+
+    <string name="view_album">Pogledaj album</string>
+    <string name="view_playlist">Pogledaj plejlistu</string>
+
+    <string name="search_placeholder">Unesite ime</string>
+    <string name="format_version_credits">v%1$s od  vfsfitvnm</string>
+    <string name="social">Društveno</string>
+    <string name="contact">Kontakt</string>
+    <string name="github">GitHub</string>
+    <string name="view_source">Pogledaj izvorni kod</string>
+    <string name="report_bug">Prijavi grešku</string>
+    <string name="report_bug_description">Ako vam je potrebna pomoć oko greške, možete prijaviti problem na GitHub-u (kliknite da se preusmerite)</string>
+    <string name="request_feature">Zatraži funkciju ili predloži ideju</string>
+    <string name="redirect_github">Bićete preusmereni na GitHub</string>
+
+    <string name="color_source">Izvor akcentne boje</string>
+    <string name="color_source_default">Podrazumevano</string>
+    <string name="color_source_dynamic">Dinamično</string>
+    <string name="color_source_material_you">Material You</string>
+
+    <string name="darkness">Tama</string>
+    <string name="darkness_normal">Normalno</string>
+    <string name="darkness_pureblack">Čista crna</string>
+    <string name="darkness_amoled">AMOLED</string>
+
+    <string name="color_mode">Mod</string>
+    <string name="color_mode_light">Svetlo</string>
+    <string name="color_mode_dark">Tamno</string>
+    <string name="color_mode_system">Sistem</string>
+
+    <string name="thumbnail_roundness">Zaobljenost sličica</string>
+    <string name="none">Ništa</string>
+    <string name="thumbnail_roundness_light">Svetlo</string>
+    <string name="thumbnail_roundness_medium">Srednje</string>
+    <string name="thumbnail_roundness_heavy">Jako</string>
+    <string name="thumbnail_roundness_heavier">Još jače</string>
+    <string name="thumbnail_roundness_heaviest">Najjače</string>
+
+    <string name="text">Tekst</string>
+    <string name="font">Font</string>
+    <string name="use_system_font">Koristi sistemski font</string>
+    <string name="use_system_font_description">Koristite font koji je primenjen na sistemu</string>
+    <string name="apply_font_padding">Primeni razmak oko fonta</string>
+    <string name="apply_font_padding_description">Dodajte razmak oko teksta</string>
+    <string name="language">Jezik</string>
+
+    <string name="lockscreen">Zaključani ekran</string>
+    <string name="show_song_cover">Prikaži omot pesme</string>
+    <string name="show_song_cover_description">Koristi omot pesme kao pozadinu na zaključanom ekranu</string>
+
+    <string name="player">Plejer</string>
+    <string name="previous_button_while_collapsed">Predhodno dugme dok je minimalizirano</string>
+    <string name="previous_button_while_collapsed_description">Prikazuje dugme za prethodnu pesmu dok je plejer minimiziran</string>
+    <string name="swipe_horizontally_to_close">Prevuci horizontalno za zatvaranje</string>
+    <string name="swipe_horizontally_to_close_description">Zatvara plejer kada prevučete levo/desno po minimiziranom plejeru. Korisno za korisnike sa Android režimom za korišćenje jednom rukom.</string>
+    <string name="show_like_button">Prikaži dugme za sviđanje</string>
+    <string name="show_like_button_description">Prikaži dugme za sviđanje direktno u plejeru</string>
+    <string name="swipe_to_remove_item">Prevuci da ukloniš stavku</string>
+    <string name="swipe_to_remove_item_description">Prevucite levo da biste uklonili stavku iz reda čekanja</string>
+    <string name="lyrics_keep_screen_awake">Zadrži ekran uključen (tekst pesme)</string>
+    <string name="lyrics_keep_screen_awake_description">Zadržava ekran uključen dok je prikazan tekst pesme</string>
+    <string name="lyrics_show_system_bars">Prikaži sistemske trake (tekst pesme)</string>
+    <string name="lyrics_show_system_bars_description">Isključivanje ove opcije omogućava prikaz na celom ekranu</string>
+    <string name="pip">PIP</string>
+    <string name="pip_description">Automatski prelazi u režim Slika-u-Slici kada aplikacija pređe u pozadinu</string>
+
+    <string name="cache">Keš</string>
+    <string name="cache_description">Kada se keš popuni, resursi koji najduže nisu korišćeni biće obrisani</string>
+    <string name="image_cache">Keš slika</string>
+    <string name="max_size">Maksimalna veličina</string>
+    <string name="format_cache_space_used">%1$s korišćeno</string>
+    <string name="format_cache_space_used_percentage">%1$s korišćeno (%2$s%%)</string>
+    <string name="song_cache">Keš pesama</string>
+    <string name="database">Baza podataka</string>
+
+    <string name="cleanup">Čišćenje</string>
+    <string name="pause_playback_history">Pauziraj istoriju reprodukcije</string>
+    <string name="pause_playback_history_description">Zaustavlja praćenje reprodukcija za brzi izbor</string>
+    <string name="pause_playback_history_warning">Napomena: ovo neće uticati na keširanje van mreže!</string>
+    <string name="reset_quick_picks">Resetuj brze izbore</string>
+    <string name="quick_picks_empty">Brzi izbor je obrisan</string>
+    <string name="pause_playback_time">Pauziraj vreme reprodukcije</string>
+    <string name="format_pause_playback_time_description">Zaustavlja beleženje vremena reprodukcije. Ovo pauzira statistike u plejlisti "Moj top %1$s"!</string>
+
+    <string name="backup">Bekap</string>
+    <string name="backup_description">Lični preferencije (npr. mod teme) i keš su isključeni.</string>
+    <string name="backup_action_description">Izvezi bazu podataka na eksternu memoriju</string>
+    <string name="restore">Vrati</string>
+    <string name="restore_warning">Postojeći podaci će biti prepisani.\nViMusic će se automatski zatvoriti nakon vraćanja baze podataka.</string>
+    <string name="restore_description">Uvezi bazu podataka sa eksterne memorije</string>
+
+    <string name="other">Ostalo</string>
+    <string name="android_auto">Android Auto</string>
+    <string name="android_auto_description">Omogući podršku za Android Auto</string>
+    <string name="android_auto_warning">Zapamtite da omogućite "Nepoznati izvori" u razvojnim podešavanjima Android Auto.</string>
+    <string name="search_history">Istorija pretrage</string>
+    <string name="pause_search_history">Pauziraj istoriju pretrage</string>
+    <string name="pause_search_history_description">Ne beleži nove upite za pretragu niti prikazuj istoriju</string>
+    <string name="clear_search_history">Obriši istoriju pretrage</string>
+    <string name="format_clear_search_history_amount">Obriši %1$s upita za pretragu</string>
+    <string name="empty_history">Istorija je prazna</string>
+    <string name="built_in_playlists">Ugrađene plejliste</string>
+    <string name="auto_sync_playlists">Automatska sinhronizacija plejliste</string>
+    <string name="auto_sync_playlists_description">Automatski sinhronizuje sačuvane plejliste sa YouTube-om kada ih otvorite</string>
+    <string name="top_list_length">Dužina top liste</string>
+    <string name="top_list_length_description">Ograničava dužinu plejliste "Moj top x"</string>
+
+    <string name="service_lifetime">Vreme trajanja servisa</string>
+    <string name="service_lifetime_warning">Ako su primenjene optimizacije baterije, obaveštenje o reprodukciji može iznenada nestati kada je pauzirano.</string>
+    <string name="service_lifetime_warning_android_12">Od Android-a 12, onemogućavanje optimizacija baterije je potrebno da bi opcija "neuništivi servis" bila dostupna.</string>
+    <string name="ignore_battery_optimizations">Ignoriši optimizacije baterije</string>
+    <string name="ignoring_battery_optimizations">Ograničenje je već uklonjeno</string>
+    <string name="ignore_battery_optimizations_action">Onemogući ograničenja u pozadini</string>
+    <string name="invincible_service">Neuništivi servis</string>
+    <string name="invincible_service_description">Treba da nastavi reprodukciju 99.99% vremena, u slučaju da isključivanje optimizacija baterije nije dovoljno</string>
+
+    <string name="need_help">Treba vam pomoć?</string>
+    <string name="need_help_description">Većinu vremena, nije krivica programera (čak ni kada uključite neuništivi servis) što aplikacija prestane da radi ispravno u pozadini. Proverite da li proizvođač vašeg uređaja ubija vaše aplikacije (kliknite za preusmerenje)</string>
+    <string name="service_lifetime_report_issue">Ako stvarno mislite da nešto nije u redu sa samom aplikacijom, idite na karticu O aplikaciji</string>
+    <string name="troubleshooting">Rešavanje problema</string>
+    <string name="troubleshooting_warning">Upozorenje: koristite ove dugmiće kao poslednje rešenje kada reprodukcija zvuka ne uspe</string>
+    <string name="reload_app_internals">Ponovo učitaj interne funkcije aplikacije</string>
+    <string name="kill_app">Zatvori aplikaciju</string>
+    <string name="show_troubleshoot_section">Prikaži sekciju za rešavanje problema</string>
+
+    <string name="persistent_queue">Uporni red čekanja</string>
+    <string name="persistent_queue_description">Sačuvaj i vrati pesme koje se reprodukuju</string>
+    <string name="resume_playback">Nastavi reprodukciju</string>
+    <string name="resume_playback_description">Kada je žični ili Bluetooth uređaj povezan</string>
+    <string name="stop_when_closed">Zaustavi kada je zatvoreno</string>
+    <string name="stop_when_closed_description">Kada zatvorite aplikaciju, muzika prestaje da svira</string>
+
+    <string name="audio">Audio</string>
+    <string name="skip_silence">Preskoči tišinu</string>
+    <string name="skip_silence_description">Preskoči tihe delove tokom reprodukcije</string>
+    <string name="minimum_silence_length">Minimalna dužina tišine</string>
+    <string name="minimum_silence_length_description">Minimalno vreme koliko zvuk mora da bude tih da bi bio preskočen</string>
+    <string name="minimum_silence_length_warning">Plejer mora biti ponovo pokrenut kako bi promene bile efikasne!</string>
+    <string name="restart_service">Ponovo pokreni servis</string>
+    <string name="loudness_normalization">Normalizacija jačine zvuka</string>
+    <string name="loudness_normalization_description">Podešava jačinu zvuka na fiksni nivo</string>
+    <string name="loudness_base_gain">Osnovno pojačanje zvuka</string>
+    <string name="loudness_base_gain_description">Ciljno pojačanje za normalizaciju jačine zvuka</string>
+    <string name="loudness_normalization_extreme">Detektovana ekstremna vrednost jačine (%s), isključuje normalizaciju za ovu pesmu</string>
+    <string name="bass_boost">Pojačanje basa</string>
+    <string name="bass_boost_description">Pojačava niske frekvencije za poboljšano iskustvo slušanja</string>
+    <string name="bass_boost_level">Nivo pojačanja basa</string>
+    <string name="bass_boost_level_description">Nivo (0–1000) pojačanja niskih frekvencija; koristite na sopstveni rizik!</string>
+    <string name="reverb">Reverb</string>
+    <string name="audio_focus">Fokus na zvuk</string>
+    <string name="audio_focus_description">Da li plejer treba da zahteva sistemski fokus na zvuk (medije)</string>
+    <string name="equalizer_description">Interakcija sa sistemskim ekvilajzerom</string>
+
+    <string name="filter_placeholder">Filter…</string>
+
+    <string name="last_interaction">Poslednje reprodukovano</string>
+    <string name="trending">Popularno</string>
+    <string name="quick_picks_source">Izvor brzih izbora</string>
+    <string name="quick_picks_cache">Keš za brze izbore</string>
+    <string name="quick_picks_cache_description">Čuva podatke brzih izbora na disku za pristup van mreže</string>
+
+    <string name="player_layout">Izgled plejera</string>
+    <string name="classic_player_layout_name">Klasičan</string>
+    <string name="new_player_layout_name">Moderan (nov)</string>
+
+    <string name="piped">Piped</string>
+    <string name="instance">Instanca</string>
+    <string name="click_to_select">Klikni za izbor</string>
+    <string name="username">Korisničko ime</string>
+    <string name="password">Lozinka</string>
+    <string name="login">Prijava</string>
+    <string name="sync_description">Možete hostovati plejliste na drugom mestu i sinhronizovati ih sa ViMusic. Trenutno podržava samo Piped.</string>
+    <string name="add_account">Dodaj nalog</string>
+    <string name="add_account_description">Poveži Piped nalog sa instancom, korisničkim imenom i lozinkom.</string>
+    <string name="learn_more">Saznaj više</string>
+    <string name="learn_more_description">Ne znate šta je Piped ili nemate nalog? Kliknite ovde za preusmerenje na njihovu dokumentaciju</string>
+    <string name="piped_sessions">Piped sesije</string>
+    <string name="custom_instance">Koristi prilagođenu instancu</string>
+    <string name="base_api_url">API URL instance</string>
+    <string name="piped_session_created_successfully">Piped sesija uspešno kreirana</string>
+
+    <string name="seek_bar_style">Stil trake za pretraživanje</string>
+    <string name="static_seek_bar_name">Statik</string>
+    <string name="wavy_seek_bar_name">Talasasta</string>
+    <string name="seek_bar_quality">Kvalitet talasaste trake za pretraživanje</string>
+    <string name="seek_bar_quality_poor">Loš</string>
+    <string name="seek_bar_quality_low">Nizak</string>
+    <string name="seek_bar_quality_medium">Srednji</string>
+    <string name="seek_bar_quality_high">Visok</string>
+    <string name="seek_bar_quality_great">Odličan</string>
+    <string name="seek_bar_quality_subpixel">Podpiksel</string>
+
+    <string name="remove_from_blacklist">Ukloni sa crne liste</string>
+    <string name="add_to_blacklist">Dodaj na crnu listu</string>
+    <string name="reset_blacklist">Resetuj crnu listu</string>
+    <string name="blacklist_empty">Crna lista je prazna</string>
+
+    <string name="pre_cache">Prethodno keširanje</string>
+
+    <string name="swipe_to_hide_song">Prevuci da sakriješ pesmu</string>
+    <string name="swipe_to_hide_song_description">Kada prevučete pesmu ulevo, biće uklonjena iz baze i keša</string>
+    <string name="swipe_to_hide_song_confirm">Potvrdi prevlačenje za skrivanje pesme</string>
+    <string name="swipe_to_hide_song_confirm_description">Kada prevučete za skrivanje, prvo morate potvrditi</string>
+    <string name="hide_explicit">Sakrij eksplicitne pesme</string>
+    <string name="hide_explicit_description">Sakriva sve eksplicitne pesme u celoj aplikaciji. Plejer će takođe preskakati eksplicitne pesme kada naiđe na njih, ukoliko je ova opcija omogućena.</string>
+
+    <string name="version">Verzija</string>
+    <string name="check_new_version">Proveri ažuriranja</string>
+    <string name="current_version">Trenutno koristite verziju v%1$s</string>
+    <string name="error_github">Došlo je do nepoznate greške prilikom preuzimanja podataka sa GitHub-a</string>
+    <string name="new_version_available">Dostupna je nova verzija</string>
+    <string name="more_information">Više informacija</string>
+    <string name="up_to_date">Aplikacija je ažurirana: nema dostupnih ažuriranja</string>
+
+    <string name="dynamic_thumbnails">Dinamičke sličice</string>
+    <string name="max_dynamic_thumbnail_size">Maksimalna veličina dinamičke sličice</string>
+    <string name="max_dynamic_thumbnail_size_description">Maksimalna veličina sličice kada se koristi dinamička sličica</string>
+
+    <string name="hourly">Po satu</string>
+    <string name="daily">Dnevno</string>
+    <string name="weekly">Nedeljno</string>
+    <string name="version_check">Automatski proveri ažuriranja</string>
+
+    <string name="skip_on_error">Automatski preskoči</string>
+    <string name="skip_on_error_description">Preskače trenutnu pesmu kada dođe do greške.</string>
+    <string name="skip_on_error_notification">Pesma %s je preskočena zbog greške</string>
+    <string name="skip_on_error_notification_unknown_song">Trenutna pesma je preskočena zbog greške</string>
+    <string name="reverb_small_room">Mala soba</string>
+    <string name="reverb_medium_room">Srednja soba</string>
+    <string name="reverb_large_room">Velika soba</string>
+    <string name="reverb_medium_hall">Srednja sala</string>
+    <string name="reverb_large_hall">Velika sala</string>
+    <string name="reverb_plate">Ploča</string>
+
+    <plurals name="format_reset_blacklist_description">
+        <item quantity="one">Ukloni %1$s pesmu sa crne liste</item>
+        <item quantity="other">Ukloni sve %1$s pesme sa crne liste</item>
+    </plurals>
+
+    <plurals name="format_reset_quick_picks_amount">
+        <item quantity="one">Obriši %1$s reprodukciju</item>
+        <item quantity="other">Obriši %1$s reprodukcija</item>
+    </plurals>
+
+    <plurals name="song_count_plural">
+        <item quantity="one">%1$d pesma</item>
+        <item quantity="other">%1$d pesama</item>
+    </plurals>
+</resources>

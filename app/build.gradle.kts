@@ -1,18 +1,29 @@
+import org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag
+
 plugins {
-    id("com.android.application")
-    kotlin("android")
-    kotlin("kapt")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.parcelize)
+    alias(libs.plugins.ksp)
 }
 
 android {
-    compileSdk = 33
+    val appId = "${project.group}.android"
+
+    namespace = appId
+    compileSdk = 35
 
     defaultConfig {
-        applicationId = "it.vfsfitvnm.vimusic"
+        applicationId = appId
+
         minSdk = 21
-        targetSdk = 33
-        versionCode = 20
-        versionName = "0.5.4"
+        targetSdk = 35
+
+        versionCode = System.getenv("ANDROID_VERSION_CODE")?.toIntOrNull() ?: 12
+        versionName = project.version.toString()
+
+        multiDexEnabled = true
     }
 
     splits {
@@ -22,75 +33,147 @@ android {
         }
     }
 
-    namespace = "it.vfsfitvnm.vimusic"
+    signingConfigs {
+        create("ci") {
+            storeFile = System.getenv("ANDROID_NIGHTLY_KEYSTORE")?.let { file(it) }
+            storePassword = System.getenv("ANDROID_NIGHTLY_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("ANDROID_NIGHTLY_KEYSTORE_ALIAS")
+            keyPassword = System.getenv("ANDROID_NIGHTLY_KEYSTORE_PASSWORD")
+        }
+    }
 
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
-            manifestPlaceholders["appName"] = "Debug"
+            versionNameSuffix = "-DEBUG"
+            manifestPlaceholders["appName"] = "ViMusic Debug"
         }
 
         release {
+            versionNameSuffix = "-RELEASE"
             isMinifyEnabled = true
             isShrinkResources = true
             manifestPlaceholders["appName"] = "ViMusic"
-            signingConfig = signingConfigs.getByName("debug")
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+
+        create("nightly") {
+            initWith(getByName("release"))
+            matchingFallbacks += "release"
+
+            applicationIdSuffix = ".nightly"
+            versionNameSuffix = "-NIGHTLY"
+            manifestPlaceholders["appName"] = "ViMusic Nightly"
+            signingConfig = signingConfigs.findByName("ci")
         }
     }
 
-    sourceSets.all {
-        kotlin.srcDir("src/$name/kotlin")
-    }
-
     buildFeatures {
-        compose = true
+        buildConfig = true
     }
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
 
     kotlinOptions {
-        freeCompilerArgs += "-Xcontext-receivers"
-        jvmTarget = "1.8"
+        freeCompilerArgs = freeCompilerArgs + listOf("-Xcontext-receivers")
+    }
+
+    packaging {
+        resources.excludes.add("META-INF/**/*")
+    }
+
+    androidResources {
+        @Suppress("UnstableApiUsage")
+        generateLocaleConfig = true
     }
 }
 
-kapt {
-    arguments {
-        arg("room.schemaLocation", "$projectDir/schemas")
+kotlin {
+    jvmToolchain(libs.versions.jvm.get().toInt())
+
+    task("testClasses")
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+composeCompiler {
+    featureFlags = setOf(
+        ComposeFeatureFlag.StrongSkipping,
+        ComposeFeatureFlag.OptimizeNonSkippingGroups
+    )
+
+    if (project.findProperty("enableComposeCompilerReports") == "true") {
+        val dest = layout.buildDirectory.dir("compose_metrics")
+        metricsDestination = dest
+        reportsDestination = dest
     }
 }
 
 dependencies {
-    implementation(projects.composePersist)
-    implementation(projects.composeRouting)
-    implementation(projects.composeReordering)
+    coreLibraryDesugaring(libs.desugaring)
 
+    implementation(projects.compose.persist)
+    implementation(projects.compose.preferences)
+    implementation(projects.compose.routing)
+    implementation(projects.compose.reordering)
+
+    implementation(fileTree(projectDir.resolve("vendor")))
+
+    implementation(platform(libs.compose.bom))
     implementation(libs.compose.activity)
     implementation(libs.compose.foundation)
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.util)
-    implementation(libs.compose.ripple)
     implementation(libs.compose.shimmer)
-    implementation(libs.compose.coil)
+    implementation(libs.compose.lottie)
+    implementation(libs.compose.material3)
+
+    implementation(libs.coil.compose)
+    implementation(libs.coil.ktor)
 
     implementation(libs.palette)
+    implementation(libs.monet)
+    runtimeOnly(projects.core.materialCompat)
 
     implementation(libs.exoplayer)
+    implementation(libs.exoplayer.workmanager)
+    implementation(libs.media3.session)
+    implementation(libs.media)
+
+    implementation(libs.workmanager)
+    implementation(libs.workmanager.ktx)
+
+    implementation(libs.credentials)
+    implementation(libs.credentials.play)
+
+    implementation(libs.kotlin.coroutines)
+    implementation(libs.kotlin.immutable)
+    implementation(libs.kotlin.datetime)
 
     implementation(libs.room)
-    kapt(libs.room.compiler)
+    ksp(libs.room.compiler)
 
-    implementation(projects.innertube)
-    implementation(projects.kugou)
+    implementation(libs.log4j)
+    implementation(libs.slf4j)
+    implementation(libs.logback)
 
-    coreLibraryDesugaring(libs.desugaring)
+    implementation(projects.providers.github)
+    implementation(projects.providers.innertube)
+    implementation(projects.providers.kugou)
+    implementation(projects.providers.lrclib)
+    implementation(projects.providers.piped)
+    implementation(projects.providers.sponsorblock)
+    implementation(projects.providers.translate)
+    implementation(projects.core.data)
+    implementation(projects.core.ui)
+
+    detektPlugins(libs.detekt.compose)
+    detektPlugins(libs.detekt.formatting)
 }

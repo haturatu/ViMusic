@@ -1,0 +1,126 @@
+config:
+  validation: true
+  warningsAsErrors: false
+
+Compose:
+  ComposableAnnotationNaming:
+    active: true
+  CompositionLocalAllowlist:
+    active: false
+  CompositionLocalNaming:
+    active: true
+  ContentEmitterReturningValues:
+    active: true
+  DefaultsVisibility:
+    active: true
+  ModifierClickableOrder:
+    active: true
+  ModifierComposable:
+    active: true
+  ModifierMissing:
+    active: true
+    ignoreAnnotated:
+      - app.vimusic.android.ui.screens.Route
+  ModifierNaming:
+    active: true
+  ModifierNotUsedAtRoot:
+    active: true
+  ModifierReused:
+    active: true
+  ModifierWithoutDefault:
+    active: true
+  MultipleEmitters:
+    active: true
+  MutableParams:
+    active: true
+  ComposableNaming:
+    active: true
+  ComposableParamOrder:
+    active: true
+  PreviewAnnotationNaming:
+    active: true
+  PreviewPublic:
+    active: true
+  RememberMissing:
+    active: true
+  RememberContentMissing:
+    active: true
+  UnstableCollections:
+    active: true
+  ViewModelForwarding:
+    active: true
+  ViewModelInjection:
+    active: true
+
+complexity:
+  ComplexCondition:
+    active: false
+  CyclomaticComplexMethod:
+    ignoreAnnotated:
+      - androidx.compose.runtime.Composable
+  LongParameterList:
+    ignoreAnnotated:
+      - androidx.compose.runtime.Composable
+    ignoreDefaultParameters: true
+    ignoreDataClasses: true
+  LongMethod:
+    active: false
+  TooManyFunctions:
+    excludes:
+      - '**/util/**'
+      - '**/utils/**'
+
+exceptions:
+  SwallowedException:
+    ignoredExceptionTypes:
+      - ActivityNotFoundException
+
+formatting:
+  AnnotationOnSeparateLine:
+    active: true
+    ignoreAnnotated:
+      - kotlinx.serialization.Serializable
+  CommentWrapping:
+    # Because argument names in comment are a thing: Java API's do not support named arguments
+    active: false
+  EnumEntryNameCase:
+    active: false # Handled by Android Lint
+  Indentation:
+    active: false # Idea/Android Studio handles indentation differently
+  MultiLineIfElse:
+    active: false
+  TrailingCommaOnCallSite:
+    active: true
+    useTrailingCommaOnCallSite: false
+  TrailingCommaOnDeclarationSite:
+    active: true
+    useTrailingCommaOnDeclarationSite: false
+
+naming:
+  EnumNaming:
+    active: false # Handled by Android Lint
+  FunctionNaming:
+    ignoreAnnotated:
+      - androidx.compose.runtime.Composable
+  MatchingDeclarationName:
+    active: false
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][_A-Z0-9]*'
+
+style:
+  DestructuringDeclarationWithTooManyEntries:
+    active: false
+  ForbiddenComment:
+    active: false
+  MagicNumber:
+    active: false
+  MaxLineLength:
+    active: false # Overlaps with MaximumLineLength, ktlint preferred because of auto-correct
+  ModifierOrder:
+    active: false # Overlaps with ModifierOrdering, ktlint preferred because of auto-correct
+  NewLineAtEndOfFile:
+    active: false # Overlaps with FinalNewline, ktlint preferred because of auto-correct
+  ReturnCount:
+    active: false
+  ThrowsCount:
+    active: false

@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="format_minutes">%1$dm</string>
+    <string name="format_hours">%1$dh</string>
+    <string name="format_days">%1$dd</string>
+    <string name="format_time_left">%1$s restante</string>
+    <string name="format_db">%1$s dB</string>
+    <string name="format_kbps">%1$s kbps</string>
+    <string name="format_ms">%1$s ms</string>
+    <string name="format_px">%1$spx</string>
+
+    <string name="format_go_to_artist">Más de %1$s</string>
+    <string name="format_top_playlist">Top %1$s</string>
+    <string name="format_my_top_playlist">Mi top %1$s</string>
+    <string name="format_view_top_of_header">Ver top %1$s de …</string>
+    <string name="format_multiplier">%1$sx</string>
+
+    <string name="past_24_hours">Últimas 24 horas</string>
+    <string name="past_week">Última semana</string>
+    <string name="past_month">Último mes</string>
+    <string name="past_year">Último año</string>
+    <string name="all_time">Todo el tiempo</string>
+
+    <string name="songs">Canciones</string>
+    <string name="playlists">Listas de reproducción</string>
+    <string name="albums">Álbumes</string>
+    <string name="artists">Artistas</string>
+    <string name="singles">Sencillos</string>
+
+    <string name="favorites">Favoritos</string>
+    <string name="offline">Sin conexión</string>
+    <string name="history">Historial</string>
+    <string name="overview">Resumen</string>
+    <string name="library">Biblioteca</string>
+    <string name="discover">Descubrir</string>
+    <string name="local">Local</string>
+    <string name="quick_picks">Selecciones rápidas</string>
+    <string name="mood">Estado de ánimo</string>
+    <string name="online">En línea</string>
+    <string name="videos">Vídeos</string>
+    <string name="about">Acerca de</string>
+    <string name="appearance">Apariencia</string>
+    <string name="colors">Colores</string>
+    <string name="shapes">Formas</string>
+
+    <string name="skip_back">Anterior</string>
+    <string name="skip_forward">Siguiente</string>
+    <string name="play">Reproducir</string>
+    <string name="pause">Pausar</string>
+    <string name="like">Me gusta</string>
+    <string name="shuffle">Aleatorio</string>
+    <string name="sync">Sincronizar</string>
+    <string name="start_radio">Iniciar radio</string>
+    <string name="play_next">Reproducir siguiente</string>
+    <string name="enqueue">Añadir a la cola</string>
+
+    <string name="sleep_timer">Temporizador</string>
+    <string name="sleep_timer_ended">Temporizador finalizado</string>
+    <string name="sleep_timer_until_song_end">Hasta el final de la canción</string>
+    <string name="stop_sleep_timer_prompt">¿Quieres detener el temporizador?</string>
+    <string name="equalizer">Ecualizador</string>
+    <string name="set_sleep_timer">Configurar temporizador</string>
+
+    <string name="cancel">Cancelar</string>
+    <string name="done">Hecho</string>
+    <string name="confirm">Confirmar</string>
+    <string name="no">No</string>
+    <string name="stop">Detener</string>
+    <string name="set">Establecer</string>
+    <string name="hide">Ocultar</string>
+    <string name="rename">Renombrar</string>
+    <string name="delete">Eliminar</string>
+    <string name="reset">Restablecer</string>
+    <string name="clear">Limpiar</string>
+    <string name="view_all">Ver todo</string>
+
+    <string name="on_label">activado</string>
+    <string name="off_label">desactivado</string>
+    <string name="off_text">Desactivado</string>
+    <string name="unknown">Desconocido</string>
+    <string name="now_playing">Reproduciendo ahora</string>
+
+    <string name="enter_playlist_name_prompt">Introduce el nombre de la lista de reproducción</string>
+    <string name="new_playlist">Nueva lista de reproducción</string>
+    <string name="add_to_playlist">Añadir a la lista de reproducción</string>
+
+    <string name="go_to_album">Ir al álbum</string>
+
+    <string name="watch_on_youtube">Ver en YouTube</string>
+    <string name="open_in_youtube_music">Abrir en YouTube Music</string>
+    <string name="watch_playlist_on_youtube">Ver lista de reproducción en YouTube</string>
+    <string name="youtube_music_not_installed">¡YouTube Music no está instalado en tu dispositivo!</string>
+
+    <string name="remove_from_queue">Eliminar de la cola</string>
+    <string name="remove_from_playlist">Eliminar de la lista de reproducción</string>
+
+    <string name="hide_from_quick_picks">Ocultar de \"Selecciones rápidas\"</string>
+    <string name="confirm_hide_song">¿Realmente quieres ocultar esta canción? Se borrará su tiempo de reproducción y caché.\nEsta acción es irreversible.</string>
+    <string name="confirm_delete_playlist">¿Realmente quieres eliminar esta lista de reproducción?</string>
+    <string name="confirm_delete_piped_session">¿Realmente quieres eliminar esta sesión de Piped?</string>
+
+    <string name="other_versions">Otras versiones</string>
+    <string name="no_alternative_version">Este álbum no tiene ninguna versión alternativa</string>
+
+    <string name="from_wikipedia">De Wikipedia</string>
+    <string name="wikipedia_cc_by_sa">De Wikipedia bajo Creative Commons Attribution CC-BY-SA 3.0</string>
+    <string name="quote_open">“</string>
+    <string name="quote_close">„</string>
+
+    <string name="moods_and_genres">Estados de ánimo y géneros</string>
+    <string name="new_released_albums">Álbumes recién lanzados</string>
+    <string name="more">Más</string>
+
+    <string name="artist_has_no_albums">Este artista aún no ha lanzado un álbum</string>
+    <string name="artist_has_no_singles">Este artista aún no ha lanzado un sencillo</string>
+
+    <string name="error_message">Ha ocurrido un error</string>
+    <string name="error_local_music_deleted">Este archivo de música local ya no existe</string>
+    <string name="error_network">Ha ocurrido un error de red</string>
+    <string name="error_unplayable">No se pudo encontrar un formato de audio reproducible</string>
+    <string name="error_source_deleted">La fuente de video original de esta canción ha sido eliminada</string>
+    <string name="error_server_restrictions">Esta canción no se puede reproducir debido a restricciones del servidor</string>
+    <string name="error_id_mismatch">El ID de video devuelto no coincide con el solicitado</string>
+    <string name="error_unknown_playback">Ha ocurrido un error de reproducción desconocido</string>
+    <string name="error_piped_link">Hubo un error desconocido al vincular tu cuenta de Piped. Por favor, inténtalo de nuevo.</string>
+    <string name="error_piped_instances_unavailable">La lista de instancias de Piped no está disponible actualmente</string>
+    <string name="error_bassboost_init">Hubo un error al inicializar el Bass Boost. Probablemente tu dispositivo no lo admite. Intenta cambiar el nivel de Bass Boost o inténtalo de nuevo.</string>
+    <string name="error_pre_cache">Ocurrió un error desconocido durante el pre-caché. Por favor, inténtalo de nuevo.</string>
+    <string name="error_url">No se puede abrir la URL %1$s</string>
+
+    <string name="media_permission_declined">Permiso denegado, por favor concede permisos de medios en la configuración de tu dispositivo.</string>
+    <string name="open_settings">Abrir configuración</string>
+    <string name="no_items_found">No se encontraron elementos</string>
+    <string name="no_search_results">No se encontraron resultados. Por favor, intenta con una consulta o categoría diferente</string>
+
+    <string name="no_browser_installed">No se pudo encontrar una aplicación para navegar por internet</string>
+    <string name="no_equalizer_installed">No se pudo encontrar una aplicación para ecualizar audio</string>
+    <string name="no_file_chooser_installed">No se pudo encontrar una aplicación para crear documentos</string>
+    <string name="no_battery_optimization_settings_found">No se pudo encontrar la configuración de optimización de batería, por favor añade ViMusic a la lista blanca manualmente</string>
+
+    <string name="related_albums">Álbumes relacionados</string>
+    <string name="similar_artists">Artistas similares</string>
+    <string name="recommended_playlists">Listas de reproducción que te pueden gustar</string>
+    <string name="format_subscribers">%s suscriptores</string>
+
+    <string name="enter_lyrics">Introduce la letra</string>
+    <string name="no_lyrics_found">No se encontraron pistas de letra</string>
+    <string name="choose_lyric_track">Elige la pista de letra</string>
+    <string name="synchronized_lyrics_not_available">Las letras sincronizadas no están disponibles para esta canción</string>
+    <string name="lyrics_not_available">Las letras no están disponibles para esta canción</string>
+    <string name="invalid_synchronized_lyrics">Letras sincronizadas inválidas, vuelve a buscar o edita las letras e intenta de nuevo</string>
+    <string name="show_unsynchronized_lyrics">Mostrar letras no sincronizadas</string>
+    <string name="show_synchronized_lyrics">Mostrar letras sincronizadas</string>
+    <string name="provided_lyrics_by">Proporcionado por lrclib.net y kugou.com</string>
+    <string name="edit_lyrics">Editar letras</string>
+    <string name="search_lyrics_online">Buscar letras en línea</string>
+    <string name="refetch_lyrics">Volver a buscar letras</string>
+    <string name="pick_from_lrclib">Elegir letras de lrclib.net</string>
+    <string name="set_lyrics_start_offset">Establecer desplazamiento inicial</string>
+    <string name="set_lyrics_start_offset_description">Desplaza las letras sincronizadas por el tiempo de reproducción actual</string>
+
+    <string name="playback_speed">Velocidad</string>
+    <string name="playback_pitch">Tono</string>
+    <string name="playback_settings">Velocidad y tono</string>
+    <string name="minimum_speed_value">¡¿Por qué harías esto?!</string>
+    <string name="volume_boost">Aumento de volumen</string>
+    <string name="queue_loop">Bucle de cola</string>
+    <string name="add_queue_to_playlist">Añadir cola a la lista de reproducción</string>
+
+    <string name="id">Id</string>
+    <string name="itag">Itag</string>
+    <string name="bitrate">Tasa de bits</string>
+    <string name="size">Tamaño</string>
+    <string name="cached">En caché</string>
+    <string name="loudness">Volumen</string>
+
+    <string name="view_album">Ver álbum</string>
+    <string name="view_playlist">Ver lista de reproducción</string>
+
+    <string name="search_placeholder">Introduce un nombre</string>
+    <string name="format_version_credits">v%1$s por  vfsfitvnm</string>
+    <string name="social">Social</string>
+    <string name="contact">Contacto</string>
+    <string name="github">GitHub</string>
+    <string name="view_source">Ver el código fuente</string>
+    <string name="report_bug">Reportar un problema</string>
+    <string name="report_bug_description">Si necesitas ayuda con un error, puedes presentar un problema en GitHub (haz clic para redirigir)</string>
+    <string name="request_feature">Solicitar una función o sugerir una idea</string>
+    <string name="redirect_github">Serás redirigido a GitHub</string>
+
+    <string name="color_source">Color de acento</string>
+    <string name="color_source_default">Predeterminado</string>
+    <string name="color_source_dynamic">Dinámico</string>
+    <string name="color_source_material_you">Material You</string>
+
+    <string name="darkness">Oscuridad</string>
+    <string name="darkness_normal">Normal</string>
+    <string name="darkness_pureblack">Negro puro</string>
+    <string name="darkness_amoled">AMOLED</string>
+
+    <string name="color_mode">Modo</string>
+    <string name="color_mode_light">Claro</string>
+    <string name="color_mode_dark">Oscuro</string>
+    <string name="color_mode_system">Sistema</string>
+
+    <string name="thumbnail_roundness">Redondez de miniaturas</string>
+    <string name="none">Ninguna</string>
+    <string name="thumbnail_roundness_light">Ligera</string>
+    <string name="thumbnail_roundness_medium">Media</string>
+    <string name="thumbnail_roundness_heavy">Fuerte</string>
+    <string name="thumbnail_roundness_heavier">Más fuerte</string>
+    <string name="thumbnail_roundness_heaviest">Máxima</string>
+
+    <string name="text">Texto</string>
+    <string name="font">Fuente</string>
+    <string name="use_system_font">Usar fuente del sistema</string>
+    <string name="use_system_font_description">Usar la fuente aplicada por el sistema</string>
+    <string name="apply_font_padding">Aplicar relleno de fuente</string>
+    <string name="apply_font_padding_description">Añade espaciado alrededor de los textos</string>
+    <string name="language">Idioma</string>
+
+    <string name="lockscreen">Pantalla de bloqueo</string>
+    <string name="show_song_cover">Mostrar portada de la canción</string>
+    <string name="show_song_cover_description">Usar la portada de la canción en reproducción como fondo de la pantalla de bloqueo</string>
+
+    <string name="player">Reproductor</string>
+    <string name="previous_button_while_collapsed">Botón anterior cuando está contraído</string>
+    <string name="previous_button_while_collapsed_description">Muestra el botón de canción anterior cuando el reproductor está contraído</string>
+    <string name="swipe_horizontally_to_close">Deslizar horizontalmente para cerrar</string>
+    <string name="swipe_horizontally_to_close_description">Cierra el reproductor al deslizar hacia la izquierda/derecha en el reproductor contraído. Útil para usuarios con el modo de una mano de Android activado.</string>
+    <string name="show_like_button">Mostrar botón de me gusta</string>
+    <string name="show_like_button_description">Mostrar el botón de me gusta directamente en el reproductor</string>
+    <string name="swipe_to_remove_item">Deslizar para eliminar elemento</string>
+    <string name="swipe_to_remove_item_description">Desliza hacia la izquierda para eliminar un elemento de la cola</string>
+    <string name="lyrics_keep_screen_awake">Mantener pantalla activa (letras)</string>
+    <string name="lyrics_keep_screen_awake_description">Mantiene la pantalla activa mientras se muestran las letras</string>
+    <string name="lyrics_show_system_bars">Mostrar barras del sistema (letras)</string>
+    <string name="lyrics_show_system_bars_description">Desactivar esto habilita la pantalla completa en todo el sistema</string>
+
+    <string name="cache">Caché</string>
+    <string name="cache_description">Cuando la caché se queda sin espacio, se eliminan los recursos a los que no se ha accedido durante más tiempo</string>
+    <string name="image_cache">Caché de imágenes</string>
+    <string name="max_size">Tamaño máximo</string>
+    <string name="format_cache_space_used">%1$s usado</string>
+    <string name="format_cache_space_used_percentage">%1$s usado (%2$s%%)</string>
+    <string name="song_cache">Caché de canciones</string>
+    <string name="database">Base de datos</string>
+
+    <string name="cleanup">Limpieza</string>
+    <string name="pause_playback_history">Pausar historial de reproducción</string>
+    <string name="pause_playback_history_description">Detiene el uso de eventos de reproducción para selecciones rápidas</string>
+    <string name="pause_playback_history_warning">Nota: ¡esto no afectará al almacenamiento en caché sin conexión!</string>
+    <string name="reset_quick_picks">Restablecer selecciones rápidas</string>
+    <string name="quick_picks_empty">Las selecciones rápidas están vacías</string>
+    <string name="pause_playback_time">Pausar tiempo de reproducción</string>
+    <string name="format_pause_playback_time_description">Detiene el guardado del tiempo de reproducción. ¡Esto pausa las estadísticas en la lista de reproducción \'Mi Top %1$s\'!</string>
+
+    <string name="backup">Copia de seguridad</string>
+    <string name="backup_description">Se excluyen las preferencias personales (es decir, el modo de tema) y la caché.</string>
+    <string name="backup_action_description">Exportar la base de datos al almacenamiento externo</string>
+    <string name="restore">Restaurar copia de seguridad</string>
+    <string name="restore_warning">Los datos existentes se sobrescribirán.\nViMusic se cerrará automáticamente después de restaurar la base de datos.</string>
+    <string name="restore_description">Importar la base de datos desde el almacenamiento externo</string>
+
+    <string name="other">Otros</string>
+    <string name="android_auto">Android Auto</string>
+    <string name="android_auto_description">Habilitar soporte para Android Auto</string>
+    <string name="android_auto_warning">Recuerda habilitar \"Fuentes desconocidas\" en la Configuración de desarrollador de Android Auto.</string>
+    <string name="search_history">Historial de búsqueda</string>
+    <string name="pause_search_history">Pausar historial de búsqueda</string>
+    <string name="pause_search_history_description">No guarda nuevas consultas de búsqueda ni muestra el historial</string>
+    <string name="clear_search_history">Borrar historial de búsqueda</string>
+    <string name="format_clear_search_history_amount">Eliminar %1$s consultas de búsqueda</string>
+    <string name="empty_history">El historial está vacío</string>
+    <string name="built_in_playlists">Listas de reproducción integradas</string>
+    <string name="auto_sync_playlists">Sincronización automática de listas</string>
+    <string name="auto_sync_playlists_description">Sincroniza automáticamente las listas de reproducción guardadas de YouTube cuando las abres</string>
+    <string name="top_list_length">Longitud de la lista top</string>
+    <string name="top_list_length_description">Limita la longitud de la lista de reproducción \'Mi top x\'</string>
+
+    <string name="service_lifetime">Duración del servicio</string>
+    <string name="service_lifetime_warning">Si se aplican optimizaciones de batería, la notificación de reproducción puede desaparecer repentinamente cuando está en pausa.</string>
+    <string name="service_lifetime_warning_android_12">Desde Android 12, se requiere desactivar las optimizaciones de batería para que la opción de servicio invencible esté disponible.</string>
+    <string name="ignore_battery_optimizations">Ignorar optimizaciones de batería</string>
+    <string name="ignoring_battery_optimizations">Restricción ya levantada</string>
+    <string name="ignore_battery_optimizations_action">Desactivar restricciones en segundo plano</string>
+    <string name="invincible_service">Servicio invencible</string>
+    <string name="invincible_service_description">Debería mantener la reproducción en funcionamiento el 99,99% del tiempo, en caso de que desactivar las optimizaciones de batería no sea suficiente</string>
+
+    <string name="need_help">¿Necesitas ayuda?</string>
+    <string name="need_help_description">La mayoría de las veces, no es culpa del desarrollador (incluso después de activar el servicio invencible) que la aplicación deje de funcionar correctamente en segundo plano.\nComprueba si el fabricante de tu dispositivo mata tus aplicaciones (haz clic para redirigir)</string>
+    <string name="service_lifetime_report_issue">Si realmente crees que hay algo mal con la aplicación en sí, ve a la pestaña Acerca de</string>
+    <string name="troubleshooting">Solución de problemas</string>
+    <string name="troubleshooting_warning">Precaución: usa estos botones como último recurso cuando falla la reproducción de audio</string>
+    <string name="reload_app_internals">Recargar internos de la aplicación</string>
+    <string name="kill_app">Forzar cierre de la aplicación</string>
+    <string name="show_troubleshoot_section">Mostrar sección de solución de problemas</string>
+
+    <string name="persistent_queue">Cola persistente</string>
+    <string name="persistent_queue_description">Guardar y restaurar canciones en reproducción</string>
+    <string name="resume_playback">Reanudar reproducción</string>
+    <string name="resume_playback_description">Cuando se conecta un dispositivo con cable o Bluetooth</string>
+    <string name="stop_when_closed">Detener al cerrar</string>
+    <string name="stop_when_closed_description">Cuando cierras la aplicación, la música deja de reproducirse</string>
+
+    <string name="audio">Audio</string>
+    <string name="skip_silence">Saltar silencio</string>
+    <string name="skip_silence_description">Saltar partes silenciosas durante la reproducción</string>
+    <string name="minimum_silence_length">Longitud mínima de silencio</string>
+    <string name="minimum_silence_length_description">El tiempo mínimo que el audio debe estar en silencio para ser saltado</string>
+    <string name="minimum_silence_length_warning">¡El reproductor debe reiniciarse para que los cambios sean efectivos!</string>
+    <string name="restart_service">Reiniciar servicio</string>
+    <string name="loudness_normalization">Normalización de volumen</string>
+    <string name="loudness_normalization_description">Ajustar el volumen a un nivel fijo</string>
+    <string name="loudness_base_gain">Ganancia base de volumen</string>
+    <string name="loudness_base_gain_description">La ganancia \'objetivo\' para la normalización de volumen</string>
+    <string name="loudness_normalization_extreme">Valor de volumen extremo detectado (%s), desactivando la normalización para esta canción</string>
+    <string name="bass_boost">Refuerzo de graves</string>
+    <string name="bass_boost_description">Reforzar frecuencias bajas para mejorar la experiencia de escucha</string>
+    <string name="bass_boost_level">Nivel de refuerzo de graves</string>
+    <string name="bass_boost_level_description">Nivel (0–1000) de refuerzo de frecuencias bajas; ¡usar bajo tu propio riesgo!</string>
+    <string name="audio_focus">Enfoque de audio</string>
+    <string name="audio_focus_description">Si el reproductor debe solicitar el enfoque de audio (multimedia) en todo el sistema</string>
+    <string name="equalizer_description">Interactuar con el ecualizador del sistema</string>
+
+    <string name="filter_placeholder">Filtrar…</string>
+
+    <string name="last_interaction">Última reproducción</string>
+    <string name="trending">Tendencias</string>
+    <string name="quick_picks_source">Fuente de selecciones rápidas</string>
+    <string name="quick_picks_cache">Almacenar en caché datos de selecciones rápidas</string>
+    <string name="quick_picks_cache_description">Guarda los datos de selecciones rápidas en el disco para acceso sin conexión</string>
+
+    <string name="player_layout">Diseño del reproductor</string>
+    <string name="classic_player_layout_name">Clásico</string>
+    <string name="new_player_layout_name">Moderno (nuevo)</string>
+
+    <string name="piped">Piped</string>
+    <string name="instance">Instancia</string>
+    <string name="click_to_select">Haz clic para seleccionar</string>
+    <string name="username">Nombre de usuario</string>
+    <string name="password">Contraseña</string>
+    <string name="login">Iniciar sesión</string>
+    <string name="sync_description">Puedes alojar listas de reproducción en otro lugar y sincronizarlas con ViMusic. Actualmente solo admite Piped.</string>
+    <string name="add_account">Añadir cuenta</string>
+    <string name="add_account_description">Vincula una cuenta de Piped con tu instancia, nombre de usuario y contraseña.</string>
+    <string name="learn_more">Más información</string>
+    <string name="learn_more_description">¿No sabes qué es Piped o no tienes una cuenta? Haz clic aquí para ser redirigido a su documentación</string>
+    <string name="piped_sessions">Sesiones de Piped</string>
+    <string name="custom_instance">Usar instancia personalizada</string>
+    <string name="base_api_url">URL de API de instancia</string>
+    <string name="piped_session_created_successfully">Sesión de Piped creada con éxito</string>
+
+    <string name="seek_bar_style">Estilo de barra de reproducción</string>
+    <string name="static_seek_bar_name">Estática</string>
+    <string name="wavy_seek_bar_name">Ondulada</string>
+    <string name="seek_bar_quality">Calidad de barra de reproducción ondulada</string>
+    <string name="seek_bar_quality_poor">Pobre</string>
+    <string name="seek_bar_quality_low">Baja</string>
+    <string name="seek_bar_quality_medium">Media</string>
+    <string name="seek_bar_quality_high">Alta</string>
+    <string name="seek_bar_quality_great">Excelente</string>
+    <string name="seek_bar_quality_subpixel">Subpíxel</string>
+
+    <string name="remove_from_blacklist">Quitar de la lista negra</string>
+    <string name="add_to_blacklist">Añadir a la lista negra</string>
+    <string name="reset_blacklist">Restablecer lista negra</string>
+    <string name="blacklist_empty">Lista negra vacía</string>
+
+    <string name="pre_cache">Pre-caché</string>
+
+    <string name="swipe_to_hide_song">Deslizar para ocultar canción</string>
+    <string name="swipe_to_hide_song_description">Cuando deslizas una canción hacia la izquierda, se elimina de la base de datos y la caché</string>
+    <string name="swipe_to_hide_song_confirm">Confirmar deslizamiento para ocultar canción</string>
+    <string name="swipe_to_hide_song_confirm_description">Cuando deslizas para ocultar, primero tienes que confirmar</string>
+
+    <string name="version">Versión</string>
+    <string name="check_new_version">Buscar actualizaciones</string>
+    <string name="current_version">Actualmente estás ejecutando la versión v%1$s</string>
+    <string name="error_github">Ocurrió un error desconocido al obtener datos de GitHub</string>
+    <string name="new_version_available">Hay una nueva versión disponible</string>
+    <string name="more_information">Más información</string>
+    <string name="up_to_date">Estás actualizado: no hay actualizaciones disponibles</string>
+
+    <string name="dynamic_thumbnails">Miniaturas dinámicas</string>
+    <string name="max_dynamic_thumbnail_size">Tamaño máximo de miniatura dinámica</string>
+    <string name="max_dynamic_thumbnail_size_description">El tamaño máximo de una miniatura cuando se usa una miniatura dinámica</string>
+
+    <string name="hourly">Cada hora</string>
+    <string name="daily">Diariamente</string>
+    <string name="weekly">Semanalmente</string>
+    <string name="version_check">Comprobar actualizaciones automáticamente</string>
+
+    <string name="skip_on_error">Salto automático</string>
+    <string name="skip_on_error_description">Salta la canción actual cuando hay un error.</string>
+    <string name="skip_on_error_notification">Se saltó %s debido a un error</string>
+    <string name="skip_on_error_notification_unknown_song">Se saltó la canción actual debido a un error</string>
+    <string name="reverb_small_room">Small room</string>
+    <string name="reverb_medium_room">Medium room</string>
+    <string name="reverb_large_room">Large room</string>
+    <string name="reverb_medium_hall">Medium hall</string>
+    <string name="reverb_large_hall">Large hall</string>
+    <string name="reverb_plate">Plate</string>
+
+    <plurals name="format_reset_blacklist_description">
+        <item quantity="one">Eliminar %1$s canción de la lista negra</item>
+        <item quantity="many">Eliminar todas las %1$s canciones de la lista negra</item>
+        <item quantity="other">Eliminar todas las %1$s canciones de la lista negra</item>
+    </plurals>
+
+    <plurals name="format_reset_quick_picks_amount">
+        <item quantity="one">Eliminar %1$s evento de reproducción</item>
+        <item quantity="many">Eliminar %1$s eventos de reproducción</item>
+        <item quantity="other">Eliminar %1$s eventos de reproducción</item>
+    </plurals>
+
+    <plurals name="song_count_plural">
+        <item quantity="one">%1$d canción</item>
+        <item quantity="many">%1$d canciones</item>
+        <item quantity="other">%1$d canciones</item>
+    </plurals>
+</resources>

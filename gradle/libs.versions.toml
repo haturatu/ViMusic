@@ -1,0 +1,88 @@
+[versions]
+kotlin = "2.0.20"
+ksp = "2.0.20-1.0.24"
+
+jvm = "17"
+agp = "8.6.0"
+
+room = "2.6.1"
+media3 = "1.4.1"
+ktor = "3.0.0"
+detekt = "1.23.6"
+workmanager = "2.9.1"
+credentials = "1.5.0-alpha06"
+coil = "3.0.0-rc01"
+
+[plugins]
+android_application = { id = "com.android.application", version.ref = "agp" }
+android_library = { id = "com.android.library", version.ref = "agp" }
+android_lint = { id = "com.android.lint", version.ref = "agp" }
+kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin_android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin_serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin_compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin_parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+
+[libraries]
+core_ktx = { module = "androidx.core:core-ktx", version = "1.13.1" }
+
+kotlin_coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.9.0" }
+kotlin_datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.6.1" }
+kotlin_immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version = "0.3.7" }
+
+compose_bom = { module = "androidx.compose:compose-bom", version = "2024.10.00" }
+compose_animation = { module = "androidx.compose.animation:animation" }
+compose_foundation = { module = "androidx.compose.foundation:foundation" }
+compose_ui = { module = "androidx.compose.ui:ui" }
+compose_ui_util = { module = "androidx.compose.ui:ui-util" }
+compose_ui_fonts = { module = "androidx.compose.ui:ui-text-google-fonts" }
+compose_material3 = { module = "androidx.compose.material3:material3", version = "1.3.0" }
+
+compose_activity = { module = "androidx.activity:activity-compose", version = "1.9.3" }
+compose_shimmer = { module = "com.valentinilk.shimmer:compose-shimmer", version = "1.3.0" }
+compose_lottie = { module = "com.airbnb.android:lottie-compose", version = "6.4.1" }
+
+coil_compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil_ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
+
+room = { module = "androidx.room:room-ktx", version.ref = "room" }
+room_compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+
+exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
+exoplayer_workmanager = { module = "androidx.media3:media3-exoplayer-workmanager", version.ref = "media3" }
+media3_session = { module = "androidx.media3:media3-session", version.ref = "media3" }
+media = { module = "androidx.media:media", version = "1.7.0" }
+
+workmanager = { module = "androidx.work:work-runtime", version.ref = "workmanager" }
+workmanager_ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workmanager" }
+
+#noinspection CredentialDependency ==> thank you Android Lint, I added the dependency and this still flags!
+credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
+credentials_play = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
+
+ktor_http = { module = "io.ktor:ktor-http", version.ref = "ktor" }
+
+ktor_client_core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor_client_cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor_client_okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor_client_content_negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor_client_logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
+ktor_client_encoding = { module = "io.ktor:ktor-client-encoding", version.ref = "ktor" }
+ktor_client_serialization = { module = "io.ktor:ktor-client-serialization", version.ref = "ktor" }
+ktor_serialization_json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+
+rhino = { module = "org.mozilla:rhino", version = "1.7.15" }
+log4j = { module = "org.apache.logging.log4j:log4j-api", version = "2.3" }
+slf4j = { module = "org.slf4j:slf4j-api", version = "2.0.16" }
+logback = { module = "com.github.tony19:logback-android", version = "3.0.0" }
+
+brotli = { module = "org.brotli:dec", version = "0.1.2" }
+palette = { module = "androidx.palette:palette", version = "1.0.0" }
+monet = { module = "com.github.KieronQuinn:MonetCompat", version = "0.4.1" }
+
+desugaring = { module = "com.android.tools:desugar_jdk_libs", version = "2.1.2" }
+
+detekt_compose = { module = "io.nlopez.compose.rules:detekt", version = "0.4.5" }
+detekt_formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }

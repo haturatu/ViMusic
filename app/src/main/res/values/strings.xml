@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="format_minutes">%1$dm</string>
+    <string name="format_hours">%1$dh</string>
+    <string name="format_days">%1$dd</string>
+    <string name="format_time_left">%1$s left</string>
+    <string name="format_db">%1$s dB</string>
+    <string name="format_kbps">%1$s kbps</string>
+    <string name="format_ms">%1$s ms</string>
+    <string name="format_px">%1$spx</string>
+
+    <string name="format_go_to_artist">More from %1$s</string>
+    <string name="format_top_playlist">Top %1$s</string>
+    <string name="format_my_top_playlist">My top %1$s</string>
+    <string name="format_view_top_of_header">View top %1$s of …</string>
+    <string name="format_multiplier">%1$sx</string>
+
+    <string name="past_24_hours">Past 24 hours</string>
+    <string name="past_week">Past week</string>
+    <string name="past_month">Past month</string>
+    <string name="past_year">Past year</string>
+    <string name="all_time">All time</string>
+
+    <string name="songs">Songs</string>
+    <string name="playlists">Playlists</string>
+    <string name="albums">Albums</string>
+    <string name="artists">Artists</string>
+    <string name="singles">Singles</string>
+
+    <string name="favorites">Favorites</string>
+    <string name="offline">Offline</string>
+    <string name="history">History</string>
+    <string name="overview">Overview</string>
+    <string name="library">Library</string>
+    <string name="discover">Discover</string>
+    <string name="local">Local</string>
+    <string name="quick_picks">Quick picks</string>
+    <string name="mood">Mood</string>
+    <string name="online">Online</string>
+    <string name="videos">Videos</string>
+    <string name="about">About</string>
+    <string name="appearance">Appearance</string>
+    <string name="colors">Colors</string>
+    <string name="shapes">Shapes</string>
+
+    <string name="skip_back">Skip back</string>
+    <string name="skip_forward">Skip forward</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="like">Like</string>
+    <string name="shuffle">Shuffle</string>
+    <string name="sync">Sync</string>
+    <string name="start_radio">Start radio</string>
+    <string name="play_next">Play next</string>
+    <string name="enqueue">Enqueue</string>
+
+    <string name="sleep_timer">Sleep timer</string>
+    <string name="sleep_timer_ended">Sleep timer ended</string>
+    <string name="sleep_timer_until_song_end">Until song ends</string>
+    <string name="stop_sleep_timer_prompt">Do you want to stop the sleep timer?</string>
+    <string name="equalizer">Equalizer</string>
+    <string name="set_sleep_timer">Set sleep timer</string>
+
+    <string name="cancel">Cancel</string>
+    <string name="done">Done</string>
+    <string name="confirm">Confirm</string>
+    <string name="no">No</string>
+    <string name="stop">Stop</string>
+    <string name="set">Set</string>
+    <string name="hide">Hide</string>
+    <string name="rename">Rename</string>
+    <string name="delete">Delete</string>
+    <string name="reset">Reset</string>
+    <string name="clear">Clear</string>
+    <string name="view_all">View all</string>
+
+    <string name="on_label">on</string>
+    <string name="off_label">off</string>
+    <string name="off_text">Off</string>
+    <string name="unknown">Unknown</string>
+    <string name="now_playing">Now playing</string>
+
+    <string name="enter_playlist_name_prompt">Enter the playlist name</string>
+    <string name="new_playlist">New playlist</string>
+    <string name="add_to_playlist">Add to playlist</string>
+
+    <string name="go_to_album">Go to album</string>
+
+    <string name="watch_on_youtube">Watch on YouTube</string>
+    <string name="open_in_youtube_music">Open in YouTube Music</string>
+    <string name="watch_playlist_on_youtube">Watch playlist on YouTube</string>
+    <string name="youtube_music_not_installed">YouTube Music is not installed on your device!</string>
+
+    <string name="remove_from_queue">Remove from queue</string>
+    <string name="remove_from_playlist">Remove from playlist</string>
+
+    <string name="hide_from_quick_picks">Hide from \"Quick picks\"</string>
+    <string name="confirm_hide_song">Do you really want to hide this song? Its playback time and cache will be wiped.\nThis action is irreversible.</string>
+    <string name="confirm_delete_playlist">Do you really want to delete this playlist?</string>
+    <string name="confirm_delete_piped_session">Do you really want to delete this Piped session?</string>
+
+    <string name="other_versions">Other versions</string>
+    <string name="no_alternative_version">This album doesn\'t have any alternative version</string>
+
+    <string name="from_wikipedia">From Wikipedia</string>
+    <string name="wikipedia_cc_by_sa">From Wikipedia under Creative Commons Attribution CC-BY-SA 3.0</string>
+    <string name="quote_open">“</string>
+    <string name="quote_close">„</string>
+
+    <string name="moods_and_genres">Moods and genres</string>
+    <string name="new_released_albums">New released albums</string>
+    <string name="more">More</string>
+
+    <string name="artist_has_no_albums">This artist hasn\'t released an album yet</string>
+    <string name="artist_has_no_singles">This artist hasn\'t released a single yet</string>
+
+    <string name="error_message">An error has occurred</string>
+    <string name="error_local_music_deleted">This local music file does not exist anymore</string>
+    <string name="error_network">A network error has occurred</string>
+    <string name="error_unplayable">Couldn\'t find a playable audio format</string>
+    <string name="error_source_deleted">The original video source of this song has been deleted</string>
+    <string name="error_server_restrictions">This song cannot be played due to server restrictions</string>
+    <string name="error_id_mismatch">The returned video ID doesn\'t match the requested one</string>
+    <string name="error_unknown_playback">An unknown playback error has occurred</string>
+    <string name="error_piped_link">There was an unknown error linking your Piped account. Please try again.</string>
+    <string name="error_piped_instances_unavailable">Piped instance list currently unavailable</string>
+    <string name="error_bassboost_init">There was an error initializing Bass Boost. Probably your device doesn\'t support it. Try changing the bass boost level or try again.</string>
+    <string name="error_pre_cache">An unknown error occurred during pre-caching. Please try again.</string>
+    <string name="error_url">Can\'t open url %1$s</string>
+
+    <string name="media_permission_declined">Permission declined, please grant media permissions in the settings of your device.</string>
+    <string name="open_settings">Open settings</string>
+    <string name="no_items_found">No items found</string>
+    <string name="no_search_results">No results found. Please try a different query or category</string>
+
+    <string name="no_browser_installed">Couldn\'t find an application to browse the internet</string>
+    <string name="no_equalizer_installed">Couldn\'t find an application to equalize audio</string>
+    <string name="no_file_chooser_installed">Couldn\'t find an application to create documents</string>
+    <string name="no_battery_optimization_settings_found">Couldn\'t find battery optimization settings, please whitelist ViMusic manually</string>
+
+    <string name="related_albums">Related albums</string>
+    <string name="similar_artists">Similar artists</string>
+    <string name="recommended_playlists">Playlists you might like</string>
+    <string name="format_subscribers">%s subscribers</string>
+
+    <string name="enter_lyrics">Enter the lyrics</string>
+    <string name="no_lyrics_found">No lyric tracks could be found</string>
+    <string name="choose_lyric_track">Choose lyric track</string>
+    <string name="synchronized_lyrics_not_available">Synchronized lyrics are not available for this song</string>
+    <string name="lyrics_not_available">Lyrics are not available for this song</string>
+    <string name="invalid_synchronized_lyrics">Invalid synchronized lyrics, refetch or edit the lyrics and try again</string>
+    <string name="show_unsynchronized_lyrics">Show unsynchronized lyrics</string>
+    <string name="show_synchronized_lyrics">Show synchronized lyrics</string>
+    <string name="provided_lyrics_by">Provided by lrclib.net &amp; kugou.com</string>
+    <string name="edit_lyrics">Edit lyrics</string>
+    <string name="search_lyrics_online">Search lyrics online</string>
+    <string name="refetch_lyrics">Fetch lyrics again</string>
+    <string name="pick_from_lrclib">Pick lyrics from lrclib.net</string>
+    <string name="set_lyrics_start_offset">Set start offset</string>
+    <string name="set_lyrics_start_offset_description">Offsets the synchronized lyrics by the current playback time</string>
+
+    <string name="playback_speed">Speed</string>
+    <string name="playback_pitch">Pitch</string>
+    <string name="playback_settings">Speed &amp; pitch</string>
+    <string name="minimum_speed_value">Why would you do this?!</string>
+    <string name="volume_boost">Volume boost</string>
+    <string name="queue_loop">Queue loop</string>
+    <string name="add_queue_to_playlist">Add queue to playlist</string>
+
+    <string name="id">Id</string>
+    <string name="itag">Itag</string>
+    <string name="bitrate">Bitrate</string>
+    <string name="size">Size</string>
+    <string name="cached">Cached</string>
+    <string name="loudness">Loudness</string>
+    <string name="reload">Reload</string>
+
+    <string name="view_album">View album</string>
+    <string name="view_playlist">View playlist</string>
+
+    <string name="search_placeholder">Enter a name</string>
+    <string name="format_version_credits">v%1$s by  vfsfitvnm</string>
+    <string name="social">Social</string>
+    <string name="contact">Contact</string>
+    <string name="github">GitHub</string>
+    <string name="view_source">View the source code</string>
+    <string name="report_bug">Report an issue</string>
+    <string name="report_bug_description">If you need help with a bug you can file an issue on GitHub (click to redirect)</string>
+    <string name="request_feature">Request a feature or suggest an idea</string>
+    <string name="redirect_github">You will be redirected to GitHub</string>
+
+    <string name="color_source">Accent color source</string>
+    <string name="color_source_default">Default</string>
+    <string name="color_source_dynamic">Dynamic</string>
+    <string name="color_source_material_you">Material You</string>
+
+    <string name="darkness">Darkness</string>
+    <string name="darkness_normal">Normal</string>
+    <string name="darkness_pureblack">PureBlack</string>
+    <string name="darkness_amoled">AMOLED</string>
+
+    <string name="color_mode">Mode</string>
+    <string name="color_mode_light">Light</string>
+    <string name="color_mode_dark">Dark</string>
+    <string name="color_mode_system">System</string>
+
+    <string name="thumbnail_roundness">Thumbnail roundness</string>
+    <string name="none">None</string>
+    <string name="thumbnail_roundness_light">Light</string>
+    <string name="thumbnail_roundness_medium">Medium</string>
+    <string name="thumbnail_roundness_heavy">Heavy</string>
+    <string name="thumbnail_roundness_heavier">Even heavier</string>
+    <string name="thumbnail_roundness_heaviest">Heaviest</string>
+
+    <string name="text">Text</string>
+    <string name="font">Font</string>
+    <string name="use_system_font">Use system font</string>
+    <string name="use_system_font_description">Use the font applied by the system</string>
+    <string name="apply_font_padding">Apply font padding</string>
+    <string name="apply_font_padding_description">Add spacing around texts</string>
+    <string name="language">Language</string>
+
+    <string name="lockscreen">Lock screen</string>
+    <string name="show_song_cover">Show song cover</string>
+    <string name="show_song_cover_description">Use the playing song cover as the lockscreen wallpaper</string>
+
+    <string name="player">Player</string>
+    <string name="previous_button_while_collapsed">Previous button while collapsed</string>
+    <string name="previous_button_while_collapsed_description">Shows the previous song button while the player is collapsed</string>
+    <string name="swipe_horizontally_to_close">Swipe horizontally to close</string>
+    <string name="swipe_horizontally_to_close_description">Closes the player when swiping left/right on the collapsed player. Useful for users with Android\'s one-handed mode enabled.</string>
+    <string name="show_like_button">Show like button</string>
+    <string name="show_like_button_description">Show the like button directly in the player</string>
+    <string name="swipe_to_remove_item">Swipe to remove item</string>
+    <string name="swipe_to_remove_item_description">Swipe left to remove an item from the queue</string>
+    <string name="lyrics_keep_screen_awake">Keep screen awake (lyrics)</string>
+    <string name="lyrics_keep_screen_awake_description">Keeps the screen awake while the lyrics are showing</string>
+    <string name="lyrics_show_system_bars">Show system bars (lyrics)</string>
+    <string name="lyrics_show_system_bars_description">Turning this off enables system-wide full-screen</string>
+    <string name="pip">PIP</string>
+    <string name="pip_description">Automatically switches to Picture-In-Picure mode when switching to the background</string>
+
+    <string name="cache">Cache</string>
+    <string name="cache_description">When the cache runs out of space, the resources that haven\'t been accessed for the longest time are cleared</string>
+    <string name="image_cache">Image cache</string>
+    <string name="max_size">Max size</string>
+    <string name="format_cache_space_used">%1$s used</string>
+    <string name="format_cache_space_used_percentage">%1$s used (%2$s%%)</string>
+    <string name="song_cache">Song cache</string>
+    <string name="pause_song_cache">Pause cache</string>
+    <string name="pause_song_cache_description">Temporarily pauses new songs being added to cache</string>
+    <string name="database">Database</string>
+
+    <string name="cleanup">Cleanup</string>
+    <string name="pause_playback_history">Pause playback history</string>
+    <string name="pause_playback_history_description">Stops playback events being used for quick picks</string>
+    <string name="pause_playback_history_warning">Please note: this won\'t affect offline caching!</string>
+    <string name="reset_quick_picks">Reset quick picks</string>
+    <string name="quick_picks_empty">Quick picks are cleared</string>
+    <string name="pause_playback_time">Pause playback time</string>
+    <string name="format_pause_playback_time_description">Stops playback time from being saved. This pauses the statistics in the \'My Top %1$s\' playlist!</string>
+
+    <string name="backup">Backup</string>
+    <string name="backup_description">Personal preferences (i.e. the theme mode) and the cache are excluded.</string>
+    <string name="backup_action_description">Export the database to the external storage</string>
+    <string name="restore">Restore</string>
+    <string name="restore_warning">Existing data will be overwritten.\nViMusic will automatically close itself after restoring the database.</string>
+    <string name="restore_description">Import the database from the external storage</string>
+
+    <string name="other">Other</string>
+    <string name="android_auto">Android Auto</string>
+    <string name="android_auto_description">Enable Android Auto support</string>
+    <string name="android_auto_warning">Remember to enable \"Unknown sources\" in the Developer Settings of Android Auto.</string>
+    <string name="search_history">Search history</string>
+    <string name="pause_search_history">Pause search history</string>
+    <string name="pause_search_history_description">Neither save new searched queries nor show history</string>
+    <string name="clear_search_history">Clear search history</string>
+    <string name="format_clear_search_history_amount">Delete %1$s search queries</string>
+    <string name="empty_history">History is empty</string>
+    <string name="built_in_playlists">Built-in playlists</string>
+    <string name="auto_sync_playlists">Auto-sync playlists</string>
+    <string name="auto_sync_playlists_description">Automatically syncs saved playlists from YouTube when you open them</string>
+    <string name="top_list_length">Top list length</string>
+    <string name="top_list_length_description">Limits the length of the \'My top x\' playlist</string>
+
+    <string name="service_lifetime">Service lifetime</string>
+    <string name="service_lifetime_warning">If battery optimizations are applied, the playback notification can suddenly disappear when paused.</string>
+    <string name="service_lifetime_warning_android_12">Since Android 12, disabling battery optimizations is required for the invincible service option to be available.</string>
+    <string name="ignore_battery_optimizations">Ignore battery optimizations</string>
+    <string name="ignoring_battery_optimizations">Restriction already lifted</string>
+    <string name="ignore_battery_optimizations_action">Disable background restrictions</string>
+    <string name="invincible_service">Invincible service</string>
+    <string name="invincible_service_description">Should keep the playback going 99.99% of the time, in case turning off the battery optimizations is not enough</string>
+
+    <string name="need_help">Need help?</string>
+    <string name="need_help_description">Most of the time, it is not the developer\'s fault (even after turning on invincible service) that the app stops working properly in the background.\nCheck if your device manufacturer kills your apps (click to redirect)</string>
+    <string name="service_lifetime_report_issue">If you really think there is something wrong with the app itself, hop on to the About tab</string>
+    <string name="troubleshooting">Troubleshooting</string>
+    <string name="troubleshooting_warning">Caution: use these buttons as a last resort when audio playback fails</string>
+    <string name="reload_app_internals">Reload app internals</string>
+    <string name="kill_app">Kill app</string>
+    <string name="show_logs">View debug logs</string>
+    <string name="logs">Logs</string>
+    <string name="show_troubleshoot_section">Show troubleshoot section</string>
+
+    <string name="persistent_queue">Persistent queue</string>
+    <string name="persistent_queue_description">Save and restore playing songs</string>
+    <string name="resume_playback">Resume playback</string>
+    <string name="resume_playback_description">When a wired or Bluetooth device is connected</string>
+    <string name="stop_when_closed">Stop when closed</string>
+    <string name="stop_when_closed_description">When you close the app, the music stops playing</string>
+
+    <string name="audio">Audio</string>
+    <string name="skip_silence">Skip silence</string>
+    <string name="skip_silence_description">Skip silent parts during playback</string>
+    <string name="minimum_silence_length">Minimum silence length</string>
+    <string name="minimum_silence_length_description">The minimum time the audio has to be silent to get skipped</string>
+    <string name="minimum_silence_length_warning">Player has to be restarted for the changes to be effective!</string>
+    <string name="restart_service">Restart service</string>
+    <string name="loudness_normalization">Loudness normalization</string>
+    <string name="loudness_normalization_description">Adjust the volume to a fixed level</string>
+    <string name="loudness_base_gain">Loudness base gain</string>
+    <string name="loudness_base_gain_description">The \'target\' gain for the loudness normalization</string>
+    <string name="loudness_normalization_extreme">Extreme loudness value detected (%s), turning off normalization for this song</string>
+    <string name="bass_boost">Bass boost</string>
+    <string name="bass_boost_description">Boost low frequencies to improve listening experience</string>
+    <string name="bass_boost_level">Bass boost level</string>
+    <string name="bass_boost_level_description">Level (0–1000) of boosting low frequencies; use at own risk!</string>
+    <string name="sponsor_block">Sponsorblock</string>
+    <string name="sponsor_block_description">Blocks sponsored/offtopic content using data from the Sponsorblock API</string>
+    <string name="reverb">Reverb</string>
+    <string name="audio_focus">Audio focus</string>
+    <string name="audio_focus_description">Whether the player should request system-wide audio (media) focus</string>
+    <string name="equalizer_description">Interact with the system equalizer</string>
+
+    <string name="filter_placeholder">Filter…</string>
+
+    <string name="last_interaction">Last Played</string>
+    <string name="trending">Trending</string>
+    <string name="quick_picks_source">Quick Picks Source</string>
+    <string name="quick_picks_cache">Cache quick picks data</string>
+    <string name="quick_picks_cache_description">Saves the quick picks data to disk for offline access</string>
+
+    <string name="player_layout">Player layout</string>
+    <string name="classic_player_layout_name">Classic</string>
+    <string name="new_player_layout_name">Modern (new)</string>
+
+    <string name="piped">Piped</string>
+    <string name="instance">Instance</string>
+    <string name="click_to_select">Click to select</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="sync_description">You can host playlists elsewhere and synchronize them with ViMusic. Currently only supports Piped.</string>
+    <string name="add_account">Add account</string>
+    <string name="add_account_description">Link a Piped account with your instance, username and password.</string>
+    <string name="learn_more">Learn more</string>
+    <string name="learn_more_description">Don\'t know what Piped is or don\'t have an account? Click here to get redirected to their docs</string>
+    <string name="piped_sessions">Piped sessions</string>
+    <string name="custom_instance">Use Custom Instance</string>
+    <string name="base_api_url">Instance API URL</string>
+    <string name="piped_session_created_successfully">Piped session created successfully</string>
+
+    <string name="seek_bar_style">Seek bar style</string>
+    <string name="static_seek_bar_name">Static</string>
+    <string name="wavy_seek_bar_name">Wavy</string>
+    <string name="seek_bar_quality">Wavy seek bar quality</string>
+    <string name="seek_bar_quality_poor">Poor</string>
+    <string name="seek_bar_quality_low">Low</string>
+    <string name="seek_bar_quality_medium">Medium</string>
+    <string name="seek_bar_quality_high">High</string>
+    <string name="seek_bar_quality_great">Great</string>
+    <string name="seek_bar_quality_subpixel">Subpixel</string>
+
+    <string name="remove_from_blacklist">Remove from blacklist</string>
+    <string name="add_to_blacklist">Add to blacklist</string>
+    <string name="reset_blacklist">Reset blacklist</string>
+    <string name="blacklist_empty">Blacklist empty</string>
+
+    <string name="pre_cache">Pre cache</string>
+
+    <string name="swipe_to_hide_song">Swipe to hide song</string>
+    <string name="swipe_to_hide_song_description">When you swipe a song to the left, it gets removed from the database and cache</string>
+    <string name="swipe_to_hide_song_confirm">Confirm swipe to hide song</string>
+    <string name="swipe_to_hide_song_confirm_description">When you swipe to hide, you first have to confirm</string>
+    <string name="hide_explicit">Hide explicit songs</string>
+    <string name="hide_explicit_description">Hides all explicit songs, throughout the entire app. The player will also skip explicit songs when it encounters one and this setting is enabled.</string>
+
+    <string name="version">Version</string>
+    <string name="check_new_version">Check for updates</string>
+    <string name="current_version">You\'re currently running version v%1$s</string>
+    <string name="error_github">An unknown error occurred while fetching data from GitHub</string>
+    <string name="new_version_available">A new version is available</string>
+    <string name="more_information">More information</string>
+    <string name="up_to_date">You\'re currently up-to-date: no updates available</string>
+
+    <string name="dynamic_thumbnails">Dynamic thumbnails</string>
+    <string name="max_dynamic_thumbnail_size">Max dynamic thumbnail size</string>
+    <string name="max_dynamic_thumbnail_size_description">The maximum size of a thumbnail when a dynamic thumbnail is used</string>
+
+    <string name="hourly">Hourly</string>
+    <string name="daily">Daily</string>
+    <string name="weekly">Weekly</string>
+    <string name="version_check">Automatically check for updates</string>
+
+    <string name="skip_on_error">Autoskip</string>
+    <string name="skip_on_error_description">Skips the current song when there is an error.</string>
+    <string name="skip_on_error_notification">Skipped %s because of an error</string>
+    <string name="skip_on_error_notification_unknown_song">Skipped the current song because of an error</string>
+    <string name="reverb_small_room">Small room</string>
+    <string name="reverb_medium_room">Medium room</string>
+    <string name="reverb_large_room">Large room</string>
+    <string name="reverb_medium_hall">Medium hall</string>
+    <string name="reverb_large_hall">Large hall</string>
+    <string name="reverb_plate">Plate</string>
+
+    <string name="tabs">Tabs</string>
+
+    <plurals name="format_reset_blacklist_description">
+        <item quantity="one">Remove %1$s song from the blacklist</item>
+        <item quantity="other">Remove all %1$s songs from the blacklist</item>
+    </plurals>
+
+    <plurals name="format_reset_quick_picks_amount">
+        <item quantity="one">Delete %1$s playback event</item>
+        <item quantity="other">Delete %1$s playback events</item>
+    </plurals>
+
+    <plurals name="song_count_plural">
+        <item quantity="one">%1$d song</item>
+        <item quantity="other">%1$d songs</item>
+    </plurals>
+</resources>

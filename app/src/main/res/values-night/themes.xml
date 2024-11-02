@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.ViMusic" parent="@android:style/Theme.Holo.NoActionBar">
         <item name="android:windowActionBar">false</item>
         <item name="android:windowContentOverlay">@null</item>
@@ -6,8 +6,8 @@
         <item name="android:windowMinWidthMinor">100%</item>
         <item name="android:windowMinWidthMajor">100%</item>
         <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">#14161f</item>
-        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:windowBackground">@color/ic_launcher_background</item>
+        <item name="android:enforceNavigationBarContrast" tools:ignore="NewApi">false</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>

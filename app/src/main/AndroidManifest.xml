@@ -1,18 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+
+    <uses-permission android:name="com.nothing.ketchum.permission.ENABLE" />
 
     <queries>
         <intent>
             <action android:name="android.media.action.DISPLAY_AUDIO_EFFECT_CONTROL_PANEL" />
         </intent>
+
         <intent>
             <action android:name="android.intent.action.WEB_SEARCH" />
+        </intent>
+
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="*/*" />
         </intent>
     </queries>
 
@@ -21,24 +47,39 @@
         android:allowBackup="true"
         android:banner="@mipmap/ic_banner"
         android:configChanges="colorMode|density|fontScale|keyboard|keyboardHidden|layoutDirection|locale|mcc|mnc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|touchscreen|uiMode"
+        android:enableOnBackInvokedCallback="true"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher_round"
         android:label="${appName}"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="false"
-        android:theme="@style/Theme.ViMusic.NoActionBar">
+        android:theme="@style/Theme.ViMusic.NoActionBar"
+        tools:ignore="UnusedAttribute">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:theme="@style/Theme.ViMusic.NoActionBar"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize"
+            android:supportsPictureInPicture="true"
+            android:configChanges="colorMode|density|fontScale|keyboard|keyboardHidden|layoutDirection|locale|mcc|mnc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|touchscreen|uiMode">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
             <intent-filter>
@@ -50,43 +91,79 @@
                 <data
                     android:host="music.youtube.com"
                     android:pathPrefix="/playlist"
-                    android:scheme="https" />
+                    android:scheme="https"
+                    tools:ignore="IntentFilterUniqueDataAttributes" />
+
                 <data
                     android:host="www.youtube.com"
                     android:pathPrefix="/playlist"
-                    android:scheme="https" />
+                    android:scheme="https"
+                    tools:ignore="IntentFilterUniqueDataAttributes" />
+
                 <data
                     android:host="m.youtube.com"
                     android:pathPrefix="/playlist"
-                    android:scheme="https" />
+                    android:scheme="https"
+                    tools:ignore="IntentFilterUniqueDataAttributes" />
+
                 <data
                     android:host="music.youtube.com"
                     android:pathPrefix="/watch"
-                    android:scheme="https" />
+                    android:scheme="https"
+                    tools:ignore="IntentFilterUniqueDataAttributes" />
+
                 <data
                     android:host="www.youtube.com"
                     android:pathPrefix="/watch"
-                    android:scheme="https" />
+                    android:scheme="https"
+                    tools:ignore="IntentFilterUniqueDataAttributes" />
+
                 <data
                     android:host="m.youtube.com"
                     android:pathPrefix="/watch"
-                    android:scheme="https" />
+                    android:scheme="https"
+                    tools:ignore="IntentFilterUniqueDataAttributes" />
+
                 <data
                     android:host="youtu.be"
                     android:pathPrefix="/"
-                    android:scheme="https" />
+                    android:scheme="https"
+                    tools:ignore="IntentFilterUniqueDataAttributes" />
+
                 <data
                     android:host="music.youtube.com"
                     android:pathPrefix="/channel"
-                    android:scheme="https" />
+                    android:scheme="https"
+                    tools:ignore="IntentFilterUniqueDataAttributes" />
+
+                <data
+                    android:host="music.youtube.com"
+                    android:pathPrefix="/search"
+                    android:scheme="https"
+                    tools:ignore="IntentFilterUniqueDataAttributes" />
+
                 <data
                     android:host="www.youtube.com"
                     android:pathPrefix="/channel"
-                    android:scheme="https" />
+                    android:scheme="https"
+                    tools:ignore="IntentFilterUniqueDataAttributes" />
+
                 <data
                     android:host="m.youtube.com"
                     android:pathPrefix="/c"
-                    android:scheme="https" />
+                    android:scheme="https"
+                    tools:ignore="IntentFilterUniqueDataAttributes" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
@@ -94,13 +171,35 @@
             android:name=".service.PlayerService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback">
+
+            <intent-filter>
+                <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </service>
 
-        <service android:name=".service.PlayerMediaBrowserService"
-            android:exported="true"
-            android:enabled="false">
+        <receiver
+            android:name="androidx.media3.session.MediaButtonReceiver"
+            android:exported="true">
+
             <intent-filter>
-                <action android:name="android.media.browse.MediaBrowserService"/>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".service.PlayerMediaBrowserService"
+            android:enabled="false"
+            android:exported="true"
+            tools:ignore="ExportedService">
+
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </service>
 
@@ -108,11 +207,39 @@
             android:name=".service.PlayerService$NotificationDismissReceiver"
             android:exported="false" />
 
-        <meta-data android:name="com.google.android.gms.car.application"
-            android:resource="@xml/automotive_app_desc"/>
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
 
-        <meta-data android:name="com.google.android.gms.car.notification.SmallIcon"
+        <meta-data
+            android:name="com.google.android.gms.car.notification.SmallIcon"
             android:resource="@drawable/app_icon" />
 
+        <meta-data
+            android:name="NothingKey"
+            android:value="test" />
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
+        <service
+            android:name=".service.PrecacheService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync">
+
+            <intent-filter>
+                <action android:name="androidx.media3.exoplayer.downloadService.action.RESTART" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="format_minutes">%1$d分</string>
+    <string name="format_hours">%1$d時間</string>
+    <string name="format_days">%1$d日</string>
+    <string name="format_time_left">残り%1$s</string>
+    <string name="format_db">%1$s dB</string>
+    <string name="format_kbps">%1$s kbps</string>
+    <string name="format_ms">%1$s ミリ秒</string>
+    <string name="format_px">%1$spx</string>
+
+    <string name="format_go_to_artist">%1$sをもっと見る</string>
+    <string name="format_top_playlist">Top %1$s</string>
+    <string name="format_my_top_playlist">My top %1$s</string>
+    <string name="format_view_top_of_header">Top %1$s を表示</string>
+    <string name="format_multiplier">×%1$s</string>
+
+    <string name="past_24_hours">過去24時間</string>
+    <string name="past_week">1週間</string>
+    <string name="past_month">1ヶ月</string>
+    <string name="past_year">1年</string>
+    <string name="all_time">すべて</string>
+
+    <string name="songs">曲</string>
+    <string name="playlists">プレイリスト</string>
+    <string name="albums">アルバム</string>
+    <string name="artists">アーティスト</string>
+    <string name="singles">シングル</string>
+
+    <string name="favorites">お気に入り</string>
+    <string name="offline">オフライン</string>
+    <string name="overview">概要</string>
+    <string name="library">ライブラリー</string>
+    <string name="discover">見つける</string>
+    <string name="local">ローカル</string>
+    <string name="quick_picks">おすすめ</string>
+    <string name="mood">ムード</string>
+    <string name="online">オンライン</string>
+    <string name="videos">動画</string>
+    <string name="about">アプリについて</string>
+    <string name="appearance">外観</string>
+    <string name="colors">色</string>
+    <string name="shapes">形</string>
+
+    <string name="skip_back">前へ</string>
+    <string name="skip_forward">次へ</string>
+    <string name="play">再生</string>
+    <string name="pause">停止</string>
+    <string name="like">お気に入り</string>
+    <string name="shuffle">シャッフル</string>
+    <string name="sync">同期</string>
+    <string name="start_radio">ラジオを再生</string>
+    <string name="play_next">次に再生</string>
+    <string name="enqueue">キューに追加</string>
+
+    <string name="sleep_timer">スリープタイマー</string>
+    <string name="sleep_timer_ended">スリープタイマーが終了しました</string>
+    <string name="sleep_timer_until_song_end">曲が終わるまで</string>
+    <string name="stop_sleep_timer_prompt">スリープタイマーを停止しますか？</string>
+    <string name="equalizer">イコライザー</string>
+    <string name="set_sleep_timer">スリープタイマーを設定する</string>
+
+    <string name="cancel">キャンセル</string>
+    <string name="done">完了</string>
+    <string name="confirm">確認</string>
+    <string name="no">いいえ</string>
+    <string name="stop">停止</string>
+    <string name="set">設定する</string>
+    <string name="hide">削除</string>
+    <string name="rename">名前の変更</string>
+    <string name="delete">削除</string>
+    <string name="reset">リセット</string>
+    <string name="clear">消去</string>
+    <string name="view_all">すべて見る</string>
+
+    <string name="on_label">オン</string>
+    <string name="off_label">オフ</string>
+    <string name="off_text">オフ</string>
+    <string name="unknown">未知</string>
+    <string name="now_playing">再生中</string>
+
+    <string name="enter_playlist_name_prompt">プレイリスト名を入力してください</string>
+    <string name="new_playlist">新しいプレイリスト</string>
+    <string name="add_to_playlist">プレイリストに追加する</string>
+
+    <string name="go_to_album">アルバムに移動</string>
+
+    <string name="watch_on_youtube">YouTubeで見る</string>
+    <string name="open_in_youtube_music">YouTube Musicで聞く</string>
+    <string name="watch_playlist_on_youtube">YouTube でプレイリストを見る</string>
+    <string name="youtube_music_not_installed">YouTube Music がインストールされていません</string>
+
+    <string name="remove_from_queue">キューから削除</string>
+    <string name="remove_from_playlist">プレイリストから削除</string>
+
+    <string name="hide_from_quick_picks">おすすめから削除</string>
+    <string name="confirm_hide_song">この曲を削除しますか？\n再生時間とキャッシュは消去されます\nこの操作は元に戻すことができません</string>
+    <string name="confirm_delete_playlist">このプレイリストを削除しますか？</string>
+    <string name="confirm_delete_piped_session">この Piped セッションを削除しますか？</string>
+
+    <string name="other_versions">ほかのバージョン</string>
+    <string name="no_alternative_version">このアルバムには他のバージョンがありません</string>
+
+    <string name="from_wikipedia">Wikipedia から</string>
+    <string name="wikipedia_cc_by_sa">From Wikipedia under Creative Commons Attribution CC-BY-SA 3.0</string>
+    <string name="quote_open">“</string>
+    <string name="quote_close">„</string>
+
+    <string name="moods_and_genres">ムードとジャンル</string>
+    <string name="new_released_albums">新しいアルバム</string>
+    <string name="more">もっと見る</string>
+
+    <string name="artist_has_no_albums">このアーティストのアルバムはありません</string>
+    <string name="artist_has_no_singles">このアーティストのシングルはありません</string>
+
+    <string name="error_message">エラーが発生しました</string>
+    <string name="error_local_music_deleted">この音楽は存在しません</string>
+    <string name="error_network">ネットワークエラーが発生しました</string>
+    <string name="error_unplayable">再生可能な音楽がみつかりませんでした</string>
+    <string name="error_source_deleted">この曲の元動画は削除されました</string>
+    <string name="error_server_restrictions">この曲はサーバーの制限により再生できません</string>
+    <string name="error_id_mismatch">Video ID が一致しませんでした</string>
+    <string name="error_unknown_playback">不明な再生エラーが発生しました</string>
+    <string name="error_piped_link">Piped アカウントのリンク中に不明なエラーが発生しました\nもう一度試してください</string>
+    <string name="error_piped_instances_unavailable">Piped インスタンスのリストは現在利用できません</string>
+    <string name="error_bassboost_init">バスブーストの初期化中にエラーが発生しました\n低音ブーストレベルを変更するか、もう一度試してください</string>
+    <string name="error_pre_cache">事前キャッシュ中に不明なエラーが発生しました\nもう一度試してください</string>
+    <string name="error_url">%1$sを開けません</string>
+
+    <string name="media_permission_declined">デバイスの設定でメディアの権限をを付与してください</string>
+    <string name="open_settings">設定を開く</string>
+    <string name="no_items_found">見つかりませんでした</string>
+    <string name="no_search_results">見つかりませんでした\n他のカテゴリーで検索してください</string>
+
+    <string name="no_browser_installed">インターネットを閲覧するためのアプリが見つかりませんでした</string>
+    <string name="no_equalizer_installed">イコライザーが見つかりませんでした</string>
+    <string name="no_file_chooser_installed">ドキュメントを作成するアプリケーションが見つかりませんでした</string>
+    <string name="no_battery_optimization_settings_found">バッテリー最適化設定が見つかりませんでした\nViMusicを手動で設定してください</string>
+
+    <string name="related_albums">関連アルバム</string>
+    <string name="similar_artists">類似したアーティスト</string>
+    <string name="recommended_playlists">類似したプレイリスト</string>
+    <string name="format_subscribers">%s人の登録者</string>
+
+    <string name="enter_lyrics">歌詞を入力してください</string>
+    <string name="no_lyrics_found">歌詞が見つかりませんでした</string>
+    <string name="choose_lyric_track">歌詞を選択してください</string>
+    <string name="synchronized_lyrics_not_available">この曲には同期した歌詞がありません</string>
+    <string name="lyrics_not_available">この曲の歌詞はありません</string>
+    <string name="invalid_synchronized_lyrics">同期した歌詞が無効です\n歌詞を再読み込みまたは編集してください</string>
+    <string name="show_unsynchronized_lyrics">同期されていない歌詞を表示する</string>
+    <string name="show_synchronized_lyrics">同期した歌詞を表示する</string>
+    <string name="provided_lyrics_by">lrclib.net &amp; kugou.comによって提供されました</string>
+    <string name="edit_lyrics">歌詞を編集する</string>
+    <string name="search_lyrics_online">Webで歌詞を検索する</string>
+    <string name="refetch_lyrics">歌詞を読み込みなおす</string>
+    <string name="pick_from_lrclib">lrclib.net から歌詞を選択</string>
+    <string name="set_lyrics_start_offset">開始位置の設定</string>
+    <string name="set_lyrics_start_offset_description">同期した歌詞の開始位置を現在の再生時間に設定します</string>
+
+    <string name="playback_speed">再生速度</string>
+    <string name="playback_pitch">ピッチ</string>
+    <string name="playback_settings">再生速度とピッチ</string>
+    <string name="minimum_speed_value">低過ぎです</string>
+    <string name="volume_boost">ボリュームブースト</string>
+    <string name="queue_loop">再生中の曲をループ再生</string>
+    <string name="add_queue_to_playlist">キューをプレイリストに追加</string>
+
+    <string name="id">Id</string>
+    <string name="itag">Itag</string>
+    <string name="bitrate">ビットレート</string>
+    <string name="size">サイズ</string>
+    <string name="cached">キャッシュした</string>
+    <string name="loudness">ラウンドネス</string>
+
+    <string name="view_album">アルバムを見る</string>
+    <string name="view_playlist">プレイリストを見る</string>
+
+    <string name="search_placeholder">キーワードを入力</string>
+    <string name="format_version_credits">v%1$s by  vfsfitvnm</string>
+    <string name="social">知る</string>
+    <string name="contact">つながる</string>
+    <string name="github">GitHub</string>
+    <string name="view_source">ソースコードを見る</string>
+    <string name="report_bug">問題を報告する</string>
+    <string name="report_bug_description">バグを見つけたら、GitHub に報告してください</string>
+    <string name="request_feature">機能のリクエストまたはアイデアの提案</string>
+    <string name="redirect_github">GitHub を開きます</string>
+
+    <string name="color_source">アクセントカラー</string>
+    <string name="color_source_default">デフォルト</string>
+    <string name="color_source_dynamic">ダイナミック</string>
+    <string name="color_source_material_you">デバイスの設定に合わせる</string>
+
+    <string name="darkness">暗さ</string>
+    <string name="darkness_normal">普通</string>
+    <string name="darkness_pureblack">真っ黒</string>
+    <string name="darkness_amoled">AMOLED</string>
+
+    <string name="color_mode">ダークモード</string>
+    <string name="color_mode_light">オフ</string>
+    <string name="color_mode_dark">オン</string>
+    <string name="color_mode_system">デバイスの設定に合わせる</string>
+
+    <string name="thumbnail_roundness">サムネイルの丸み</string>
+    <string name="none">なし</string>
+    <string name="thumbnail_roundness_light">20%</string>
+    <string name="thumbnail_roundness_medium">35%(標準)</string>
+    <string name="thumbnail_roundness_heavy">50%</string>
+    <string name="thumbnail_roundness_heavier">65%</string>
+    <string name="thumbnail_roundness_heaviest">80%</string>
+
+    <string name="text">テキスト</string>
+    <string name="font">フォント</string>
+    <string name="use_system_font">デバイスのフォントを使う</string>
+    <string name="use_system_font_description">デバイスで設定されたフォントを使います</string>
+    <string name="apply_font_padding">余白</string>
+    <string name="apply_font_padding_description">文字の周りに余白を追加します</string>
+    <string name="language">言語</string>
+
+    <string name="lockscreen">ロック画面</string>
+    <string name="show_song_cover">曲のカバーを表示する</string>
+    <string name="show_song_cover_description">再生中の曲のカバーをロック画面の壁紙にします</string>
+
+    <string name="player">プレーヤー</string>
+    <string name="previous_button_while_collapsed">前へボタンを表示する</string>
+    <string name="previous_button_while_collapsed_description">折りたたまれいても前へボタンを表示します</string>
+    <string name="swipe_horizontally_to_close">スワイプしてプレーヤーを閉じる</string>
+    <string name="swipe_horizontally_to_close_description">折りたたまれたプレーヤーを左右にスワイプするとプレーヤーを閉じます</string>
+    <string name="show_like_button">お気に入りボタンを表示する</string>
+    <string name="show_like_button_description">プレーヤーにお気に入りボタンを表示します</string>
+    <string name="swipe_to_remove_item">スワイプして削除</string>
+    <string name="swipe_to_remove_item_description">スワイプして、キューからアイテムを削除します</string>
+    <string name="lyrics_keep_screen_awake">画面を起動したままにする(歌詞)</string>
+    <string name="lyrics_keep_screen_awake_description">歌詞が表示されているときに、画面を起動したままにします</string>
+
+    <string name="cache">キャッシュ</string>
+    <string name="cache_description">キャッシュが保存できなくなったら、古いキャッシュから削除します</string>
+    <string name="image_cache">画像のキャッシュ</string>
+    <string name="max_size">最大サイズ</string>
+    <string name="format_cache_space_used">%1$s 使用中</string>
+    <string name="format_cache_space_used_percentage">%1$s 使用中 (%2$s%%)</string>
+    <string name="song_cache">曲のキャッシュ</string>
+    <string name="database">データベース</string>
+
+    <string name="cleanup">削除</string>
+    <string name="pause_playback_history">再生履歴を一時停止</string>
+    <string name="pause_playback_history_description">クイックピックで使用される再生イベントを停止します</string>
+    <string name="pause_playback_history_warning">注意: これはオフライン キャッシュには影響しません</string>
+    <string name="reset_quick_picks">おすすめのリセット</string>
+    <string name="quick_picks_empty">おすすめはありません</string>
+    <string name="pause_playback_time">再生時間の保存を一時停止</string>
+    <string name="format_pause_playback_time_description">再生時間の保存を停止します\n「My Top %1$s」の統計が一時停止されます</string>
+
+    <string name="backup">バックアップ</string>
+    <string name="backup_description">個人的な設定(テーマ モードなど)とキャッシュは除外されます</string>
+    <string name="backup_action_description">データベースを外部ストレージにエクスポートします</string>
+    <string name="restore">復元</string>
+    <string name="restore_warning">既存のデータは上書きされます\nデータベースの復元後、ViMusic は自動的に終了します</string>
+    <string name="restore_description">データベースを外部ストレージからインポートします</string>
+
+    <string name="other">その他</string>
+    <string name="android_auto">Android Auto</string>
+    <string name="android_auto_description">Android Auto を有効化します</string>
+    <string name="android_auto_warning">Android Autoの開発者設定で、提供元不明のソースを有効にしてください</string>
+    <string name="search_history">検索履歴</string>
+    <string name="pause_search_history">検索履歴を一時停止</string>
+    <string name="pause_search_history_description">検索履歴の保存を停止します</string>
+    <string name="clear_search_history">検索履歴を消去する</string>
+    <string name="format_clear_search_history_amount">%1$s 個の検索履歴を削除します</string>
+    <string name="empty_history">履歴はありません</string>
+    <string name="built_in_playlists">内臓プレイリスト</string>
+    <string name="top_list_length">Top リストの長さ</string>
+    <string name="top_list_length_description">My top のプレイリストの長さを設定します</string>
+
+    <string name="service_lifetime">Service lifetime</string>
+    <string name="service_lifetime_warning">バッテリーの最適化が適用されている場合、一時停止時に再生通知が消えることがあります</string>
+    <string name="service_lifetime_warning_android_12">Android 12 以降、上級サービスオプションを利用するには、バッテリーの最適化を無効にする必要があります</string>
+    <string name="ignore_battery_optimizations">バッテリーの最適化を無効にする</string>
+    <string name="ignoring_battery_optimizations">バッテリー最適化はすでに無効です</string>
+    <string name="ignore_battery_optimizations_action">バックグラウンドの制限を無効にする</string>
+    <string name="invincible_service">上級サービス</string>
+    <string name="invincible_service_description">バッテリーの最適化をオフにするだけでは不十分な場合、再生を継続させます</string>
+
+    <string name="need_help">ヘルプが必要ですか？</string>
+    <string name="need_help_description">ほとんどの場合、アプリがバックグラウンドで上級サービスをオンにしても正常に動作しなくなるのは開発者のせいではありません\nデバイスの製造元がアプリを強制終了していないか確認する</string>
+    <string name="service_lifetime_report_issue">アプリ自体に問題があると本当に思う場合は、「アプリについて」から、GitHubで報告してください</string>
+    <string name="troubleshooting">トラブルシューティング</string>
+    <string name="troubleshooting_warning">注意: これらのボタンは、アプリがエラーが発生した時の最終手段として使用してください</string>
+    <string name="reload_app_internals">アプリをリロードする</string>
+    <string name="kill_app">アプリを終了する</string>
+    <string name="show_troubleshoot_section">トラブルシューティングを表示する</string>
+
+    <string name="persistent_queue">アプリが閉じてもキューを残す</string>
+    <string name="persistent_queue_description">再生中の曲の保存と復元をします</string>
+    <string name="resume_playback">再生を再開する</string>
+    <string name="resume_playback_description">有線またはBluetoothデバイスが接続された場合に、再生を再開します</string>
+    <string name="stop_when_closed">再生を停止する</string>
+    <string name="stop_when_closed_description">アプリが終了したら、再生を停止します</string>
+
+    <string name="audio">オーディオ</string>
+    <string name="skip_silence">無音部分をスキップ</string>
+    <string name="skip_silence_description">再生中に無音部分をスキップする</string>
+    <string name="minimum_silence_length">最低無音時間</string>
+    <string name="minimum_silence_length_description">音声がスキップされる最低無音時間</string>
+    <string name="minimum_silence_length_warning">変更を適用するには、プレーヤーを再起動する必要があります</string>
+    <string name="restart_service">プレーヤーを再起動する</string>
+    <string name="loudness_normalization">ラウドネスノーマライズ</string>
+    <string name="loudness_normalization_description">音量を一定レベルに調整します</string>
+    <string name="loudness_base_gain">ラウドネスの基本音量</string>
+    <string name="loudness_base_gain_description">ラウドネスノーマライズのターゲットゲイン</string>
+    <string name="loudness_normalization_extreme">極端なラウドネスの値が検出されました (%s).\この曲のノーマライズをオフにします</string>
+    <string name="bass_boost">バスブースト</string>
+    <string name="bass_boost_description">低音域を強化します</string>
+    <string name="bass_boost_level">バスブーストレベル</string>
+    <string name="bass_boost_level_description">自己責任でブーストレベルを0から1000の間で指定してください</string>
+    <string name="equalizer_description">システムイコライザーを開く</string>
+
+    <string name="filter_placeholder">フィルター</string>
+
+    <string name="last_interaction">最後に再生した曲</string>
+    <string name="trending">トレンド</string>
+    <string name="quick_picks_source">おすすめの取得元</string>
+    <string name="quick_picks_cache">おすすめのデータを一時保存する</string>
+    <string name="quick_picks_cache_description">オフラインでもおすすめの曲を聞けるように一時保存します</string>
+
+    <string name="player_layout">プレーヤーのレイアウト</string>
+    <string name="classic_player_layout_name">クラシック</string>
+    <string name="new_player_layout_name">モダン (新しい)</string>
+
+    <string name="piped">Piped</string>
+    <string name="instance">一覧</string>
+    <string name="click_to_select">タップして選択してください</string>
+    <string name="username">ユーザーネーム</string>
+    <string name="password">パスワード</string>
+    <string name="login">ログイン</string>
+    <string name="sync_description">プレイリストを別の場所で保存し、ViMusic と同期することができます\n現在、Piped のみをサポートしています</string>
+    <string name="add_account">アカウントを追加する</string>
+    <string name="add_account_description">Piped アカウントにリンクします</string>
+    <string name="learn_more">もっと知る</string>
+    <string name="learn_more_description">Piped を知らない、またはアカウントをお持ちでない場合は、ここをクリックするとPiped のドキュメントを開きます</string>
+    <string name="piped_sessions">Piped セッション</string>
+    <string name="custom_instance">カスタムインスタンスを使用する</string>
+    <string name="base_api_url">インスタンスAPIのURL</string>
+    <string name="piped_session_created_successfully">Piped セッションが正常に作成されました</string>
+
+    <string name="seek_bar_style">再生バーのスタイル</string>
+    <string name="static_seek_bar_name">普通</string>
+    <string name="wavy_seek_bar_name">波状</string>
+    <string name="seek_bar_quality">波状再生バーの品質</string>
+    <string name="seek_bar_quality_poor">25%</string>
+    <string name="seek_bar_quality_low">40%</string>
+    <string name="seek_bar_quality_medium">55%</string>
+    <string name="seek_bar_quality_high">70%</string>
+    <string name="seek_bar_quality_great">85%</string>
+    <string name="seek_bar_quality_subpixel">100%</string>
+
+    <string name="remove_from_blacklist">ブラックリストから削除する</string>
+    <string name="add_to_blacklist">ブラックリストに追加する</string>
+    <string name="reset_blacklist">ブラックリストをリセットする</string>
+    <string name="blacklist_empty">ブラックリストはありません</string>
+
+    <string name="pre_cache">プリキャッシュ</string>
+
+    <string name="swipe_to_hide_song">スワイプして曲を削除</string>
+    <string name="swipe_to_hide_song_description">曲を左にスワイプすると、データベースとキャッシュから削除されます</string>
+    <string name="swipe_to_hide_song_confirm">スワイプを確認する</string>
+    <string name="swipe_to_hide_song_confirm_description">スワイプして削除する場合は、確認する必要があります</string>
+
+    <string name="version">バージョン</string>
+    <string name="check_new_version">アップデートを確認する</string>
+    <string name="current_version">バージョン v%1$s を実行しています</string>
+    <string name="error_github">GitHubからのデータ取得中に不明なエラーが発生しました</string>
+    <string name="new_version_available">新しいバージョンが使用可能です</string>
+    <string name="more_information">詳細情報</string>
+    <string name="up_to_date">実行しているバージョンが最新です</string>
+
+    <string name="dynamic_thumbnails">ダイナミックサムネイル</string>
+    <string name="max_dynamic_thumbnail_size">ダイナミックサムネイルの最大サイズ</string>
+    <string name="max_dynamic_thumbnail_size_description">ダイナミックサムネイル使用時のサムネイルの最大サイズを設定します</string>
+
+    <string name="hourly">毎時間</string>
+    <string name="daily">毎日</string>
+    <string name="weekly">毎週</string>
+    <string name="version_check">アップデートの自動チェック</string>
+
+    <string name="skip_on_error">自動スキップ</string>
+    <string name="skip_on_error_description">エラーが発生したときに再生中の曲をスキップする</string>
+    <string name="skip_on_error_notification">エラーが発生したため %s がスキップされました</string>
+    <string name="skip_on_error_notification_unknown_song">エラーが発生したため再生中の曲をスキップしました</string>
+    <string name="reverb_small_room">Small room</string>
+    <string name="reverb_medium_room">Medium room</string>
+    <string name="reverb_large_room">Large room</string>
+    <string name="reverb_medium_hall">Medium hall</string>
+    <string name="reverb_large_hall">Large hall</string>
+    <string name="reverb_plate">Plate</string>
+
+    <plurals name="format_reset_blacklist_description">
+        <item quantity="other">ブラックリストから %1$s の曲をすべて削除する</item>
+    </plurals>
+
+    <plurals name="format_reset_quick_picks_amount">
+        <item quantity="other">%1$s の再生イベントを削除する</item>
+    </plurals>
+
+    <plurals name="song_count_plural">
+        <item quantity="other">%1$d 曲</item>
+    </plurals>
+</resources>

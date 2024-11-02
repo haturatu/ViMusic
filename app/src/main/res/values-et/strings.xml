@@ -1,0 +1,427 @@
+<resources>
+    <string name="format_minutes">%1$dm</string>
+    <string name="format_hours">%1$dh</string>
+    <string name="format_days">%1$dp</string>
+    <string name="format_time_left">%1$s jäänud</string>
+    <string name="format_db">%1$s dB</string>
+    <string name="format_kbps">%1$s kbps</string>
+    <string name="format_ms">%1$s ms</string>
+    <string name="format_px">%1$spx</string>
+
+    <string name="format_go_to_artist">Rohkem %1$s</string>
+    <string name="format_top_playlist">Top %1$s</string>
+    <string name="format_my_top_playlist">Minu top %1$s</string>
+    <string name="format_view_top_of_header">Vaata top %1$s …</string>
+    <string name="format_multiplier">%1$sx</string>
+
+    <string name="past_24_hours">Viimased 24 tundi</string>
+    <string name="past_week">Viimane nädal</string>
+    <string name="past_month">Viimane kuu</string>
+    <string name="past_year">Viimane aasta</string>
+    <string name="all_time">Kõik aeg</string>
+
+    <string name="songs">Lood</string>
+    <string name="playlists">Playlist`id</string>
+    <string name="albums">Albumid</string>
+    <string name="artists">Artistid</string>
+    <string name="singles">Singlid</string>
+
+    <string name="favorites">Lemmikud</string>
+    <string name="offline">Offline</string>
+    <string name="history">Ajalugu</string>
+    <string name="overview">Ülevaade</string>
+    <string name="library">Muusikakogu</string>
+    <string name="discover">Avasta</string>
+    <string name="local">Kohalik</string>
+    <string name="quick_picks">Kiirvalikud</string>
+    <string name="mood">Meeleolu</string>
+    <string name="online">Online</string>
+    <string name="videos">Videod</string>
+    <string name="about">Teave</string>
+    <string name="appearance">Välimus</string>
+    <string name="colors">Värvid</string>
+    <string name="shapes">Kujundid</string>
+
+    <string name="skip_back">Tagasi</string>
+    <string name="skip_forward">Edasi</string>
+    <string name="play">Esita</string>
+    <string name="pause">Paus</string>
+    <string name="like">Meeldib</string>
+    <string name="shuffle">Sega</string>
+    <string name="sync">Sünkrooni</string>
+    <string name="start_radio">Alusta raadiot</string>
+    <string name="play_next">Mängi järgmine</string>
+    <string name="enqueue">Lisa järjekorda</string>
+
+    <string name="sleep_timer">Unetaimer</string>
+    <string name="sleep_timer_ended">Unetaimer lõppes</string>
+    <string name="sleep_timer_until_song_end">Kuni loo lõpuni</string>
+    <string name="stop_sleep_timer_prompt">Kas soovid unetaimeri peatada?</string>
+    <string name="equalizer">Ekvalaiser</string>
+    <string name="set_sleep_timer">Määra unetaimer</string>
+
+    <string name="cancel">Tühista</string>
+    <string name="done">Valmis</string>
+    <string name="confirm">Kinnita</string>
+    <string name="no">Ei</string>
+    <string name="stop">Peata</string>
+    <string name="set">Määra</string>
+    <string name="hide">Peida</string>
+    <string name="rename">Nimeta ümber</string>
+    <string name="delete">Kustuta</string>
+    <string name="reset">Lähtesta</string>
+    <string name="clear">Tühjenda</string>
+    <string name="view_all">Vaata kõiki</string>
+
+    <string name="on_label">sees</string>
+    <string name="off_label">väljas</string>
+    <string name="off_text">Väljas</string>
+    <string name="unknown">Tundmatu</string>
+    <string name="now_playing">Praegu mängib</string>
+
+    <string name="enter_playlist_name_prompt">Sisesta Playlist`i nimi</string>
+    <string name="new_playlist">Uus Playlist</string>
+    <string name="add_to_playlist">Lisa Playlist`i</string>
+
+    <string name="go_to_album">Mine albumisse</string>
+
+    <string name="watch_on_youtube">Vaata YouTube\'is</string>
+    <string name="open_in_youtube_music">Ava YouTube Music\'is</string>
+    <string name="watch_playlist_on_youtube">Vaata Playlist`i YouTube\'is</string>
+    <string name="youtube_music_not_installed">YouTube Music ei ole sinu seadmesse installitud!</string>
+
+    <string name="remove_from_queue">Eemalda järjekorrast</string>
+    <string name="remove_from_playlist">Eemalda Playlist`ist</string>
+
+    <string name="hide_from_quick_picks">Peida "Kiirvalikutest"</string>
+    <string name="confirm_hide_song">Kas sa tõesti tahad selle loo peita? Selle esitusaeg ja vahemälu kustutatakse.\nSee tegevus on pöördumatu.</string>
+    <string name="confirm_delete_playlist">Kas sa tõesti tahad selle esitusloendi kustutada?</string>
+    <string name="confirm_delete_piped_session">Kas sa tõesti tahad selle Piped\'i sessiooni kustutada?</string>
+
+    <string name="other_versions">Teised versioonid</string>
+    <string name="no_alternative_version">Sellel albumil ei ole alternatiivset versiooni</string>
+
+    <string name="from_wikipedia">Wikipeediast</string>
+    <string name="wikipedia_cc_by_sa">Wikipeediast Creative Commons Attribution CC-BY-SA 3.0 all</string>
+    <string name="quote_open">„</string>
+    <string name="quote_close">”</string>
+
+    <string name="moods_and_genres">Meeleolud ja žanrid</string>
+    <string name="new_released_albums">Uued albumid</string>
+    <string name="more">Rohkem</string>
+
+    <string name="artist_has_no_albums">See artist ei ole veel albumit välja andnud</string>
+    <string name="artist_has_no_singles">See artist ei ole veel singlit välja andnud</string>
+
+    <string name="error_message">Kohustus tekkis viga</string>
+    <string name="error_local_music_deleted">See kohalik muusikafail ei eksisteeri enam</string>
+    <string name="error_network">Võrguviga</string>
+    <string name="error_unplayable">Mängitavat helivormingut ei leitud</string>
+    <string name="error_source_deleted">Selle loo originaalvideoallikas on kustutatud</string>
+    <string name="error_server_restrictions">Seda lugu ei saa mängida serveri piirangute tõttu</string>
+    <string name="error_id_mismatch">Tagastatud video ID ei kattu nõutud omaga</string>
+    <string name="error_unknown_playback">Tekkis tundmatu esitamise viga</string>
+    <string name="error_piped_link">Tekkis tundmatu viga sinu Piped\'i konto sidumisel. Proovi uuesti.</string>
+    <string name="error_piped_instances_unavailable">Piped\'i instantside loend ei ole hetkel saadaval</string>
+    <string name="error_bassboost_init">Tekkis viga Bass Boost\'i initsialiseerimisel. Tõenäoliselt ei toeta sinu seade seda. Proovi bassi tuge muuta või proovi uuesti.</string>
+    <string name="error_pre_cache">Tekkis viga eelvahemälu loomisel. Proovi uuesti.</string>
+    <string name="error_url">Ei saa avada URL\'i %1$s</string>
+
+    <string name="media_permission_declined">Luba keeldus, palun anna meediaõigused seadme seadetes.</string>
+    <string name="open_settings">Ava seaded</string>
+    <string name="no_items_found">Objekte ei leitud</string>
+    <string name="no_search_results">Tulemusi ei leitud. Proovi teist päringut või kategooriat</string>
+
+    <string name="no_browser_installed">Interneti sirvimiseks ei leitud rakendust</string>
+    <string name="no_equalizer_installed">Heli ekvalaiserit ei leitud</string>
+    <string name="no_file_chooser_installed">Dokumentide loomise rakendust ei leitud</string>
+    <string name="no_battery_optimization_settings_found">Aku optimeerimise seadeid ei leitud, palun lisa ViMusic käsitsi valgesse nimekirja</string>
+
+    <string name="related_albums">Seotud albumid</string>
+    <string name="similar_artists">Sarnased artistid</string>
+    <string name="recommended_playlists">Soovitatud Playlist`id</string>
+    <string name="format_subscribers">%s jälgijat</string>
+
+    <string name="enter_lyrics">Sisesta laulusõnad</string>
+    <string name="no_lyrics_found">Laulusõnu ei leitud</string>
+    <string name="choose_lyric_track">Vali laulusõnade rada</string>
+    <string name="synchronized_lyrics_not_available">Sünkroniseeritud laulusõnad pole selle laulu jaoks saadaval</string>
+    <string name="lyrics_not_available">Laulusõnad pole selle laulu jaoks saadaval</string>
+    <string name="invalid_synchronized_lyrics">Vale sünkroniseeritud laulusõnad, uuenda või muuda laulusõnu ja proovi uuesti</string>
+    <string name="show_unsynchronized_lyrics">Kuva mitte-sünkroniseeritud laulusõnad</string>
+    <string name="show_synchronized_lyrics">Kuva sünkroniseeritud laulusõnad</string>
+    <string name="provided_lyrics_by">Laulusõnad on saadud lrclib.net ja kugou.com</string>
+    <string name="edit_lyrics">Muuda laulusõnu</string>
+    <string name="search_lyrics_online">Otsi laulusõnu internetis</string>
+    <string name="refetch_lyrics">Uuenda laulusõnu</string>
+    <string name="pick_from_lrclib">Vali laulusõnad lrclib.net\'ist</string>
+    <string name="set_lyrics_start_offset">Määra laulusõnade alguse nihke</string>
+    <string name="set_lyrics_start_offset_description">Nihutab sünkroniseeritud laulusõnu praeguse esitusaaja järgi</string>
+
+    <string name="playback_speed">Esituse kiirus</string>
+    <string name="playback_pitch">Helikõrgus</string>
+    <string name="playback_settings">Kiirus ja helikõrgus</string>
+    <string name="minimum_speed_value">Miks sa seda teed?!</string>
+    <string name="volume_boost">Heli võimendus</string>
+    <string name="queue_loop">Järjekorra tsükkel</string>
+    <string name="add_queue_to_playlist">Lisa järjekord Playlist`isse</string>
+
+    <string name="id">ID</string>
+    <string name="itag">Itag</string>
+    <string name="bitrate">Bitrate</string>
+    <string name="size">Suurus</string>
+    <string name="cached">Vahemälus</string>
+    <string name="loudness">Heli tugevus</string>
+
+    <string name="view_album">Vaata albumit</string>
+    <string name="view_playlist">Vaata Playlist`i</string>
+
+    <string name="search_placeholder">Sisesta nimi</string>
+    <string name="format_version_credits">v%1$s autoriks  vfsfitvnm</string>
+    <string name="social">Sotsiaalmeedia</string>
+    <string name="contact">Kontakt</string>
+    <string name="github">GitHub</string>
+    <string name="view_source">Vaata allikat</string>
+    <string name="report_bug">Teata veast</string>
+    <string name="report_bug_description">Kui sul on probleem, võid sa teate esitada GitHub\'is (kliki, et suunata)</string>
+    <string name="request_feature">Küsi funktsiooni või soovita ideed</string>
+    <string name="redirect_github">Sind suunatakse GitHub\'i</string>
+
+    <string name="color_source">Aktsentvärvi allikas</string>
+    <string name="color_source_default">Vaikimisi</string>
+    <string name="color_source_dynamic">Dünaamiline</string>
+    <string name="color_source_material_you">Material You</string>
+
+    <string name="darkness">Tumedus</string>
+    <string name="darkness_normal">Normaalne</string>
+    <string name="darkness_pureblack">Puhtalt must</string>
+    <string name="darkness_amoled">AMOLED</string>
+
+    <string name="color_mode">Režiim</string>
+    <string name="color_mode_light">Hele</string>
+    <string name="color_mode_dark">Tume</string>
+    <string name="color_mode_system">Süsteemi</string>
+
+    <string name="thumbnail_roundness">Miniatuuride ümarus</string>
+    <string name="none">Pole</string>
+    <string name="thumbnail_roundness_light">Kergelt ümar</string>
+    <string name="thumbnail_roundness_medium">Keskmiselt ümar</string>
+    <string name="thumbnail_roundness_heavy">Raskelt ümar</string>
+    <string name="thumbnail_roundness_heavier">Veel raskelt ümar</string>
+    <string name="thumbnail_roundness_heaviest">Kõige raskelt ümar</string>
+
+    <string name="text">Tekst</string>
+    <string name="font">Font</string>
+    <string name="use_system_font">Kasuta süsteemi fontte</string>
+    <string name="use_system_font_description">Kasutab süsteemi poolt rakendatud fontte</string>
+    <string name="apply_font_padding">Kohanda fontti paddingut</string>
+    <string name="apply_font_padding_description">Lisa ruumi tekstide ümber</string>
+    <string name="language">Keel</string>
+
+    <string name="lockscreen">Lukustuskuva</string>
+    <string name="show_song_cover">Kuva laulu kaanepilt</string>
+    <string name="show_song_cover_description">Kasuta mängiva laulu kaanepilti lukustuskuvana</string>
+
+    <string name="player">Mängija</string>
+    <string name="previous_button_while_collapsed">Eelmise loo nupp kokkuvolditud ajal</string>
+    <string name="previous_button_while_collapsed_description">Kuvab eelmise loo nupu, kui mängija on kokkuvolditud</string>
+    <string name="swipe_horizontally_to_close">Pühkige horisontaalselt, et sulgeda</string>
+    <string name="swipe_horizontally_to_close_description">Sulgeb mängija, kui pühid vasakule/paremale kokkuvolditud mängijast. Kasulik, kui Android\'i üheaegne töörežiim on sisse lülitatud.</string>
+    <string name="show_like_button">Kuva "Meeldib" nupp</string>
+    <string name="show_like_button_description">Kuvab "Meeldib" nupu otse mängijas</string>
+    <string name="swipe_to_remove_item">Pühkige, et eemaldada element</string>
+    <string name="swipe_to_remove_item_description">Pühkige vasakule, et eemaldada element järjekorrast</string>
+    <string name="lyrics_keep_screen_awake">Hoidke ekraan ärkvel (laulusõnad)</string>
+    <string name="lyrics_keep_screen_awake_description">Hoidke ekraan ärkvel, kui kuvatakse laulusõnad</string>
+    <string name="lyrics_show_system_bars">Kuva süsteemi ribad (laulusõnad)</string>
+    <string name="lyrics_show_system_bars_description">Selle väljalülitamine võimaldab süsteemi tasemel täisekraani</string>
+    <string name="pip">PIP</string>
+    <string name="pip_description">Automaatne üleminek pildipildis režiimi, kui lülitute taustale</string>
+
+    <string name="cache">Vahemälu</string>
+    <string name="cache_description">Kui vahemälu täitub, kustutatakse kõige kauem mittekasutatud ressursid</string>
+    <string name="image_cache">Pildi vahemälu</string>
+    <string name="max_size">Maksimaalne suurus</string>
+    <string name="format_cache_space_used">%1$s kasutatud</string>
+    <string name="format_cache_space_used_percentage">%1$s kasutatud (%2$s%%)</string>
+    <string name="song_cache">Laulu vahemälu</string>
+    <string name="pause_song_cache">Pausi vahemälu</string>
+    <string name="pause_song_cache_description">Ajutiselt peatab uute laulude lisamise vahemällu</string>
+    <string name="database">Andmebaas</string>
+
+    <string name="cleanup">Kohandamine</string>
+    <string name="pause_playback_history">Peata esituse ajalugu</string>
+    <string name="pause_playback_history_description">Peatab esituse sündmuste kasutamise kiirvalikute jaoks</string>
+    <string name="pause_playback_history_warning">Palun pane tähele: see ei mõjuta offline vahemälu!</string>
+    <string name="reset_quick_picks">Lähtesta kiirvalikud</string>
+    <string name="quick_picks_empty">Kiirvalikud on kustutatud</string>
+    <string name="pause_playback_time">Peata esituse aeg</string>
+    <string name="format_pause_playback_time_description">Peatab esitusaega salvestamise. See peatab statistika "Minu tipp %1$s" esitusloendis!</string>
+
+    <string name="backup">Varukoopia</string>
+    <string name="backup_description">Isiklikud seaded (nt teema režiim) ja vahemälu jäetakse välja.</string>
+    <string name="backup_action_description">Ekspordi andmebaas välisele salvestusele</string>
+    <string name="restore">Taasta</string>
+    <string name="restore_warning">Olemasolevad andmed kirjutatakse üle.\nViMusic sulgub automaatselt pärast andmebaasi taastamist.</string>
+    <string name="restore_description">Impordi andmebaas väliselt salvestuselt</string>
+
+    <string name="other">Muud</string>
+    <string name="android_auto">Android Auto</string>
+    <string name="android_auto_description">Luba Android Auto tugi</string>
+    <string name="android_auto_warning">Ära unusta lubada "Tundmatud allikad" Android Auto arendaja seadetes.</string>
+    <string name="search_history">Otsingu ajalugu</string>
+    <string name="pause_search_history">Peata otsingu ajalugu</string>
+    <string name="pause_search_history_description">Ei salvesta uusi otsingupäringuid ega näita ajalugu</string>
+    <string name="clear_search_history">Kustuta otsingu ajalugu</string>
+    <string name="format_clear_search_history_amount">Kustuta %1$s otsingupäringut</string>
+    <string name="empty_history">Ajalugu on tühi</string>
+    <string name="built_in_playlists">Sisseehitatud esitusloendid</string>
+    <string name="auto_sync_playlists">Automaatne esitusloendite sünkroniseerimine</string>
+    <string name="auto_sync_playlists_description">Automaatne salvestatud esitusloendite sünkroniseerimine YouTube\'ist, kui neid avatakse</string>
+    <string name="top_list_length">Top-nimekirja pikkus</string>
+    <string name="top_list_length_description">Piirab "Minu top x" esitusloendi pikkust</string>
+
+    <string name="service_lifetime">Teenuse eluiga</string>
+    <string name="service_lifetime_warning">Kui aku optimeerimiseid rakendatakse, võib esituse teade äkki kaduda, kui muusika on pausis.</string>
+    <string name="service_lifetime_warning_android_12">Alates Android 12-st on nõutav aku optimeerimise keelamine, et "Invincible service" valik oleks saadaval.</string>
+    <string name="ignore_battery_optimizations">Ignoreeri aku optimeerimisi</string>
+    <string name="ignoring_battery_optimizations">Piirang on juba eemaldatud</string>
+    <string name="ignore_battery_optimizations_action">Keela taustpiirangud</string>
+    <string name="invincible_service">Invincible service</string>
+    <string name="invincible_service_description">Peaks hoidma esitust käimas 99.99% ajast, juhul kui aku optimeerimise keelamine ei ole piisav</string>
+
+    <string name="need_help">Vajad abi?</string>
+    <string name="need_help_description">Enamasti ei ole arendaja süü (isegi kui "Invincible service" on sisse lülitatud), et rakendus ei tööta taustal korralikult.\nKontrolli, kas sinu seadme tootja lõpetab sinu rakendused (kliki suunamiseks)</string>
+    <string name="service_lifetime_report_issue">Kui sa tõeliselt arvad, et rakenduses endas on probleem, vaata "Teave" sektsiooni</string>
+    <string name="troubleshooting">Probleemide lahendamine</string>
+    <string name="troubleshooting_warning">Hoiatus: kasuta neid nuppe viimases hädas, kui heli esitamine ei toimi</string>
+    <string name="reload_app_internals">Laadi rakenduse sisemised andmed uuesti</string>
+    <string name="kill_app">Tappa rakendus</string>
+    <string name="show_troubleshoot_section">Kuva probleemide lahendamise sektsioon</string>
+
+    <string name="persistent_queue">Püsiv järjekord</string>
+    <string name="persistent_queue_description">Salvesta ja taasta mängivad lood</string>
+    <string name="resume_playback">Jätka esitust</string>
+    <string name="resume_playback_description">Kui ühendatud on juhtmega või Bluetooth-seade</string>
+    <string name="stop_when_closed">Peata, kui suletud</string>
+    <string name="stop_when_closed_description">Kui sulged rakenduse, peatub muusika esitamine</string>
+
+    <string name="audio">Audio</string>
+    <string name="skip_silence">Jäta vaikuse kohad vahele</string>
+    <string name="skip_silence_description">Jätab vahele vaiksed osad esitamise ajal</string>
+    <string name="minimum_silence_length">Minimaalne vaikuse pikkus</string>
+    <string name="minimum_silence_length_description">Minimaalne aeg, mille jooksul audio peab olema vaikne, et see vahele jätta</string>
+    <string name="minimum_silence_length_warning">Mängijat tuleb taaskäivitada, et muudatused kehtiksid!</string>
+    <string name="restart_service">Taaskäivita teenus</string>
+    <string name="loudness_normalization">Heli normaliseerimine</string>
+    <string name="loudness_normalization_description">Kohandab heli kindlaks tasemeks</string>
+    <string name="loudness_base_gain">Heli põhivõimendus</string>
+    <string name="loudness_base_gain_description">Sihtvõimendus heli normaliseerimise jaoks</string>
+    <string name="loudness_normalization_extreme">Avastatud äärmuslik heli väärtus (%s), normaliseerimine selle laulu jaoks keelatud</string>
+    <string name="bass_boost">Bassivoimendus</string>
+    <string name="bass_boost_description">Tugevdab madalaid frekantsse, et parandada kuulamiskogemust</string>
+    <string name="bass_boost_level">Bassivoimenduse tase</string>
+    <string name="bass_boost_level_description">Tase (0–1000) madalate frekantside võimendamiseks; kasuta oma riskil!</string>
+    <string name="sponsor_block">Sponsorblock</string>
+    <string name="sponsor_block_description">Blokeerib sponsoreeritud/välisteemalise sisu, kasutades Sponsorblock API</string>
+    <string name="reverb">Kaja</string>
+    <string name="audio_focus">Audio fookus</string>
+    <string name="audio_focus_description">Kas mängija peaks küsima süsteemi tasandi audio (meedia) fookust</string>
+    <string name="equalizer_description">Suhtle süsteemi ekvalaiseriga</string>
+
+    <string name="filter_placeholder">Filtreeri…</string>
+
+    <string name="last_interaction">Viimati mängitud</string>
+    <string name="trending">Populaarne</string>
+    <string name="quick_picks_source">Kiirvalikute allikas</string>
+    <string name="quick_picks_cache">Kiirvalikute andmete vahemälu</string>
+    <string name="quick_picks_cache_description">Salvestab kiirvalikute andmed kettale offline-juurdepääsu jaoks</string>
+
+    <string name="player_layout">Mängija paigutus</string>
+    <string name="classic_player_layout_name">Klassikaline</string>
+    <string name="new_player_layout_name">Uus (modernne)</string>
+
+    <string name="piped">Piped</string>
+    <string name="instance">Instants</string>
+    <string name="click_to_select">Vajuta, et valida</string>
+    <string name="username">Kasutajanimi</string>
+    <string name="password">Parool</string>
+    <string name="login">Logi sisse</string>
+    <string name="sync_description">Sa saad esitusloendeid mujal majutada ja sünkroonida neid ViMusic\'iga. Praegu toetab ainult Piped.</string>
+    <string name="add_account">Lisa konto</string>
+    <string name="add_account_description">Siduge Piped\'i konto oma instantsiga, kasutajanime ja parooliga.</string>
+    <string name="learn_more">Uuri rohkem</string>
+    <string name="learn_more_description">Ei tea, mis on Piped või sul pole kontot? Kliki siia, et suunata nende dokumentatsioonile</string>
+    <string name="piped_sessions">Piped\'i seansid</string>
+    <string name="custom_instance">Kohanda instants</string>
+    <string name="base_api_url">Instantsi API URL</string>
+    <string name="piped_session_created_successfully">Piped\'i seanss loodi edukalt</string>
+
+    <string name="seek_bar_style">Otsinguriba stiil</string>
+    <string name="static_seek_bar_name">Statiline</string>
+    <string name="wavy_seek_bar_name">Laineline</string>
+    <string name="seek_bar_quality">Lainelise otsinguriba kvaliteet</string>
+    <string name="seek_bar_quality_poor">Kehv</string>
+    <string name="seek_bar_quality_low">Madal</string>
+    <string name="seek_bar_quality_medium">Keskmine</string>
+    <string name="seek_bar_quality_high">Kõrge</string>
+    <string name="seek_bar_quality_great">Suurepärane</string>
+    <string name="seek_bar_quality_subpixel">Alampiksel</string>
+
+    <string name="remove_from_blacklist">Eemalda mustast nimekirjast</string>
+    <string name="add_to_blacklist">Lisa musta nimekirja</string>
+    <string name="reset_blacklist">Lähtesta must nimekiri</string>
+    <string name="blacklist_empty">Must nimekiri on tühi</string>
+
+    <string name="pre_cache">Eelvahemälu</string>
+
+    <string name="swipe_to_hide_song">Pühkige, et peita laul</string>
+    <string name="swipe_to_hide_song_description">Kui pühkite laulu vasakule, eemaldatakse see andmebaasist ja vahemälust</string>
+    <string name="swipe_to_hide_song_confirm">Kinnita laulu peitmine</string>
+    <string name="swipe_to_hide_song_confirm_description">Kui pühkite peitmiseks, peate esmalt kinnitama</string>
+    <string name="hide_explicit">Peida täiskasvanutele mõeldud lood</string>
+    <string name="hide_explicit_description">Peidab kõik täiskasvanutele mõeldud lood kogu rakenduses. Mängija jätab ka täiskasvanutele mõeldud lood vahele, kui see seade on lubatud.</string>
+
+    <string name="version">Versioon</string>
+    <string name="check_new_version">Kontrolli uuendusi</string>
+    <string name="current_version">Sa kasutad versiooni v%1$s</string>
+    <string name="error_github">Tekkis tundmatu viga, kui andmeid GitHub\'ist saadakse</string>
+    <string name="new_version_available">Uus versioon on saadaval</string>
+    <string name="more_information">Rohkem teavet</string>
+    <string name="up_to_date">Sa oled hetkel värskendatud: uuendusi pole saadaval</string>
+
+    <string name="dynamic_thumbnails">Dünaamilised pisipildid</string>
+    <string name="max_dynamic_thumbnail_size">Maksimaalne dünaamilise pisipildi suurus</string>
+    <string name="max_dynamic_thumbnail_size_description">Dünaamilise pisipildi kasutamisel maksimaalne pisipildi suurus</string>
+
+    <string name="hourly">Iga tunni järel</string>
+    <string name="daily">Iga päev</string>
+    <string name="weekly">Iga nädal</string>
+    <string name="version_check">Automaatne uuenduste kontrollimine</string>
+
+    <string name="skip_on_error">Automaatselt vahele</string>
+    <string name="skip_on_error_description">Jätab praeguse laulu vahele, kui tekib viga.</string>
+    <string name="skip_on_error_notification">Jäteti %s vea tõttu vahele</string>
+    <string name="skip_on_error_notification_unknown_song">Jäteti praegune laul vea tõttu vahele</string>
+    <string name="reverb_small_room">Väike ruum</string>
+    <string name="reverb_medium_room">Keskmine ruum</string>
+    <string name="reverb_large_room">Suur ruum</string>
+    <string name="reverb_medium_hall">Keskmine saal</string>
+    <string name="reverb_large_hall">Suur saal</string>
+    <string name="reverb_plate">Plaat</string>
+
+    <plurals name="format_reset_blacklist_description">
+        <item quantity="one">Eemalda %1$s laul mustast nimekirjast</item>
+        <item quantity="other">Eemalda kõik %1$s laulu mustast nimekirjast</item>
+    </plurals>
+
+    <plurals name="format_reset_quick_picks_amount">
+        <item quantity="one">Kustuta %1$s esituse sündmus</item>
+        <item quantity="other">Kustuta %1$s esituse sündmused</item>
+    </plurals>
+
+    <plurals name="song_count_plural">
+        <item quantity="one">%1$d laul</item>
+        <item quantity="other">%1$d laulu</item>
+    </plurals>
+</resources>

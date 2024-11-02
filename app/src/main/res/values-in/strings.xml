@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="format_minutes">%1$dm</string>
+    <string name="format_hours">%1$dj</string>
+    <string name="format_days">%1$dh</string>
+    <string name="format_time_left">%1$s lagi</string>
+    <string name="format_db">%1$s dB</string>
+    <string name="format_kbps">%1$s kbps</string>
+    <string name="format_ms">%1$s ms</string>
+    <string name="format_px">%1$spx</string>
+
+    <string name="format_go_to_artist">Lebih banyak dari %1$s</string>
+    <string name="format_top_playlist">%1$s teratas</string>
+    <string name="format_my_top_playlist">%1$s teratas Saya</string>
+    <string name="format_view_top_of_header">Lihat %1$s teratas dari …</string>
+    <string name="format_multiplier">%1$sx</string>
+
+    <string name="past_24_hours">24 jam terakhir</string>
+    <string name="past_week">Minggu lalu</string>
+    <string name="past_month">Bulan lalu</string>
+    <string name="past_year">Tahun lalu</string>
+    <string name="all_time">Sepanjang waktu</string>
+
+    <string name="songs">Lagu</string>
+    <string name="playlists">Daftar Putar</string>
+    <string name="albums">Album</string>
+    <string name="artists">Artis</string>
+    <string name="singles">Singel</string>
+
+    <string name="favorites">Favorit</string>
+    <string name="offline">Luring</string>
+    <string name="overview">Gambaran Umum</string>
+    <string name="library">Pustaka</string>
+    <string name="discover">Jelajahi</string>
+    <string name="local">Lokal</string>
+    <string name="quick_picks">Pilihan cepat</string>
+    <string name="mood">Mood</string>
+    <string name="online">Daring</string>
+    <string name="videos">Video</string>
+    <string name="about">Tentang</string>
+    <string name="appearance">Penampilan</string>
+    <string name="colors">Warna</string>
+    <string name="shapes">Bentuk</string>
+
+    <string name="skip_back">Mundur</string>
+    <string name="skip_forward">Lanjut</string>
+    <string name="play">Putar</string>
+    <string name="pause">Jeda</string>
+    <string name="like">Suka</string>
+    <string name="shuffle">Acak</string>
+    <string name="sync">Sinkronisasi</string>
+    <string name="start_radio">Mulai radio</string>
+    <string name="play_next">Putar berikutnya</string>
+    <string name="enqueue">Masukkan dalam antrian</string>
+
+    <string name="sleep_timer">Pengatur waktu tidur</string>
+    <string name="sleep_timer_ended">Waktu tidur berakhir</string>
+    <string name="stop_sleep_timer_prompt">Apakah Anda ingin menghentikan pengatur waktu tidur?</string>
+    <string name="equalizer">Pengatur suara</string>
+    <string name="set_sleep_timer">Atur pengatur waktu tidur</string>
+
+    <string name="cancel">Batal</string>
+    <string name="done">Selesai</string>
+    <string name="confirm">Konfirmasi</string>
+    <string name="no">Tidak</string>
+    <string name="stop">Berenti</string>
+    <string name="set">Atur</string>
+    <string name="hide">Sembunyikan</string>
+    <string name="rename">Ubah Nama</string>
+    <string name="delete">Hapus</string>
+    <string name="reset">Setel ulang</string>
+    <string name="clear">Bersihkan</string>
+    <string name="view_all">Lihat semua</string>
+
+    <string name="on_label">hidup</string>
+    <string name="off_label">mati</string>
+    <string name="off_text">Mati</string>
+    <string name="unknown">Tidak diketahui</string>
+    <string name="now_playing">Sedang diputar</string>
+
+    <string name="enter_playlist_name_prompt">Masukkan nama daftar putar</string>
+    <string name="new_playlist">Daftar putar baru</string>
+    <string name="add_to_playlist">Tambahkan ke daftar putar</string>
+
+    <string name="go_to_album">Buka album</string>
+
+    <string name="watch_on_youtube">Tonton di YouTube</string>
+    <string name="open_in_youtube_music">Buka di YouTube Music</string>
+    <string name="watch_playlist_on_youtube">Tonton daftar putar di YouTube</string>
+    <string name="youtube_music_not_installed">YouTube Music tidak terinstal di perangkat Anda!</string>
+
+    <string name="remove_from_queue">Hapus dari antrian</string>
+    <string name="remove_from_playlist">Hapus dari daftar putar</string>
+
+    <string name="hide_from_quick_picks">Sembunyikan dari \"Pilihan Cepat\"</string>
+    <string name="confirm_hide_song">Apakah Anda ingin menyembunyikan lagu ini? Waktu pemutaran dan cache-nya akan dihapus.\nTindakan ini tidak dapat diubah.</string>
+    <string name="confirm_delete_playlist">Apakah Anda ingin menghapus daftar putar ini?</string>
+
+    <string name="other_versions">Versi lain</string>
+    <string name="no_alternative_version">Album ini tidak memiliki versi alternatif</string>
+
+    <string name="from_wikipedia">Dari Wikipedia</string>
+    <string name="wikipedia_cc_by_sa">Dari Wikipedia di bawah Creative Commons Attribution CC-BY-SA 3.0</string>
+    <string name="quote_open">“</string>
+    <string name="quote_close">„</string>
+
+    <string name="moods_and_genres">Mood dan genre</string>
+    <string name="new_released_albums">Album yang baru dirilis</string>
+
+    <string name="artist_has_no_albums">Artis ini belum merilis album</string>
+    <string name="artist_has_no_singles">Artis ini belum merilis singel</string>
+
+    <string name="error_message">Terjadi kesalahan</string>
+    <string name="error_local_music_deleted">File musik lokal ini tidak ada lagi</string>
+    <string name="error_network">Terjadi kesalahan jaringan</string>
+    <string name="error_unplayable">Tidak dapat menemukan format audio yang dapat diputar</string>
+    <string name="error_source_deleted">Sumber video asli dari lagu ini telah dihapus</string>
+    <string name="error_server_restrictions">Lagu ini tidak dapat diputar karena pembatasan server</string>
+    <string name="error_id_mismatch">Id video yang dikembalikan tidak sesuai dengan yang diminta</string>
+    <string name="error_unknown_playback">Terjadi kesalahan pemutaran yang tidak diketahui</string>
+    <string name="error_piped_link">Terjadi kesalahan yang tidak diketahui saat menautkan akun Piped Anda. Silakan coba lagi.</string>
+    <string name="error_piped_instances_unavailable">Daftar contoh Piped saat ini tidak tersedia</string>
+    <string name="error_bassboost_init">Terjadi kesalahan dalam menginisialisasi Bass Boost. Mungkin perangkat Anda tidak mendukungnya. Coba ubah tingkat penguat bass atau coba lagi.</string>
+    <string name="error_pre_cache">Terjadi kesalahan yang tidak diketahui selama pra-caching. Silakan coba lagi.</string>
+    <string name="error_url">Tidak dapat membuka url %1$s</string>
+
+    <string name="media_permission_declined">Izin ditolak, berikan izin media di pengaturan perangkat Anda.</string>
+    <string name="open_settings">Buka pengaturan</string>
+    <string name="no_items_found">Tidak ada item yang ditemukan</string>
+    <string name="no_search_results">Tidak ada hasil yang ditemukan. Silakan coba kueri atau kategori yang berbeda</string>
+
+    <string name="no_browser_installed">Tidak dapat menemukan aplikasi untuk menjelajah internet</string>
+    <string name="no_equalizer_installed">Tidak dapat menemukan aplikasi untuk melakukan ekualisasi audio</string>
+    <string name="no_file_chooser_installed">Tidak dapat menemukan aplikasi untuk membuat dokumen</string>
+    <string name="no_battery_optimization_settings_found">Tidak dapat menemukan pengaturan optimisasi baterai, harap daftarkan ViMusic secara manual</string>
+
+    <string name="related_albums">Album terkait</string>
+    <string name="similar_artists">Artis serupa</string>
+    <string name="recommended_playlists">Daftar putar yang mungkin Anda sukai</string>
+
+    <string name="enter_lyrics">Masukkan lirik</string>
+    <string name="no_lyrics_found">Tidak ada trek lirik yang ditemukan</string>
+    <string name="choose_lyric_track">Pilih trek lirik</string>
+    <string name="synchronized_lyrics_not_available">Lirik yang disinkronkan tidak tersedia untuk lagu ini</string>
+    <string name="lyrics_not_available">Lirik tidak tersedia untuk lagu ini</string>
+    <string name="invalid_synchronized_lyrics">Lirik yang disinkronkan tidak valid, ambil kembali atau edit lirik dan coba lagi</string>
+    <string name="show_unsynchronized_lyrics">Menampilkan lirik yang tidak disinkronkan</string>
+    <string name="show_synchronized_lyrics">Menampilkan lirik yang disinkronkan</string>
+    <string name="provided_lyrics_by">Disediakan oleh lrclib.net &amp; kugou.com</string>
+    <string name="edit_lyrics">Edit lirik</string>
+    <string name="search_lyrics_online">Cari lirik secara online</string>
+    <string name="refetch_lyrics">Mengambil lirik lagi</string>
+    <string name="pick_from_lrclib">Pilih lirik dari lrclib.net</string>
+    <string name="set_lyrics_start_offset">Atur offset awal</string>
+    <string name="set_lyrics_start_offset_description">Menyesuaikan lirik yang disinkronkan dengan waktu pemutaran saat ini</string>
+
+    <string name="playback_speed">Kecepatan pemutaran</string>
+    <string name="minimum_speed_value">Mengapa Anda melakukan ini?!</string>
+    <string name="volume_boost">Peningkatan volume</string>
+    <string name="queue_loop">Antrian loop</string>
+    <string name="add_queue_to_playlist">Tambahkan antrian ke daftar putar</string>
+
+    <string name="id">Id</string>
+    <string name="itag">Itag</string>
+    <string name="bitrate">Bitrate</string>
+    <string name="size">Ukuran</string>
+    <string name="cached">Tercache</string>
+    <string name="loudness">Kebisingan</string>
+
+    <string name="view_album">Lihat album</string>
+    <string name="view_playlist">Lihat daftar putar</string>
+
+    <string name="search_placeholder">Masukkan nama</string>
+    <string name="format_version_credits">v%1$s oleh  vfsfitvnm</string>
+    <string name="social">Sosial</string>
+    <string name="contact">Kontak</string>
+    <string name="github">GitHub</string>
+    <string name="view_source">Lihat kode sumber</string>
+    <string name="report_bug">Laporkan masalah</string>
+    <string name="report_bug_description">Jika Anda membutuhkan bantuan dengan bug, Anda dapat mengirimkan isu di GitHub (klik untuk diarahkan)</string>
+    <string name="request_feature">Minta fitur atau usulkan ide</string>
+    <string name="redirect_github">Anda akan diarahkan ke GitHub</string>
+
+    <string name="color_source">Sumber warna aksen</string>
+    <string name="color_source_default">Default</string>
+    <string name="color_source_dynamic">Dinamis</string>
+    <string name="color_source_material_you">Material You</string>
+
+    <string name="darkness">Kegelapan</string>
+    <string name="darkness_normal">Normal</string>
+    <string name="darkness_pureblack">Hitam Murni</string>
+    <string name="darkness_amoled">AMOLED</string>
+
+    <string name="color_mode">Mode</string>
+    <string name="color_mode_light">Terang</string>
+    <string name="color_mode_dark">Gelap</string>
+    <string name="color_mode_system">Sistem</string>
+
+    <string name="thumbnail_roundness">Kebulatan thumbnail</string>
+    <string name="none">Tidak ada</string>
+    <string name="thumbnail_roundness_light">Ringan</string>
+    <string name="thumbnail_roundness_medium">Sedang</string>
+    <string name="thumbnail_roundness_heavy">Berat</string>
+    <string name="thumbnail_roundness_heavier">Lebih berat</string>
+    <string name="thumbnail_roundness_heaviest">Terberat</string>
+
+    <string name="text">Teks</string>
+    <string name="font">Font</string>
+    <string name="use_system_font">Gunakan font sistem</string>
+    <string name="use_system_font_description">Gunakan font yang diterapkan oleh sistem</string>
+    <string name="apply_font_padding">Menerapkan padding font</string>
+    <string name="apply_font_padding_description">Menambahkan jarak di sekitar teks</string>
+    <string name="language">Bahasa</string>
+
+    <string name="lockscreen">Layar Kunci</string>
+    <string name="show_song_cover">Tampilkan sampul lagu</string>
+    <string name="show_song_cover_description">Gunakan sampul lagu yang sedang diputar sebagai wallpaper layar kunci</string>
+
+    <string name="player">Pemutar</string>
+    <string name="previous_button_while_collapsed">Tombol sebelumnya saat terlipat</string>
+    <string name="previous_button_while_collapsed_description">Tampilkan tombol lagu sebelumnya saat pemutar terlipat</string>
+    <string name="swipe_horizontally_to_close">Geser secara horizontal untuk menutup</string>
+    <string name="swipe_horizontally_to_close_description">Tutup pemutar saat menggeser ke kiri/kanan pada pemutar terlipat. Berguna untuk pengguna dengan mode satu tangan Android aktif.</string>
+    <string name="show_like_button">Tampilkan tombol suka</string>
+    <string name="show_like_button_description">Menampilkan tombol suka di pemutar</string>
+    <string name="swipe_to_remove_item">Geser untuk menghapus item</string>
+    <string name="swipe_to_remove_item_description">Geser ke kiri untuk menghapus item dari antrean</string>
+
+    <string name="cache">Cache</string>
+    <string name="cache_description">Ketika cache kehabisan ruang, sumber daya yang tidak diakses dalam waktu lama akan dihapus</string>
+    <string name="image_cache">Cache gambar</string>
+    <string name="max_size">Ukuran maksimal</string>
+    <string name="format_cache_space_used">%1$s digunakan</string>
+    <string name="format_cache_space_used_percentage">%1$s digunakan (%2$s%%)</string>
+    <string name="song_cache">Cache lagu</string>
+    <string name="database">Database</string>
+
+    <string name="cleanup">Pembersihan</string>
+    <string name="pause_playback_history">Jeda riwayat pemutaran</string>
+    <string name="pause_playback_history_description">Hentikan pemutaran yang sedang digunakan untuk pilihan cepat</string>
+    <string name="pause_playback_history_warning">Harap diperhatikan: hal ini tidak akan memengaruhi cache offline!</string>
+    <string name="reset_quick_picks">Setel ulang pilihan cepat</string>
+    <string name="quick_picks_empty">Pilihan cepat telat dibersihkan</string>
+    <string name="pause_playback_time">Jeda waktu pemutaran</string>
+    <string name="format_pause_playback_time_description">Berhenti menyimpan waktu pemutaran. Ini menghentikan statistik di daftar putar \'%1$s teratas saya\'!</string>
+
+    <string name="backup">Cadangkan</string>
+    <string name="backup_description">Preferensi pribadi (mis. mode tema) dan cache dikecualikan.</string>
+    <string name="backup_action_description">Ekspor database ke penyimpanan eksternal</string>
+    <string name="restore">Pulihkan</string>
+    <string name="restore_warning">Data yang ada akan ditimpa.\nViMusic akan otomatis menutup dirinya sendiri setelah memulihkan database.</string>
+    <string name="restore_description">Impor database dari penyimpanan eksternal</string>
+
+    <string name="other">Lainnya</string>
+    <string name="android_auto">Android Auto</string>
+    <string name="android_auto_description">Aktifkan dukungan Android Auto</string>
+    <string name="android_auto_warning">Ingat untuk mengaktifkan \"Sumber tidak dikenal\" di Pengaturan Pengembang Android Auto.</string>
+    <string name="search_history">Riwayat pencarian</string>
+    <string name="pause_search_history">Jeda riwayat pencarian</string>
+    <string name="pause_search_history_description">Tidak menyimpan kueri pencarian baru atau menampilkan riwayat</string>
+    <string name="clear_search_history">Bersihkan riwayat pencarian</string>
+    <string name="format_clear_search_history_amount">Hapus %1$s kueri pencarian</string>
+    <string name="empty_history">Riwayat kosong</string>
+    <string name="built_in_playlists">Daftar putar bawaan</string>
+    <string name="top_list_length">Panjang daftar teratas</string>
+    <string name="top_list_length_description">Batas panjang daftar putar \'x teratas saya\'</string>
+
+    <string name="service_lifetime">Masa pakai layanan</string>
+    <string name="service_lifetime_warning">Jika optimisasi baterai diterapkan, notifikasi pemutaran dapat tiba-tiba menghilang saat dijeda.</string>
+    <string name="service_lifetime_warning_android_12">Sejak Android 12, menonaktifkan optimisasi baterai diperlukan agar opsi layanan yang tak terkalahkan tersedia.</string>
+    <string name="ignore_battery_optimizations">Abaikan optimisasi baterai</string>
+    <string name="ignoring_battery_optimizations">Pembatasan sudah dihapus</string>
+    <string name="ignore_battery_optimizations_action">Nonaktifkan pembatasan latar belakang</string>
+    <string name="invincible_service">Layanan tak terkalahkan</string>
+    <string name="invincible_service_description">Harus menjaga pemutaran berjalan 99,99% waktu, jika mematikan optimisasi baterai tidak cukup</string>
+
+    <string name="need_help">Butuh bantuan?</string>
+    <string name="need_help_description">Sebagian besar, bukan kesalahan pengembang (bahkan setelah mengaktifkan layanan tak terkalahkan) bahwa aplikasi berhenti berfungsi dengan baik di latar belakang.\nPeriksa apakah produsen perangkat Anda menonaktifkan aplikasi Anda (klik untuk diarahkan)</string>
+    <string name="service_lifetime_report_issue">Jika Anda benar-benar yakin ada yang salah dengan aplikasi itu sendiri, beralih ke tab Tentang</string>
+    <string name="troubleshooting">Perbaikan masalah</string>
+    <string name="troubleshooting_warning">Peringatan: gunakan tombol ini sebagai tindakan terakhir saat pemutaran audio gagal</string>
+    <string name="reload_app_internals">Muat ulang internal aplikasi</string>
+    <string name="kill_app">Tutup aplikasi</string>
+    <string name="show_troubleshoot_section">Tampilkan bagian perbaikan masalah</string>
+
+    <string name="persistent_queue">Antrian persisten</string>
+    <string name="persistent_queue_description">Simpan dan pulihkan lagu yang sedang diputar</string>
+    <string name="resume_playback">Lanjutkan pemutaran</string>
+    <string name="resume_playback_description">Saat perangkat kabel atau Bluetooth terhubung</string>
+    <string name="stop_when_closed">Berhenti saat ditutup</string>
+    <string name="stop_when_closed_description">Ketika Anda menutup aplikasi, musik berhenti diputar</string>
+
+    <string name="audio">Audio</string>
+    <string name="skip_silence">Lewati keheningan</string>
+    <string name="skip_silence_description">Lewati bagian yang hening selama pemutaran</string>
+    <string name="minimum_silence_length">Panjang keheningan minimum</string>
+    <string name="minimum_silence_length_description">Waktu minimum audio harus hening untuk dilewati</string>
+    <string name="minimum_silence_length_warning">Pemutar harus di-restart agar perubahan berlaku!</string>
+    <string name="restart_service">Mulai ulang layanan</string>
+    <string name="loudness_normalization">Normalisasi kebisingan</string>
+    <string name="loudness_normalization_description">Atur volume ke level tetap</string>
+    <string name="loudness_base_gain">Kebisingan dasar</string>
+    <string name="loudness_base_gain_description">Peningkatan target untuk normalisasi kebisingan</string>
+    <string name="bass_boost">Peningkatan bass</string>
+    <string name="bass_boost_description">Boost low frequencies to improve listening experience</string>
+    <string name="bass_boost_level">Bass boost level</string>
+    <string name="bass_boost_level_description">Level (0–1000) peningkatan frekuensi rendah; gunakan dengan risiko sendiri!</string>
+    <string name="equalizer_description">Interaksi dengan pengatur suara sistem</string>
+
+    <string name="filter_placeholder">Filter…</string>
+
+    <string name="last_interaction">Terakhir diputar</string>
+    <string name="trending">Trending</string>
+    <string name="quick_picks_source">Sumber Pilihan Cepat</string>
+
+    <string name="player_layout">Tata letak pemutar</string>
+    <string name="classic_player_layout_name">Klasik</string>
+    <string name="new_player_layout_name">Modern (baru)</string>
+
+    <string name="piped">Piped</string>
+    <string name="instance">Instansi</string>
+    <string name="click_to_select">Klik untuk memilih</string>
+    <string name="username">Nama pengguna</string>
+    <string name="password">Kata sandi</string>
+    <string name="login">Masuk</string>
+    <string name="sync_description">Anda dapat menyimpan daftar putar di tempat lain dan menyinkronkannya dengan ViMusic. Saat ini hanya mendukung Piped.</string>
+    <string name="add_account">Tambahkan akun</string>
+    <string name="add_account_description">Hubungkan akun Piped dengan instansi Anda, nama pengguna, dan kata sandi.</string>
+    <string name="learn_more">Pelajari lebih lanjut</string>
+    <string name="learn_more_description">Tidak tahu apa itu Piped atau tidak memiliki akun? Klik di sini untuk diarahkan ke dokumennya</string>
+    <string name="piped_sessions">Sesi Piped</string>
+    <string name="custom_instance">Gunakan Instansi Kustom</string>
+    <string name="base_api_url">URL API Instansi</string>
+
+    <string name="seek_bar_style">Gaya bar pencarian</string>
+    <string name="static_seek_bar_name">Statis</string>
+    <string name="wavy_seek_bar_name">Bergelombang</string>
+    <string name="seek_bar_quality">Kualitas bar pencarian bergelombang</string>
+    <string name="seek_bar_quality_poor">Sangat rendah</string>
+    <string name="seek_bar_quality_low">Rendah</string>
+    <string name="seek_bar_quality_medium">Sedang</string>
+    <string name="seek_bar_quality_high">Tinggi</string>
+    <string name="seek_bar_quality_great">Hebat</string>
+    <string name="seek_bar_quality_subpixel">Subpixel</string>
+
+    <string name="remove_from_blacklist">Hapus dari daftar hitam</string>
+    <string name="add_to_blacklist">Tambahkan ke daftar hitam</string>
+    <string name="reset_blacklist">Setel ulang daftar hitam</string>
+    <string name="blacklist_empty">Daftar hitam kosong</string>
+
+    <string name="pre_cache">Pra-cache</string>
+
+    <string name="swipe_to_hide_song">Geser untuk menyembunyikan lagu</string>
+    <string name="swipe_to_hide_song_description">Ketika Anda menggeser lagu ke kiri, akan menghapus lagu dari database dan cache</string>
+    <string name="swipe_to_hide_song_confirm">Konfirmasi gesek untuk menyembunyikan lagu</string>
+    <string name="swipe_to_hide_song_confirm_description">Ketika Anda menggeser untuk menyembunyikan, Anda harus mengkonfirmasi terlebih dahulu</string>
+
+    <string name="version">Versi</string>
+    <string name="check_new_version">Periksa pembaruan</string>
+    <string name="current_version">Anda saat ini menggunakan versi v%1$s</string>
+    <string name="error_github">Kesalahan tidak diketahui terjadi saat mengambil data dari GitHub</string>
+    <string name="new_version_available">Versi baru tersedia</string>
+    <string name="more_information">Informasi lebih lanjut</string>
+    <string name="up_to_date">Anda saat ini sudah terbaru: tidak ada pembaruan tersedia</string>
+
+    <string name="dynamic_thumbnails">Thumbnail dinamis</string>
+    <string name="max_dynamic_thumbnail_size">Ukuran maksimal thumbnail dinamis</string>
+    <string name="max_dynamic_thumbnail_size_description">Ukuran maksimal thumbnail saat thumbnail dinamis digunakan</string>
+    <string name="reverb_small_room">Small room</string>
+    <string name="reverb_medium_room">Medium room</string>
+    <string name="reverb_large_room">Large room</string>
+    <string name="reverb_medium_hall">Medium hall</string>
+    <string name="reverb_large_hall">Large hall</string>
+    <string name="reverb_plate">Plate</string>
+
+    <plurals name="format_reset_blacklist_description">
+        <item quantity="other">Hapus semua %1$s lagu dari daftar hitam</item>
+    </plurals>
+
+    <plurals name="format_reset_quick_picks_amount">
+        <item quantity="other">Hapus %1$s peristiwa pemutaran</item>
+    </plurals>
+
+    <plurals name="song_count_plural">
+        <item quantity="other">%1$d lagu</item>
+    </plurals>
+</resources>

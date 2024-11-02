@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="format_minutes">%1$dm</string>
+    <string name="format_hours">%1$dh</string>
+    <string name="format_days">%1$dd</string>
+    <string name="format_time_left">剩余 %1$s</string>
+    <string name="format_db">%1$s dB</string>
+    <string name="format_kbps">%1$s kbps</string>
+    <string name="format_ms">%1$s ms</string>
+    <string name="format_px">%1$spx</string>
+
+    <string name="format_go_to_artist">更多来自 %1$s</string>
+    <string name="format_top_playlist">热门 %1$s</string>
+    <string name="format_my_top_playlist">我的热门 %1$s</string>
+    <string name="format_view_top_of_header">查看热门 %1$s…</string>
+    <string name="format_multiplier">%1$s 倍</string>
+
+    <string name="past_24_hours">过去24小时</string>
+    <string name="past_week">过去一周</string>
+    <string name="past_month">过去一月</string>
+    <string name="past_year">过去一年</string>
+    <string name="all_time">所有时间</string>
+
+    <string name="songs">歌曲</string>
+    <string name="playlists">播放列表</string>
+    <string name="albums">专辑</string>
+    <string name="artists">艺术家</string>
+    <string name="singles">单曲</string>
+
+    <string name="favorites">收藏</string>
+    <string name="offline">离线</string>
+    <string name="history">历史</string>
+    <string name="overview">概览</string>
+    <string name="library">库</string>
+    <string name="discover">发现</string>
+    <string name="local">本地</string>
+    <string name="quick_picks">快速选择</string>
+    <string name="mood">心情</string>
+    <string name="online">在线</string>
+    <string name="videos">视频</string>
+    <string name="about">关于</string>
+    <string name="appearance">外观</string>
+    <string name="colors">颜色</string>
+    <string name="shapes">形状</string>
+
+    <string name="skip_back">后退</string>
+    <string name="skip_forward">前进</string>
+    <string name="play">播放</string>
+    <string name="pause">暂停</string>
+    <string name="like">喜欢</string>
+    <string name="shuffle">随机播放</string>
+    <string name="sync">同步</string>
+    <string name="start_radio">播放电台</string>
+    <string name="play_next">下一首播放</string>
+    <string name="enqueue">加入队列</string>
+
+    <string name="sleep_timer">睡眠定时器</string>
+    <string name="sleep_timer_ended">睡眠定时器结束</string>
+    <string name="sleep_timer_until_song_end">直到歌曲结束</string>
+    <string name="stop_sleep_timer_prompt">您要停止睡眠定时器吗？</string>
+    <string name="equalizer">均衡器</string>
+    <string name="set_sleep_timer">设置睡眠定时器</string>
+
+    <string name="cancel">取消</string>
+    <string name="done">完成</string>
+    <string name="confirm">确认</string>
+    <string name="no">否</string>
+    <string name="stop">停止</string>
+    <string name="set">设置</string>
+    <string name="hide">隐藏</string>
+    <string name="rename">重命名</string>
+    <string name="delete">删除</string>
+    <string name="reset">重置</string>
+    <string name="clear">清除</string>
+    <string name="view_all">查看全部</string>
+
+    <string name="on_label">开</string>
+    <string name="off_label">关</string>
+    <string name="off_text">关闭</string>
+    <string name="unknown">未知</string>
+    <string name="now_playing">正在播放</string>
+
+    <string name="enter_playlist_name_prompt">输入播放列表名称</string>
+    <string name="new_playlist">新建播放列表</string>
+    <string name="add_to_playlist">添加到播放列表</string>
+
+    <string name="go_to_album">前往专辑</string>
+
+    <string name="watch_on_youtube">在 YouTube 上观看</string>
+    <string name="open_in_youtube_music">在 YouTube Music 中打开</string>
+    <string name="watch_playlist_on_youtube">在 YouTube 上观看播放列表</string>
+    <string name="youtube_music_not_installed">您的设备上未安装 YouTube Music！</string>
+
+    <string name="remove_from_queue">从队列中移除</string>
+    <string name="remove_from_playlist">从播放列表中移除</string>
+
+    <string name="hide_from_quick_picks">从“快速选择”中隐藏</string>
+    <string name="confirm_hide_song">您确定要隐藏这首歌吗？它的播放时间和缓存将被清除。\n此操作不可逆。</string>
+    <string name="confirm_delete_playlist">您确定要删除此播放列表吗？</string>
+    <string name="confirm_delete_piped_session">您确定要删除此 Piped 会话吗？</string>
+
+    <string name="other_versions">其他版本</string>
+    <string name="no_alternative_version">此专辑没有其他版本</string>
+
+    <string name="from_wikipedia">来自维基百科</string>
+    <string name="wikipedia_cc_by_sa">来自维基百科，遵循知识共享署名 CC-BY-SA 3.0 许可协议</string>
+    <string name="quote_open">“</string>
+    <string name="quote_close">”</string>
+
+    <string name="moods_and_genres">心情和类型</string>
+    <string name="new_released_albums">新发布的专辑</string>
+    <string name="more">更多</string>
+
+    <string name="artist_has_no_albums">此艺术家尚未发布专辑</string>
+    <string name="artist_has_no_singles">此艺术家尚未发布单曲</string>
+
+    <string name="error_message">发生错误</string>
+    <string name="error_local_music_deleted">此本地音乐文件不再存在</string>
+    <string name="error_network">发生网络错误</string>
+    <string name="error_unplayable">找不到可播放的音频格式</string>
+    <string name="error_source_deleted">此歌曲的原始视频源已被删除</string>
+    <string name="error_server_restrictions">由于服务器限制，此歌曲无法播放</string>
+    <string name="error_id_mismatch">返回的视频 ID 与请求的 ID 不匹配</string>
+    <string name="error_unknown_playback">发生未知播放错误</string>
+    <string name="error_piped_link">链接您的 Piped 帐户时发生未知错误。请再试一次。</string>
+    <string name="error_piped_instances_unavailable">当前不可用 Piped 实例列表</string>
+    <string name="error_bassboost_init">初始化低音增强时发生错误。可能您的设备不支持。尝试更改低音增强级别或再试一次。</string>
+    <string name="error_pre_cache">预缓存时发生未知错误。请再试一次。</string>
+    <string name="error_url">无法打开网址 %1$s</string>
+
+    <string name="media_permission_declined">权限被拒绝，请在设备的设置中授予媒体权限。</string>
+    <string name="open_settings">打开设置</string>
+    <string name="no_items_found">未找到项目</string>
+    <string name="no_search_results">未找到结果。请尝试不同的查询或类别</string>
+
+    <string name="no_browser_installed">找不到浏览互联网的应用程序</string>
+    <string name="no_equalizer_installed">找不到均衡音频的应用程序</string>
+    <string name="no_file_chooser_installed">找不到创建文档的应用程序</string>
+    <string name="no_battery_optimization_settings_found">找不到电池优化设置，请手动将 ViMusic 加入白名单</string>
+
+    <string name="related_albums">相关专辑</string>
+    <string name="similar_artists">相似艺术家</string>
+    <string name="recommended_playlists">您可能喜欢的播放列表</string>
+    <string name="format_subscribers">%s 订阅者</string>
+
+    <string name="enter_lyrics">输入歌词</string>
+    <string name="no_lyrics_found">未找到歌词轨迹</string>
+    <string name="choose_lyric_track">选择歌词轨迹</string>
+    <string name="synchronized_lyrics_not_available">此歌曲无可用的同步歌词</string>
+    <string name="lyrics_not_available">此歌曲无可用的歌词</string>
+    <string name="invalid_synchronized_lyrics">同步歌词无效，请重新获取或编辑歌词后再试</string>
+    <string name="show_unsynchronized_lyrics">显示非同步歌词</string>
+    <string name="show_synchronized_lyrics">显示同步歌词</string>
+    <string name="provided_lyrics_by">由 lrclib.net &amp; kugou.com 提供</string>
+    <string name="edit_lyrics">编辑歌词</string>
+    <string name="search_lyrics_online">在线搜索歌词</string>
+    <string name="refetch_lyrics">重新获取歌词</string>
+    <string name="pick_from_lrclib">从lrclib.net选择歌词</string>
+    <string name="set_lyrics_start_offset">设置起始偏移量</string>
+    <string name="set_lyrics_start_offset_description">将同步歌词偏移至当前播放时间</string>
+
+    <string name="playback_speed">播放速度</string>
+    <string name="playback_pitch">音调</string>
+    <string name="playback_settings">速度和音调</string>
+    <string name="minimum_speed_value">你为什么要这样做？！</string>
+    <string name="volume_boost">音量增强</string>
+    <string name="queue_loop">队列循环</string>
+    <string name="add_queue_to_playlist">将队列添加到播放列表</string>
+
+    <string name="id">编号</string>
+    <string name="itag">标签</string>
+    <string name="bitrate">比特率</string>
+    <string name="size">大小</string>
+    <string name="cached">已缓存</string>
+    <string name="loudness">响度</string>
+
+    <string name="view_album">查看专辑</string>
+    <string name="view_playlist">查看播放列表</string>
+
+    <string name="search_placeholder">输入名称</string>
+    <string name="format_version_credits">v%1$s 由  vfsfitvnm 制作</string>
+    <string name="social">社交</string>
+    <string name="contact">联系</string>
+    <string name="github">GitHub</string>
+    <string name="view_source">查看源代码</string>
+    <string name="report_bug">报告问题</string>
+    <string name="report_bug_description">如果你需要帮助解决一个错误，你可以在 GitHub 上提交问题 (点击跳转)</string>
+    <string name="request_feature">请求功能或提出建议</string>
+    <string name="redirect_github">你将被重定向到 GitHub</string>
+
+    <string name="color_source">强调色来源</string>
+    <string name="color_source_default">默认</string>
+    <string name="color_source_dynamic">动态</string>
+    <string name="color_source_material_you">Material You</string>
+
+    <string name="darkness">暗度</string>
+    <string name="darkness_normal">正常</string>
+    <string name="darkness_pureblack">纯黑</string>
+    <string name="darkness_amoled">AMOLED</string>
+
+    <string name="color_mode">模式</string>
+    <string name="color_mode_light">浅色</string>
+    <string name="color_mode_dark">深色</string>
+    <string name="color_mode_system">系统</string>
+
+    <string name="thumbnail_roundness">缩略图圆角</string>
+    <string name="none">无</string>
+    <string name="thumbnail_roundness_light">轻微</string>
+    <string name="thumbnail_roundness_medium">中等</string>
+    <string name="thumbnail_roundness_heavy">较重</string>
+    <string name="thumbnail_roundness_heavier">更重</string>
+    <string name="thumbnail_roundness_heaviest">最重</string>
+
+    <string name="text">文本</string>
+    <string name="font">字体</string>
+    <string name="use_system_font">使用系统字体</string>
+    <string name="use_system_font_description">使用系统应用的字体</string>
+    <string name="apply_font_padding">应用字体内边距</string>
+    <string name="apply_font_padding_description">在文本周围添加间距</string>
+    <string name="language">语言</string>
+
+    <string name="lockscreen">锁屏</string>
+    <string name="show_song_cover">显示歌曲封面</string>
+    <string name="show_song_cover_description">使用播放中的歌曲封面作为锁屏壁纸</string>
+
+    <string name="player">播放器</string>
+    <string name="previous_button_while_collapsed">折叠时显示上一曲按钮</string>
+    <string name="previous_button_while_collapsed_description">播放器折叠时显示上一曲按钮</string>
+    <string name="swipe_horizontally_to_close">横向滑动关闭</string>
+    <string name="swipe_horizontally_to_close_description">在折叠播放器上左右滑动可关闭播放器。对启用安卓单手模式的用户很有用</string>
+    <string name="show_like_button">显示喜欢按钮</string>
+    <string name="show_like_button_description">在播放器中直接显示喜欢按钮</string>
+    <string name="swipe_to_remove_item">滑动移除项目</string>
+    <string name="swipe_to_remove_item_description">向左滑动以从队列中移除项目</string>
+    <string name="lyrics_keep_screen_awake">歌词时保持屏幕唤醒</string>
+    <string name="lyrics_keep_screen_awake_description">歌词显示时保持屏幕唤醒</string>
+    <string name="lyrics_show_system_bars">显示系统栏（歌词）</string>
+    <string name="lyrics_show_system_bars_description">关闭此选项可启用系统级全屏</string>
+    <string name="pip">PIP</string>
+    <string name="pip_description">切换到后台时自动切换到画中画模式</string>
+
+    <string name="cache">缓存</string>
+    <string name="cache_description">当缓存空间耗尽时，最久未被访问的资源将被清除</string>
+    <string name="image_cache">图片缓存</string>
+    <string name="max_size">最大尺寸</string>
+    <string name="format_cache_space_used">%1$s 已使用</string>
+    <string name="format_cache_space_used_percentage">%1$s 已使用 (%2$s%%)</string>
+    <string name="song_cache">歌曲缓存</string>
+    <string name="pause_song_cache">停止缓存</string>
+    <string name="pause_song_cache_description">临时停止添加新的歌曲到缓存</string>
+    <string name="database">数据库</string>
+
+    <string name="cleanup">清理</string>
+    <string name="pause_playback_history">暂停播放历史</string>
+    <string name="pause_playback_history_description">停止使用播放事件进行快速选择</string>
+    <string name="pause_playback_history_warning">请注意：这不会影响离线缓存！</string>
+    <string name="reset_quick_picks">重置快速选择</string>
+    <string name="quick_picks_empty">快速选择已清空</string>
+    <string name="pause_playback_time">暂停播放时间</string>
+    <string name="format_pause_playback_time_description">停止保存播放时间。这将暂停 “我的热门 %1$s” 播放列表中的统计数据！</string>
+
+    <string name="backup">备份</string>
+    <string name="backup_description">个人偏好（如主题模式）和缓存将被排除</string>
+    <string name="backup_action_description">将数据库导出到外部存储</string>
+    <string name="restore">恢复</string>
+    <string name="restore_warning">现有数据将被覆盖。\n恢复数据库后，ViMusic 将自动关闭</string>
+    <string name="restore_description">从外部存储导入数据库</string>
+
+    <string name="other">其他</string>
+    <string name="android_auto">Android Auto</string>
+    <string name="android_auto_description">启用 Android Auto 支持</string>
+    <string name="android_auto_warning">请记得在 Android Auto 的开发者设置中启用 “未知来源”。</string>
+    <string name="search_history">搜索历史</string>
+    <string name="pause_search_history">暂停搜索历史</string>
+    <string name="pause_search_history_description">不保存新的搜索查询，也不显示历史记录</string>
+    <string name="clear_search_history">清除搜索历史</string>
+    <string name="format_clear_search_history_amount">删除 %1$s 个搜索查询</string>
+    <string name="empty_history">历史记录为空</string>
+    <string name="built_in_playlists">内置播放列表</string>
+    <string name="auto_sync_playlists">自动同步播放列表</string>
+    <string name="auto_sync_playlists_description">打开时自动同步保存的YouTube播放列表</string>
+    <string name="top_list_length">热门列表长度</string>
+    <string name="top_list_length_description">限制 “我的热门 x” 播放列表的长度</string>
+
+    <string name="service_lifetime">服务时长</string>
+    <string name="service_lifetime_warning">如果应用了电池优化，暂停时播放通知可能会突然消失。</string>
+    <string name="service_lifetime_warning_android_12">从 Android 12 开始，需要禁用电池优化才能启用不可杀服务选项。</string>
+    <string name="ignore_battery_optimizations">忽略电池优化</string>
+    <string name="ignoring_battery_optimizations">限制已解除</string>
+    <string name="ignore_battery_optimizations_action">禁用后台限制</string>
+    <string name="invincible_service">不可杀服务</string>
+    <string name="invincible_service_description">在禁用电池优化仍不够的情况下，应保证 99.99% 的时间内播放不中断</string>
+
+    <string name="need_help">需要帮助？</string>
+    <string name="need_help_description">大多数情况下，即使启用了不可杀服务，应用在后台停止工作也不是开发者的错。\n检查你的设备制造商是否杀死了你的应用（点击跳转）</string>
+    <string name="service_lifetime_report_issue">如果你真的认为应用本身有问题，请前往 “关于” 标签</string>
+    <string name="troubleshooting">故障排除</string>
+    <string name="troubleshooting_warning">警告：当音频播放失败时，请最后尝试使用这些按钮</string>
+    <string name="reload_app_internals">重新加载应用内部</string>
+    <string name="kill_app">终止应用</string>
+    <string name="show_logs">查看故障日志</string>
+    <string name="logs">日志</string>
+    <string name="show_troubleshoot_section">显示故障排除部分</string>
+
+    <string name="persistent_queue">持久队列</string>
+    <string name="persistent_queue_description">保存并恢复播放的歌曲</string>
+    <string name="resume_playback">恢复播放</string>
+    <string name="resume_playback_description">当连接有线或蓝牙设备时</string>
+    <string name="stop_when_closed">关闭时停止播放</string>
+    <string name="stop_when_closed_description">当你关闭应用时，音乐停止播放</string>
+
+    <string name="audio">音频</string>
+    <string name="skip_silence">跳过静音</string>
+    <string name="skip_silence_description">在播放时跳过静音部分</string>
+    <string name="minimum_silence_length">最短静音长度</string>
+    <string name="minimum_silence_length_description">要跳过的音频必须达到的最短静音时间</string>
+    <string name="minimum_silence_length_warning">需要重新启动播放器才能使更改生效！</string>
+    <string name="restart_service">重新启动服务</string>
+    <string name="loudness_normalization">响度标准化</string>
+    <string name="loudness_normalization_description">将音量调整到固定水平</string>
+    <string name="loudness_base_gain">响度基础增益</string>
+    <string name="loudness_base_gain_description">响度标准化的目标增益</string>
+    <string name="loudness_normalization_extreme">检测到极端响度值 (%s)，将关闭此歌曲的响度标准化</string>
+    <string name="bass_boost">低音增强</string>
+    <string name="bass_boost_description">增强低频以提升听觉体验</string>
+    <string name="bass_boost_level">低音增强级别</string>
+    <string name="bass_boost_level_description">增强低频的级别 (0–1000)，使用需谨慎！</string>
+    <string name="sponsor_block">屏蔽赞助商</string>
+    <string name="sponsor_block_description">使用 Sponsorblock API 的数据来屏蔽赞助/无关内容</string>
+    <string name="reverb">混响</string>
+    <string name="audio_focus">音频焦点</string>
+    <string name="audio_focus_description">播放器是否应请求系统范围的音频（媒体）焦点</string>
+    <string name="equalizer_description">与系统均衡器进行交互</string>
+
+    <string name="filter_placeholder">过滤器…</string>
+
+    <string name="last_interaction">最近播放</string>
+    <string name="trending">趋势</string>
+    <string name="quick_picks_source">快速选择源</string>
+    <string name="quick_picks_cache">缓存快速选择数据</string>
+    <string name="quick_picks_cache_description">将快速选择数据保存到磁盘，以便离线访问</string>
+
+    <string name="player_layout">播放器布局</string>
+    <string name="classic_player_layout_name">经典</string>
+    <string name="new_player_layout_name">现代 (新)</string>
+
+    <string name="piped">Piped</string>
+    <string name="instance">实例</string>
+    <string name="click_to_select">点击选择</string>
+    <string name="username">用户名</string>
+    <string name="password">密码</string>
+    <string name="login">登录</string>
+    <string name="sync_description">您可以在其他地方托管播放列表，并与 ViMusic 同步。目前仅支持 Piped。</string>
+    <string name="add_account">添加账户</string>
+    <string name="add_account_description">链接一个 Piped 账户，输入您的实例、用户名和密码。</string>
+    <string name="learn_more">了解更多</string>
+    <string name="learn_more_description">不了解 Piped 是什么或者没有账户？点击这里查看相关文档。</string>
+    <string name="piped_sessions">Piped 会话</string>
+    <string name="custom_instance">使用自定义实例</string>
+    <string name="base_api_url">实例 API URL</string>
+    <string name="piped_session_created_successfully">Piped 会话创建成功</string>
+
+    <string name="seek_bar_style">进度条样式</string>
+    <string name="static_seek_bar_name">静态</string>
+    <string name="wavy_seek_bar_name">波形</string>
+    <string name="seek_bar_quality">波形进度条质量</string>
+    <string name="seek_bar_quality_poor">低</string>
+    <string name="seek_bar_quality_low">一般</string>
+    <string name="seek_bar_quality_medium">中等</string>
+    <string name="seek_bar_quality_high">高</string>
+    <string name="seek_bar_quality_great">极高</string>
+    <string name="seek_bar_quality_subpixel">亚像素</string>
+
+    <string name="remove_from_blacklist">从黑名单中移除</string>
+    <string name="add_to_blacklist">添加到黑名单</string>
+    <string name="reset_blacklist">重置黑名单</string>
+    <string name="blacklist_empty">黑名单为空</string>
+
+    <string name="pre_cache">预缓存</string>
+
+    <string name="swipe_to_hide_song">滑动隐藏歌曲</string>
+    <string name="swipe_to_hide_song_description">当你向左滑动一首歌曲时，它将从数据库和缓存中移除</string>
+    <string name="swipe_to_hide_song_confirm">确认滑动隐藏歌曲</string>
+    <string name="swipe_to_hide_song_confirm_description">在执行隐藏操作前，需要先确认</string>
+    <string name="hide_explicit">隐藏带有脏话的歌曲</string>
+    <string name="hide_explicit_description">在整个应用程序中隐藏所有带有脏话的歌曲。当启用此设置时，播放器还会跳过播放时遇到的带有脏话的歌曲。</string>
+
+    <string name="version">版本</string>
+    <string name="check_new_version">检查更新</string>
+    <string name="current_version">当前运行版本为 v%1$s</string>
+    <string name="error_github">从 GitHub 获取数据时发生未知错误</string>
+    <string name="new_version_available">有新版本可用</string>
+    <string name="more_information">更多信息</string>
+    <string name="up_to_date">当前已是最新版本，无需更新</string>
+
+    <string name="dynamic_thumbnails">动态缩略图</string>
+    <string name="max_dynamic_thumbnail_size">最大动态缩略图大小</string>
+    <string name="max_dynamic_thumbnail_size_description">使用动态缩略图时的最大尺寸</string>
+
+    <string name="hourly">每小时</string>
+    <string name="daily">每天</string>
+    <string name="weekly">每周</string>
+    <string name="version_check">自动检查更新</string>
+
+    <string name="skip_on_error">自动跳过</string>
+    <string name="skip_on_error_description">当发生错误时跳过当前歌曲</string>
+    <string name="skip_on_error_notification">由于错误，已跳过 %s</string>
+    <string name="skip_on_error_notification_unknown_song">由于错误，已跳过当前歌曲</string>
+    <string name="reverb_small_room">小房间</string>
+    <string name="reverb_medium_room">中等房间</string>
+    <string name="reverb_large_room">大房间</string>
+    <string name="reverb_medium_hall">中等大厅</string>
+    <string name="reverb_large_hall">大厅</string>
+    <string name="reverb_plate">板式混响</string>
+
+    <plurals name="format_reset_blacklist_description">
+        <item quantity="other">从黑名单中移除所有 %1$s 首歌曲</item>
+    </plurals>
+
+    <plurals name="format_reset_quick_picks_amount">
+        <item quantity="other">删除 %1$s 次播放事件</item>
+    </plurals>
+
+    <plurals name="song_count_plural">
+        <item quantity="other">%1$d 首歌曲</item>
+    </plurals>
+</resources>
