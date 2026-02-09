@@ -1,6 +1,6 @@
 plugins {
     id("org.jetbrains.kotlin.jvm")
-    alias(libs.plugins.android.lint)
+    id("com.android.lint")
 }
 
 dependencies {
