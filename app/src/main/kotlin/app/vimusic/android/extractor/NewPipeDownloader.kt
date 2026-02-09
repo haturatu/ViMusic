@@ -1,7 +1,7 @@
 package app.vimusic.android.extractor
 
 import okhttp3.OkHttpClient
-import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
@@ -11,7 +11,7 @@ class NewPipeDownloader(
     private val client: OkHttpClient
 ) : Downloader() {
     override fun execute(request: Request): Response {
-        val body = request.dataToSend()?.let { RequestBody.create(null, it) }
+        val body = request.dataToSend()?.toRequestBody(null)
         val httpRequest = okhttp3.Request.Builder()
             .url(request.url())
             .method(request.httpMethod(), body)
@@ -29,7 +29,7 @@ class NewPipeDownloader(
                 throw ReCaptchaException("reCaptcha Challenge requested", request.url())
             }
 
-            val responseBody = response.body?.string()
+            val responseBody = response.body.string()
             return Response(
                 response.code,
                 response.message,

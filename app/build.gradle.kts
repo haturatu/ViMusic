@@ -99,7 +99,8 @@ android {
 kotlin {
     jvmToolchain(libs.versions.jvm.get().toInt())
     compilerOptions {
-        freeCompilerArgs.add("-Xcontext-receivers")
+        freeCompilerArgs.add("-Xcontext-parameters")
+        freeCompilerArgs.add("-Xannotation-default-target=param-property")
     }
 }
 
@@ -108,10 +109,6 @@ ksp {
 }
 
 composeCompiler {
-    featureFlags = setOf(
-        ComposeFeatureFlag.OptimizeNonSkippingGroups
-    )
-
     if (project.findProperty("enableComposeCompilerReports") == "true") {
         val dest = layout.buildDirectory.dir("compose_metrics")
         metricsDestination = dest

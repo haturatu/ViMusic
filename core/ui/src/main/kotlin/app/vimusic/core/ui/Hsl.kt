@@ -36,5 +36,5 @@ value class Hsl(@PublishedApi internal val raw: FloatArray) {
 val FloatArray.hsl get() = Hsl(raw = this)
 val Color.hsl
     get() = FloatArray(3)
-        .apply { ColorUtils.colorToHSL(this@Color.toArgb(), this) }
+        .apply { ColorUtils.colorToHSL(this@hsl.toArgb(), this) }
         .hsl

@@ -12,8 +12,8 @@ import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.toBitmap
 
-context(Context)
 class BitmapProvider(
+    private val context: Context,
     private val getBitmapSize: () -> Int,
     private val getColor: (isDark: Boolean) -> Int
 ) {
@@ -38,7 +38,7 @@ class BitmapProvider(
     }
 
     fun setDefaultBitmap(): Boolean {
-        val isSystemInDarkMode = resources.configuration.uiMode and
+        val isSystemInDarkMode = context.resources.configuration.uiMode and
                 Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 
         if (::defaultBitmap.isInitialized && isSystemInDarkMode == lastIsSystemInDarkMode) return false
@@ -75,8 +75,8 @@ class BitmapProvider(
             return
         }
 
-        currentTask = applicationContext.imageLoader.enqueue(
-            ImageRequest.Builder(applicationContext)
+        currentTask = context.applicationContext.imageLoader.enqueue(
+            ImageRequest.Builder(context.applicationContext)
                 .data(uri.thumbnail(getBitmapSize()))
                 .allowHardware(false)
                 .listener(

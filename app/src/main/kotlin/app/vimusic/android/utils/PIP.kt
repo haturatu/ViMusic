@@ -39,6 +39,7 @@ import app.vimusic.compose.persist.findActivityNullable
 import app.vimusic.core.ui.utils.isAtLeastAndroid12
 import app.vimusic.core.ui.utils.isAtLeastAndroid7
 import app.vimusic.core.ui.utils.isAtLeastAndroid8
+import kotlin.ConsistentCopyVisibility
 
 private fun logError(throwable: Throwable) = Log.e("PipHandler", "An error occurred", throwable)
 
@@ -103,6 +104,7 @@ fun rememberPipHandler(key: Any = Unit): PipHandler {
     }
 }
 
+@ConsistentCopyVisibility
 @Immutable
 data class PipHandler internal constructor(
     private val enterPip: () -> Boolean?,

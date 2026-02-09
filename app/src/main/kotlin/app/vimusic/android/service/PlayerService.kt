@@ -55,7 +55,6 @@ import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.analytics.PlaybackStats
 import androidx.media3.exoplayer.analytics.PlaybackStatsListener
 import androidx.media3.exoplayer.audio.AudioSink
-import androidx.media3.exoplayer.audio.DefaultAudioOffloadSupportProvider
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink.DefaultAudioProcessorChain
 import androidx.media3.exoplayer.audio.SilenceSkippingAudioProcessor
@@ -162,7 +161,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
-import kotlinx.datetime.Clock
 import java.io.IOException
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
@@ -275,6 +273,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         glyphInterface.tryInit()
 
         bitmapProvider = BitmapProvider(
+            context = this,
             getBitmapSize = {
                 (512 * resources.displayMetrics.density)
                     .roundToInt()
@@ -1065,13 +1064,10 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             val minimumSilenceDuration =
                 PlayerPreferences.minimumSilence.coerceIn(1000L..2_000_000L)
 
-            return DefaultAudioSink.Builder(applicationContext)
-                .setEnableFloatOutput(enableFloatOutput)
-                .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
-                .setAudioOffloadSupportProvider(
-                    DefaultAudioOffloadSupportProvider(applicationContext)
-                )
-                .setAudioProcessorChain(
+                return DefaultAudioSink.Builder(applicationContext)
+                    .setEnableFloatOutput(enableFloatOutput)
+                    .setEnableAudioOutputPlaybackParameters(enableAudioTrackPlaybackParams)
+                    .setAudioProcessorChain(
                     DefaultAudioProcessorChain(
                         arrayOf(),
                         SilenceSkippingAudioProcessor(

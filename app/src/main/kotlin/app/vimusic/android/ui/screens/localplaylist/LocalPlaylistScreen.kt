@@ -40,15 +40,12 @@ fun LocalPlaylistScreen(playlistId: Long) {
                 Database
                     .playlist(playlistId)
                     .filterNotNull()
-                    .distinctUntilChanged()
                     .collect { playlist = it }
             }
 
             LaunchedEffect(Unit) {
                 Database
                     .playlistSongs(playlistId)
-                    .filterNotNull()
-                    .distinctUntilChanged()
                     .collect { songs = it.toImmutableList() }
             }
 

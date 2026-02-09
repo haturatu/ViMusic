@@ -42,10 +42,10 @@ sealed class Route : Parcelable {
 
 @Immutable
 class Route0(override val tag: String) : Route() {
-    context(RouteHandlerScope)
+    context(scope: RouteHandlerScope)
     @Composable
     operator fun invoke(content: @Composable () -> Unit) {
-        if (this == child) content()
+        if (this == scope.child) content()
     }
 
     fun global() = global(emptyArray())
@@ -54,10 +54,10 @@ class Route0(override val tag: String) : Route() {
 
 @Immutable
 class Route1<P0>(override val tag: String) : Route() {
-    context(RouteHandlerScope)
+    context(scope: RouteHandlerScope)
     @Composable
     operator fun invoke(content: @Composable (P0) -> Unit) {
-        if (this == child) content(args[0] as P0)
+        if (this == scope.child) content(scope.args[0] as P0)
     }
 
     fun global(p0: P0) = global(arrayOf(p0))
@@ -66,12 +66,12 @@ class Route1<P0>(override val tag: String) : Route() {
 
 @Immutable
 class Route2<P0, P1>(override val tag: String) : Route() {
-    context(RouteHandlerScope)
+    context(scope: RouteHandlerScope)
     @Composable
     operator fun invoke(content: @Composable (P0, P1) -> Unit) {
-        if (this == child) content(
-            args[0] as P0,
-            args[1] as P1
+        if (this == scope.child) content(
+            scope.args[0] as P0,
+            scope.args[1] as P1
         )
     }
 
@@ -81,13 +81,13 @@ class Route2<P0, P1>(override val tag: String) : Route() {
 
 @Immutable
 class Route3<P0, P1, P2>(override val tag: String) : Route() {
-    context(RouteHandlerScope)
+    context(scope: RouteHandlerScope)
     @Composable
     operator fun invoke(content: @Composable (P0, P1, P2) -> Unit) {
-        if (this == child) content(
-            args[0] as P0,
-            args[1] as P1,
-            args[2] as P2
+        if (this == scope.child) content(
+            scope.args[0] as P0,
+            scope.args[1] as P1,
+            scope.args[2] as P2
         )
     }
 
@@ -97,14 +97,14 @@ class Route3<P0, P1, P2>(override val tag: String) : Route() {
 
 @Immutable
 class Route4<P0, P1, P2, P3>(override val tag: String) : Route() {
-    context(RouteHandlerScope)
+    context(scope: RouteHandlerScope)
     @Composable
     operator fun invoke(content: @Composable (P0, P1, P2, P3) -> Unit) {
-        if (this == child) content(
-            args[0] as P0,
-            args[1] as P1,
-            args[2] as P2,
-            args[3] as P3
+        if (this == scope.child) content(
+            scope.args[0] as P0,
+            scope.args[1] as P1,
+            scope.args[2] as P2,
+            scope.args[3] as P3
         )
     }
 

@@ -18,7 +18,7 @@ kotlin {
     jvmToolchain(libs.versions.jvm.get().toInt())
 
     compilerOptions {
-        freeCompilerArgs.add("-Xcontext-receivers")
+        freeCompilerArgs.add("-Xcontext-parameters")
     }
 }
 

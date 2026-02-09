@@ -14,7 +14,7 @@ import androidx.compose.ui.res.stringResource
 import app.vimusic.android.Database
 import app.vimusic.android.R
 import app.vimusic.android.internal
-import app.vimusic.android.path
+import app.vimusic.android.dbPath
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.query
 import app.vimusic.android.service.PlayerService
@@ -50,7 +50,7 @@ fun DatabaseSettings() = with(DataPreferences) {
             Database.checkpoint()
 
             context.applicationContext.contentResolver.openOutputStream(uri)?.use { output ->
-                FileInputStream(Database.internal.path).use { input -> input.copyTo(output) }
+                FileInputStream(Database.internal.dbPath).use { input -> input.copyTo(output) }
             }
         }
     }
@@ -66,7 +66,7 @@ fun DatabaseSettings() = with(DataPreferences) {
 
             context.applicationContext.contentResolver.openInputStream(uri)
                 ?.use { inputStream ->
-                    FileOutputStream(Database.internal.path).use { outputStream ->
+                    FileOutputStream(Database.internal.dbPath).use { outputStream ->
                         inputStream.copyTo(outputStream)
                     }
                 }

@@ -13,12 +13,12 @@ import kotlinx.coroutines.launch
 
 val LocalMonetCompat = staticCompositionLocalOf { MonetCompat.getInstance() }
 
-context(LifecycleOwner)
+context(owner: LifecycleOwner)
 inline fun MonetCompat.invokeOnReady(
     state: Lifecycle.State = Lifecycle.State.CREATED,
     crossinline block: () -> Unit
-) = lifecycleScope.launch {
-    repeatOnLifecycle(state) {
+) = owner.lifecycleScope.launch {
+    owner.repeatOnLifecycle(state) {
         awaitMonetReady()
         block()
     }

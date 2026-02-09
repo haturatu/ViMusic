@@ -350,7 +350,7 @@ interface Database {
         ORDER BY SortedSongPlaylistMap.position
         """
     )
-    fun playlistSongs(id: Long): Flow<List<Song>?>
+    fun playlistSongs(id: Long): Flow<List<Song>>
 
     @Transaction
     @Query("SELECT * FROM Playlist WHERE id = :id")
@@ -439,7 +439,7 @@ interface Database {
         LIMIT 4
         """
     )
-    fun playlistThumbnailUrls(id: Long): Flow<List<String?>>
+    fun playlistThumbnailUrls(id: Long): Flow<List<String>>
 
     @Transaction
     @Query(
@@ -1129,5 +1129,5 @@ fun transaction(block: () -> Unit) = with(DatabaseInitializer.instance) {
     }
 }
 
-val RoomDatabase.path: String?
+val RoomDatabase.dbPath: String?
     get() = openHelper.writableDatabase.path

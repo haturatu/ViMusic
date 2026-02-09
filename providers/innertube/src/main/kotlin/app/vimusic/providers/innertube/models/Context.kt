@@ -1,9 +1,8 @@
 package app.vimusic.providers.innertube.models
 
-import io.ktor.client.request.headers
-import io.ktor.http.HttpMessageBuilder
-import io.ktor.http.parameters
-import io.ktor.http.userAgent
+import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.header
+import io.ktor.client.request.parameter
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import java.util.Locale
@@ -46,21 +45,15 @@ data class Context(
         val lockedSafetyMode: Boolean = false
     )
 
-    context(HttpMessageBuilder)
+    context(builder: HttpRequestBuilder)
     fun apply() {
-        client.userAgent?.let { userAgent(it) }
-
-        headers {
-            client.referer?.let { append("Referer", it) }
-            append("X-Youtube-Bootstrap-Logged-In", "false")
-            append("X-YouTube-Client-Name", client.clientName)
-            append("X-YouTube-Client-Version", client.clientVersion)
-            client.apiKey?.let { append("X-Goog-Api-Key", it) }
-        }
-
-        parameters {
-            client.apiKey?.let { append("key", it) }
-        }
+        client.userAgent?.let { builder.header("User-Agent", it) }
+        client.referer?.let { builder.header("Referer", it) }
+        builder.header("X-Youtube-Bootstrap-Logged-In", "false")
+        builder.header("X-YouTube-Client-Name", client.clientName)
+        builder.header("X-YouTube-Client-Version", client.clientVersion)
+        client.apiKey?.let { builder.header("X-Goog-Api-Key", it) }
+        client.apiKey?.let { builder.parameter("key", it) }
     }
 
     companion object {

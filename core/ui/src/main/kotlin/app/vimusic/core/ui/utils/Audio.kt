@@ -15,6 +15,7 @@ fun Context.streamVolumeFlow(
     @ContextCompat.RegisterReceiverFlags
     flags: Int = ContextCompat.RECEIVER_NOT_EXPORTED
 ) = callbackFlow {
+    val context = this@streamVolumeFlow
     val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val extras = intent.extras?.volumeChangedIntentBundle ?: return
@@ -23,12 +24,12 @@ fun Context.streamVolumeFlow(
     }
 
     ContextCompat.registerReceiver(
-        /* context = */ this@Context,
+        /* context = */ context,
         /* receiver = */ receiver,
         /* filter = */ IntentFilter(VolumeChangedIntentBundleAccessor.ACTION),
         /* flags = */ flags
     )
-    awaitClose { unregisterReceiver(receiver) }
+    awaitClose { context.unregisterReceiver(receiver) }
 }
 
 class VolumeChangedIntentBundleAccessor(val bundle: Bundle = Bundle()) : BundleAccessor {
