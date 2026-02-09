@@ -1064,10 +1064,10 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             val minimumSilenceDuration =
                 PlayerPreferences.minimumSilence.coerceIn(1000L..2_000_000L)
 
-                return DefaultAudioSink.Builder(applicationContext)
-                    .setEnableFloatOutput(enableFloatOutput)
-                    .setEnableAudioOutputPlaybackParameters(enableAudioTrackPlaybackParams)
-                    .setAudioProcessorChain(
+            return DefaultAudioSink.Builder(applicationContext)
+                .setEnableFloatOutput(enableFloatOutput)
+                .setEnableAudioOutputPlaybackParameters(enableAudioTrackPlaybackParams)
+                .setAudioProcessorChain(
                     DefaultAudioProcessorChain(
                         arrayOf(),
                         SilenceSkippingAudioProcessor(
