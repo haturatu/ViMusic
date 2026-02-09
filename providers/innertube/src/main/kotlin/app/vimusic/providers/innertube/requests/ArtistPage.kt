@@ -7,6 +7,7 @@ import app.vimusic.providers.innertube.models.MusicCarouselShelfRenderer
 import app.vimusic.providers.innertube.models.MusicShelfRenderer
 import app.vimusic.providers.innertube.models.bodies.BrowseBody
 import app.vimusic.providers.innertube.utils.findSectionByTitle
+import app.vimusic.providers.innertube.utils.findSectionByTitleAny
 import app.vimusic.providers.innertube.utils.from
 import app.vimusic.providers.utils.runCatchingCancellable
 import io.ktor.client.call.body
@@ -51,9 +52,30 @@ suspend fun Innertube.artistPage(body: BrowseBody) = runCatchingCancellable {
         ?.sectionListRenderer
         ?.findSectionByTitle(text)
 
-    val songsSection = findSectionByTitle("Songs")?.musicShelfRenderer
-    val albumsSection = findSectionByTitle("Albums")?.musicCarouselShelfRenderer
-    val singlesSection = findSectionByTitle("Singles")?.musicCarouselShelfRenderer
+    suspend fun findSectionByTitleAny(vararg texts: String) = response
+        .contents
+        ?.singleColumnBrowseResultsRenderer
+        ?.tabs
+        ?.get(0)
+        ?.tabRenderer
+        ?.content
+        ?.sectionListRenderer
+        ?.findSectionByTitleAny(*texts) ?: responseNoLang.await()
+        .contents
+        ?.singleColumnBrowseResultsRenderer
+        ?.tabs
+        ?.get(0)
+        ?.tabRenderer
+        ?.content
+        ?.sectionListRenderer
+        ?.findSectionByTitleAny(*texts)
+
+    val songsSection = findSectionByTitleAny("Songs", "Top songs")
+        ?.musicShelfRenderer
+    val albumsSection = findSectionByTitleAny("Albums", "Releases")
+        ?.musicCarouselShelfRenderer
+    val singlesSection = findSectionByTitleAny("Singles & EPs", "Singles", "EPs")
+        ?.musicCarouselShelfRenderer
 
     Innertube.ArtistPage(
         name = response
