@@ -8,6 +8,7 @@ import app.vimusic.providers.innertube.models.UserAgents
 import app.vimusic.providers.utils.runCatchingCancellable
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.compression.brotli
@@ -29,18 +30,34 @@ import io.ktor.http.parseQueryString
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import okhttp3.Protocol
 import org.slf4j.LoggerFactory
+import java.io.IOException
 
 object Innertube {
     private var javascriptChallenge: JavaScriptChallenge? = null
 
     private val javascriptClient = HttpClient(OkHttp) {
+        engine {
+            config {
+                protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+                retryOnConnectionFailure(true)
+            }
+        }
+
         expectSuccess = true
 
         install(ContentEncoding) {
             brotli(1.0f)
             gzip(0.9f)
             deflate(0.8f)
+        }
+
+        install(HttpRequestRetry) {
+            retryOnExceptionIf { _, cause -> cause is IOException }
+            retryOnServerErrors()
+            exponentialDelay()
+            maxRetries = 3
         }
 
         install(Logging)
@@ -64,6 +81,13 @@ object Innertube {
 
     val logger = LoggerFactory.getLogger(Innertube::class.java)
     val client = HttpClient(OkHttp) {
+        engine {
+            config {
+                protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+                retryOnConnectionFailure(true)
+            }
+        }
+
         expectSuccess = true
 
         install(ContentNegotiation) {
@@ -80,6 +104,13 @@ object Innertube {
             brotli(1.0f)
             gzip(0.9f)
             deflate(0.8f)
+        }
+
+        install(HttpRequestRetry) {
+            retryOnExceptionIf { _, cause -> cause is IOException }
+            retryOnServerErrors()
+            exponentialDelay()
+            maxRetries = 3
         }
 
         install(Logging) {

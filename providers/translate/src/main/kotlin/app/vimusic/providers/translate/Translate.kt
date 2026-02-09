@@ -5,6 +5,8 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.UserAgent
+import io.ktor.client.plugins.compression.ContentEncoding
+import io.ktor.client.plugins.compression.brotli
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.accept
@@ -12,6 +14,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import java.io.IOException
 
 object Translate {
     internal val client by lazy {
@@ -26,8 +29,10 @@ object Translate {
             }
 
             install(HttpRequestRetry) {
+                retryOnExceptionIf { _, cause -> cause is IOException }
+                retryOnServerErrors()
                 exponentialDelay()
-                maxRetries = 2
+                maxRetries = 3
             }
 
             install(HttpTimeout) {
@@ -40,6 +45,12 @@ object Translate {
             defaultRequest {
                 accept(ContentType.Application.Json)
                 contentType(ContentType.Application.Json)
+            }
+
+            install(ContentEncoding) {
+                brotli()
+                gzip()
+                deflate()
             }
 
             install(UserAgent) {

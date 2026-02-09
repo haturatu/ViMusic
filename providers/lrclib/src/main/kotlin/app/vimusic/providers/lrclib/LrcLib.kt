@@ -6,7 +6,10 @@ import app.vimusic.providers.utils.runCatchingCancellable
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.UserAgent
+import io.ktor.client.plugins.compression.ContentEncoding
+import io.ktor.client.plugins.compression.brotli
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.get
@@ -15,6 +18,7 @@ import io.ktor.client.request.parameter
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
+import java.io.IOException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -41,6 +45,19 @@ object LrcLib {
 
             install(UserAgent) {
                 agent = AGENT
+            }
+
+            install(HttpRequestRetry) {
+                retryOnExceptionIf { _, cause -> cause is IOException }
+                retryOnServerErrors()
+                exponentialDelay()
+                maxRetries = 3
+            }
+
+            install(ContentEncoding) {
+                brotli()
+                gzip()
+                deflate()
             }
 
             expectSuccess = true

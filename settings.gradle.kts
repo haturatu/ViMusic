@@ -13,12 +13,20 @@ dependencyResolutionManagement {
 }
 
 pluginManagement {
+    val kotlinVersion = "2.3.10"
     resolutionStrategy {
         repositories {
             google()
             mavenCentral()
             gradlePluginPortal()
         }
+    }
+    plugins {
+        id("org.jetbrains.kotlin.android") version kotlinVersion
+        id("org.jetbrains.kotlin.jvm") version kotlinVersion
+        id("org.jetbrains.kotlin.plugin.compose") version kotlinVersion
+        id("org.jetbrains.kotlin.plugin.parcelize") version kotlinVersion
+        id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion
     }
 }
 

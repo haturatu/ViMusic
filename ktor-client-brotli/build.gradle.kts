@@ -1,11 +1,11 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    id("org.jetbrains.kotlin.jvm")
     alias(libs.plugins.android.lint)
 }
 
 dependencies {
-    implementation(libs.ktor.client.encoding)
-    implementation(libs.brotli)
+    api(libs.ktor.client.encoding)
+    api(libs.brotli)
 
 }
 
