@@ -114,4 +114,12 @@ If you plan to maintain or release this app yourself, generate your own signing 
 keytool -genkeypair -v -keystore vimusic-release.jks -keyalg RSA -keysize 4096 -validity 10000 -alias vimusic
 ```
 
+For `make release`, set the signing properties in `~/.gradle/gradle.properties`:
+
+```
+VIMUSIC_KEYSTORE_PASSWORD=your_password
+VIMUSIC_KEY_PASSWORD=your_password
+VIMUSIC_KEY_ALIAS=vimusic
+```
+
 When updating the app version, bump the `version` value in `gradle.properties`.
