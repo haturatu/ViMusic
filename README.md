@@ -67,6 +67,13 @@ sudo pacman -S jdk17-openjdk
 yay -S android-sdk-cmdline-tools-latest android-sdk android-sdk-platform-tools android-sdk-build-tools
 ```
 
+### Environment variables (.bashrc)
+```bash
+export ANDROID_HOME=/opt/android-sdk
+export ANDROID_SDK_ROOT=/opt/android-sdk
+export PATH=$PATH:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools
+```
+
 ### Build APK
 ```bash
 make build
