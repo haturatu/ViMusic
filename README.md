@@ -84,13 +84,7 @@ mkdir -p ~/.android-sdk/cmdline-tools/
 cp -pr /opt/android-sdk/cmdline-tools/latest ~/.android-sdk/cmdline-tools/
 ```
 
-Then update `.bashrc` to point to the user-local SDK:
-
-```bash
-export ANDROID_HOME=$HOME/.android-sdk
-export ANDROID_SDK_ROOT=$HOME/.android-sdk
-export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
-```
+Then update the `.bashrc` environment variables to point to the user-local SDK (see the section above).
 
 Accept licenses and install required packages:
 
