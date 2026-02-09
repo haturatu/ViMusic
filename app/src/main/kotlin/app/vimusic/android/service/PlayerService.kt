@@ -217,6 +217,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
     private var timerJob: TimerJob? by mutableStateOf(null)
     private var radio: YouTubeRadio? = null
+    private val unknownErrorRetryCounts = HashMap<String, Int>()
+
+    private val unknownErrorRetryDelaysMs = longArrayOf(500L, 1500L, 3000L)
 
     private lateinit var bitmapProvider: BitmapProvider
 
@@ -480,6 +483,10 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             return
         }
 
+        mediaItem?.mediaId?.let {
+            unknownErrorRetryCounts[it] = 0
+        }
+
         mediaItemState.update { mediaItem }
 
         maybeRecoverPlaybackError()
@@ -515,6 +522,25 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             return
         }
 
+        player.currentMediaItem?.mediaId?.let { mediaId ->
+            if (isUnknownPlaybackError(error)) {
+                val retryIndex = unknownErrorRetryCounts[mediaId] ?: 0
+                if (retryIndex < unknownErrorRetryDelaysMs.size) {
+                    unknownErrorRetryCounts[mediaId] = retryIndex + 1
+                    val delayMs = unknownErrorRetryDelaysMs[retryIndex]
+                    handler.postDelayed(
+                        {
+                            if (player.currentMediaItem?.mediaId != mediaId) return@postDelayed
+                            player.prepare()
+                            player.play()
+                        },
+                        delayMs
+                    )
+                    return
+                }
+            }
+        }
+
         if (!PlayerPreferences.skipOnError || !player.hasNextMediaItem()) return
 
         val prev = player.currentMediaItem ?: return
@@ -533,6 +559,12 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 )
                 .setContentTitle(getString(R.string.skip_on_error))
         }
+    }
+
+    private fun isUnknownPlaybackError(error: PlaybackException): Boolean {
+        if (error.errorCode != PlaybackException.ERROR_CODE_UNSPECIFIED) return false
+        val message = error.message ?: return false
+        return message.contains("Unknown playback error", ignoreCase = true)
     }
 
     private fun updateMediaSessionQueue(timeline: Timeline) {
