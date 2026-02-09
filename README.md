@@ -76,6 +76,29 @@ export ANDROID_SDK_ROOT=/opt/android-sdk
 export PATH=$PATH:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools
 ```
 
+### User-local SDK (copy cmdline-tools)
+If your SDK under `/opt/android-sdk` is read-only, copy cmdline-tools to a user-writable SDK:
+
+```bash
+mkdir -p ~/.android-sdk/cmdline-tools/
+cp -pr /opt/android-sdk/cmdline-tools/latest ~/.android-sdk/cmdline-tools/
+```
+
+Then update `.bashrc` to point to the user-local SDK:
+
+```bash
+export ANDROID_HOME=$HOME/.android-sdk
+export ANDROID_SDK_ROOT=$HOME/.android-sdk
+export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
+```
+
+Accept licenses and install required packages:
+
+```bash
+sdkmanager --licenses
+sdkmanager "platforms;android-35" "build-tools;34.0.0"
+```
+
 ### local.properties
 ```bash
 cp local.properties.example local.properties
