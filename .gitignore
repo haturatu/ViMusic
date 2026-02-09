@@ -11,3 +11,4 @@ local.properties
 **/build/
 .kotlin/
 .gradle-user/
+vimusic-release.jks
