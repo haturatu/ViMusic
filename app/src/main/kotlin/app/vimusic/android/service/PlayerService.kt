@@ -122,6 +122,7 @@ import app.vimusic.providers.innertube.utils.from
 import app.vimusic.providers.sponsorblock.SponsorBlock
 import app.vimusic.providers.sponsorblock.models.Action
 import app.vimusic.providers.sponsorblock.models.Category
+import app.vimusic.providers.sponsorblock.models.Segment
 import app.vimusic.providers.sponsorblock.requests.segments
 import org.schabi.newpipe.extractor.exceptions.ContentNotAvailableException
 import org.schabi.newpipe.extractor.exceptions.ContentNotSupportedException
@@ -690,7 +691,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         }
     }
 
-    @Suppress("CyclomaticComplexMethod") // TODO: evaluate CyclomaticComplexMethod threshold
     private fun maybeSponsorBlock() {
         poiTimestamp = null
 
@@ -704,64 +704,68 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         sponsorBlockJob = coroutineScope.launch {
             mediaItemState.onStart { emit(mediaItemState.value) }.collectLatest { mediaItem ->
                 poiTimestamp = null
-                val videoId = mediaItem?.mediaId
-                    ?.removePrefix("https://youtube.com/watch?v=")
-                    ?.takeIf { it.isNotBlank() } ?: return@collectLatest
+                val videoId = extractYoutubeVideoId(mediaItem) ?: return@collectLatest
 
                 SponsorBlock
                     .segments(videoId)
                     ?.onSuccess { segments ->
-                        poiTimestamp =
-                            segments.find { it.category == Category.PoiHighlight }?.start?.inWholeMilliseconds
-                    }
-                    ?.map { segments ->
-                        segments
+                        updatePoiTimestamp(segments)
+                        val skipSegments = segments
                             .sortedBy { it.start.inWholeMilliseconds }
                             .filter { it.action == Action.Skip }
+
+                        runSponsorBlockSkipLoop(skipSegments)
                     }
-                    ?.mapCatching { segments ->
-                        suspend fun posMillis() =
-                            withContext(Dispatchers.Main) { player.currentPosition }
-
-                        suspend fun speed() =
-                            withContext(Dispatchers.Main) { player.playbackParameters.speed }
-
-                        suspend fun seek(millis: Long) =
-                            withContext(Dispatchers.Main) { player.seekTo(millis) }
-
-                        val ctx = currentCoroutineContext()
-                        val lastSegmentEnd =
-                            segments.lastOrNull()?.end?.inWholeMilliseconds ?: return@mapCatching
-
-                        @Suppress("LoopWithTooManyJumpStatements")
-                        do {
-                            if (lastSegmentEnd < posMillis()) {
-                                yield()
-                                continue
-                            }
-
-                            val nextSegment =
-                                segments.firstOrNull { posMillis() < it.end.inWholeMilliseconds }
-                                    ?: continue
-
-                            // Wait for next segment
-                            if (nextSegment.start.inWholeMilliseconds > posMillis()) delay(
-                                ((nextSegment.start.inWholeMilliseconds - posMillis()) / speed().toDouble()).milliseconds
-                            )
-
-                            if (posMillis().milliseconds !in nextSegment.start..nextSegment.end) {
-                                // Player is not in the segment for some reason, maybe the user seeked in the meantime
-                                yield()
-                                continue
-                            }
-
-                            seek(nextSegment.end.inWholeMilliseconds)
-                        } while (ctx.isActive)
-                    }?.onFailure {
-                        it.printStackTrace()
-                    }
+                    ?.onFailure { it.printStackTrace() }
             }
         }
+    }
+
+    private fun extractYoutubeVideoId(mediaItem: MediaItem?): String? =
+        mediaItem
+            ?.mediaId
+            ?.removePrefix("https://youtube.com/watch?v=")
+            ?.takeIf { it.isNotBlank() }
+
+    private fun updatePoiTimestamp(segments: List<Segment>) {
+        poiTimestamp = segments
+            .find { it.category == Category.PoiHighlight }
+            ?.start
+            ?.inWholeMilliseconds
+    }
+
+    private suspend fun runSponsorBlockSkipLoop(segments: List<Segment>) {
+        if (segments.isEmpty()) return
+
+        suspend fun posMillis() = withContext(Dispatchers.Main) { player.currentPosition }
+        suspend fun speed() = withContext(Dispatchers.Main) { player.playbackParameters.speed }
+        suspend fun seek(millis: Long) = withContext(Dispatchers.Main) { player.seekTo(millis) }
+
+        val ctx = currentCoroutineContext()
+        val lastSegmentEnd = segments.lastOrNull()?.end?.inWholeMilliseconds ?: return
+
+        @Suppress("LoopWithTooManyJumpStatements")
+        do {
+            if (lastSegmentEnd < posMillis()) {
+                yield()
+                continue
+            }
+
+            val nextSegment = segments.firstOrNull { posMillis() < it.end.inWholeMilliseconds } ?: continue
+
+            // Wait for next segment
+            if (nextSegment.start.inWholeMilliseconds > posMillis()) delay(
+                ((nextSegment.start.inWholeMilliseconds - posMillis()) / speed().toDouble()).milliseconds
+            )
+
+            if (posMillis().milliseconds !in nextSegment.start..nextSegment.end) {
+                // Player is not in the segment for some reason, maybe the user seeked in the meantime
+                yield()
+                continue
+            }
+
+            seek(nextSegment.end.inWholeMilliseconds)
+        } while (ctx.isActive)
     }
 
     private fun maybeBassBoost() {

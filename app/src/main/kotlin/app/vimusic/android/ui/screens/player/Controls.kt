@@ -144,9 +144,11 @@ private fun ClassicControls(
         MediaInfo(media)
         Spacer(modifier = Modifier.weight(1f))
         SeekBar(
-            binder = binder,
             position = position,
             media = media,
+            onSeekTo = binder.player::seekTo,
+            poiTimestamp = binder.poiTimestamp,
+            isActive = binder.player.isPlaying,
             alwaysShowDuration = true
         )
         Spacer(modifier = Modifier.weight(1f))
@@ -293,9 +295,11 @@ private fun ModernControls(
 
             Column(modifier = Modifier.weight(4f)) {
                 SeekBar(
-                    binder = binder,
                     position = position,
-                    media = media
+                    media = media,
+                    onSeekTo = binder.player::seekTo,
+                    poiTimestamp = binder.poiTimestamp,
+                    isActive = binder.player.isPlaying
                 )
             }
         }

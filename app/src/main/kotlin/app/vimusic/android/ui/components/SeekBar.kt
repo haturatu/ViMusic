@@ -54,7 +54,6 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.C
 import app.vimusic.android.models.ui.UiMedia
 import app.vimusic.android.preferences.PlayerPreferences
-import app.vimusic.android.service.PlayerService
 import app.vimusic.android.utils.formatAsDuration
 import app.vimusic.android.utils.semiBold
 import app.vimusic.core.ui.LocalAppearance
@@ -62,18 +61,17 @@ import app.vimusic.core.ui.utils.roundedShape
 import kotlin.math.PI
 import kotlin.math.sin
 
-// TODO: de-couple from binder
-
 @Composable
 fun SeekBar(
-    binder: PlayerService.Binder,
     position: Long,
     media: UiMedia,
+    onSeekTo: (Long) -> Unit,
+    poiTimestamp: Long? = null,
     modifier: Modifier = Modifier,
     color: Color = LocalAppearance.current.colorPalette.text,
     backgroundColor: Color = LocalAppearance.current.colorPalette.background2,
     shape: Shape = 8.dp.roundedShape,
-    isActive: Boolean = binder.player.isPlaying,
+    isActive: Boolean = false,
     alwaysShowDuration: Boolean = false,
     scrubberRadius: Dp = 6.dp,
     style: PlayerPreferences.SeekBarStyle = PlayerPreferences.seekBarStyle,
@@ -93,7 +91,7 @@ fun SeekBar(
         else scrubbingPosition?.let { (it + delta).coerceIn(range) }
     }
     val onSeekEnd = {
-        scrubbingPosition?.let(binder.player::seekTo)
+        scrubbingPosition?.let(onSeekTo)
         scrubbingPosition = null
     }
 
@@ -122,7 +120,7 @@ fun SeekBar(
             ClassicSeekBarBody(
                 position = scrubbingPosition ?: animatedPosition.toLong(),
                 duration = media.duration,
-                poiTimestamp = binder.poiTimestamp,
+                poiTimestamp = poiTimestamp,
                 isDragging = isDragging,
                 color = color,
                 backgroundColor = backgroundColor,
@@ -137,7 +135,7 @@ fun SeekBar(
             WavySeekBarBody(
                 position = scrubbingPosition ?: animatedPosition.toLong(),
                 duration = media.duration,
-                poiTimestamp = binder.poiTimestamp,
+                poiTimestamp = poiTimestamp,
                 isDragging = isDragging,
                 color = color,
                 backgroundColor = backgroundColor,

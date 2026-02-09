@@ -339,15 +339,13 @@ interface Database {
     @Query("SELECT * FROM Playlist WHERE id = :id")
     fun playlist(id: Long): Flow<Playlist?>
 
-    // TODO: apparently this is an edge-case now?
-    @RewriteQueriesToDropUnusedColumns
     @Transaction
     @Query(
         """
-        SELECT * FROM SortedSongPlaylistMap
-        INNER JOIN Song on Song.id = SortedSongPlaylistMap.songId
-        WHERE playlistId = :id
-        ORDER BY SortedSongPlaylistMap.position
+        SELECT Song.* FROM Song
+        INNER JOIN SongPlaylistMap on Song.id = SongPlaylistMap.songId
+        WHERE SongPlaylistMap.playlistId = :id
+        ORDER BY SongPlaylistMap.position
         """
     )
     fun playlistSongs(id: Long): Flow<List<Song>>

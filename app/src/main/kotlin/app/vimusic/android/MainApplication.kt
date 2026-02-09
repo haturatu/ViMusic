@@ -84,6 +84,7 @@ import app.vimusic.android.ui.screens.settingsRoute
 import app.vimusic.android.utils.DisposableListener
 import app.vimusic.android.utils.KeyedCrossfade
 import app.vimusic.android.utils.LocalMonetCompat
+import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.collectProvidedBitmapAsState
 import app.vimusic.android.utils.forcePlay
@@ -92,6 +93,7 @@ import app.vimusic.android.utils.invokeOnReady
 import app.vimusic.android.utils.isInPip
 import app.vimusic.android.utils.maybeEnterPip
 import app.vimusic.android.utils.maybeExitPip
+import app.vimusic.android.utils.rememberPlaybackActions
 import app.vimusic.android.utils.setDefaultPalette
 import app.vimusic.android.utils.shouldBePlaying
 import app.vimusic.android.utils.toast
@@ -216,9 +218,11 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                 .fillMaxSize()
                 .background(appearance.colorPalette.background0)
         ) {
+            val playbackActions = rememberPlaybackActions(vm.binder)
             CompositionLocalProvider(
                 LocalAppearance provides appearance,
                 LocalPlayerServiceBinder provides vm.binder,
+                LocalPlaybackActions provides playbackActions,
                 LocalCredentialManager provides Dependencies.credentialManager,
                 LocalIndication provides ripple(),
                 LocalRippleConfiguration provides rippleConfiguration(appearance = appearance),

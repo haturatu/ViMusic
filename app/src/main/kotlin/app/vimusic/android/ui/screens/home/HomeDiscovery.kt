@@ -60,10 +60,10 @@ import app.vimusic.android.ui.items.AlbumItem
 import app.vimusic.android.ui.items.AlbumItemPlaceholder
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.screens.Route
+import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.center
 import app.vimusic.android.utils.color
-import app.vimusic.android.utils.forcePlay
 import app.vimusic.android.utils.rememberSnapLayoutInfo
 import app.vimusic.android.utils.secondary
 import app.vimusic.android.utils.semiBold
@@ -75,8 +75,6 @@ import app.vimusic.core.ui.utils.isLandscape
 import app.vimusic.providers.innertube.Innertube
 import app.vimusic.providers.innertube.models.NavigationEndpoint
 import app.vimusic.providers.innertube.requests.discoverPage
-
-// TODO: a lot of duplicate code all around the codebase, especially for discover
 
 @OptIn(ExperimentalFoundationApi::class)
 @Route
@@ -93,6 +91,7 @@ fun HomeDiscovery(
     val windowInsets = LocalPlayerAwareWindowInsets.current
     val menuState = LocalMenuState.current
     val binder = LocalPlayerServiceBinder.current
+    val playbackActions = LocalPlaybackActions.current
 
     val scrollState = rememberScrollState()
     val moodGridState = rememberLazyGridState()
@@ -140,30 +139,11 @@ fun HomeDiscovery(
 
             discoverPage?.getOrNull()?.let { page ->
                 if (page.moods.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        FadingRow(
-                            modifier = Modifier.weight(
-                                weight = 1f,
-                                fill = false
-                            )
-                        ) {
-                            BasicText(
-                                text = stringResource(R.string.moods_and_genres),
-                                style = typography.m.semiBold,
-                                modifier = sectionTextModifier
-                            )
-                        }
-
-                        SecondaryTextButton(
-                            text = stringResource(R.string.more),
-                            onClick = onMoreMoodsClick,
-                            modifier = sectionTextModifier
-                        )
-                    }
+                    DiscoverySectionHeader(
+                        title = stringResource(R.string.moods_and_genres),
+                        onMoreClick = onMoreMoodsClick,
+                        textModifier = sectionTextModifier
+                    )
 
                     LazyHorizontalGrid(
                         state = moodGridState,
@@ -190,30 +170,11 @@ fun HomeDiscovery(
                 }
 
                 if (page.newReleaseAlbums.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        FadingRow(
-                            modifier = Modifier.weight(
-                                weight = 1f,
-                                fill = false
-                            )
-                        ) {
-                            BasicText(
-                                text = stringResource(R.string.new_released_albums),
-                                style = typography.m.semiBold,
-                                modifier = sectionTextModifier
-                            )
-                        }
-
-                        SecondaryTextButton(
-                            text = stringResource(R.string.more),
-                            onClick = onMoreAlbumsClick,
-                            modifier = sectionTextModifier
-                        )
-                    }
+                    DiscoverySectionHeader(
+                        title = stringResource(R.string.new_released_albums),
+                        onMoreClick = onMoreAlbumsClick,
+                        textModifier = sectionTextModifier
+                    )
 
                     LazyRow(contentPadding = endPaddingValues) {
                         items(items = page.newReleaseAlbums, key = { it.key }) {
@@ -228,32 +189,13 @@ fun HomeDiscovery(
                 }
 
                 if (page.trending.songs.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        FadingRow(
-                            modifier = Modifier.weight(
-                                weight = 1f,
-                                fill = false
-                            )
-                        ) {
-                            BasicText(
-                                text = stringResource(R.string.trending),
-                                style = typography.m.semiBold,
-                                modifier = sectionTextModifier
-                            )
-                        }
-
-                        page.trending.endpoint?.browseId?.let { browseId ->
-                            SecondaryTextButton(
-                                text = stringResource(R.string.more),
-                                onClick = { onPlaylistClick(browseId) },
-                                modifier = sectionTextModifier
-                            )
-                        }
-                    }
+                    DiscoverySectionHeader(
+                        title = stringResource(R.string.trending),
+                        onMoreClick = page.trending.endpoint?.browseId?.let { browseId ->
+                            { onPlaylistClick(browseId) }
+                        },
+                        textModifier = sectionTextModifier
+                    )
 
                     val trendingGridState = rememberLazyGridState()
                     val trendingSnapLayoutInfoProvider = rememberSnapLayoutInfo(
@@ -291,8 +233,7 @@ fun HomeDiscovery(
                                         },
                                         onClick = {
                                             val mediaItem = song.asMediaItem
-                                            binder?.stopRadio()
-                                            binder?.player?.forcePlay(mediaItem)
+                                            playbackActions.play(mediaItem)
                                             binder?.setupRadio(
                                                 NavigationEndpoint.Endpoint.Watch(videoId = mediaItem.mediaId)
                                             )
@@ -348,6 +289,43 @@ fun HomeDiscovery(
             icon = R.drawable.search,
             onClick = onSearchClick
         )
+    }
+}
+
+@Composable
+private fun DiscoverySectionHeader(
+    title: String,
+    onMoreClick: (() -> Unit)?,
+    textModifier: Modifier,
+    modifier: Modifier = Modifier
+) {
+    val typography = LocalAppearance.current.typography
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        FadingRow(
+            modifier = Modifier.weight(
+                weight = 1f,
+                fill = false
+            )
+        ) {
+            BasicText(
+                text = title,
+                style = typography.m.semiBold,
+                modifier = textModifier
+            )
+        }
+
+        onMoreClick?.let {
+            SecondaryTextButton(
+                text = stringResource(R.string.more),
+                onClick = it,
+                modifier = textModifier
+            )
+        }
     }
 }
 

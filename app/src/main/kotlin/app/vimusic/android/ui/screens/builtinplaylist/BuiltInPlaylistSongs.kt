@@ -34,14 +34,13 @@ import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.InHistoryMediaItemMenu
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
+import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.ValueSelectorDialog
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.screens.home.HeaderSongSortBy
-import app.vimusic.android.utils.PlaylistDownloadIcon
+import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.asMediaItem
-import app.vimusic.android.utils.enqueue
-import app.vimusic.android.utils.forcePlayAtIndex
-import app.vimusic.android.utils.forcePlayFromBeginning
+import app.vimusic.android.utils.rememberMediaItems
 import app.vimusic.compose.persist.persistList
 import app.vimusic.core.data.enums.BuiltInPlaylist
 import app.vimusic.core.data.enums.SongSortBy
@@ -66,8 +65,10 @@ fun BuiltInPlaylistSongs(
     val (colorPalette) = LocalAppearance.current
     val binder = LocalPlayerServiceBinder.current
     val menuState = LocalMenuState.current
+    val playbackActions = LocalPlaybackActions.current
 
     var songs by persistList<Song>("${builtInPlaylist.name}/songs")
+    val mediaItems = rememberMediaItems(songs)
 
     var sortBy by rememberSaveable(stateSaver = enumSaver()) { mutableStateOf(SongSortBy.DateAdded) }
     var sortOrder by rememberSaveable(stateSaver = enumSaver()) { mutableStateOf(SortOrder.Descending) }
@@ -139,47 +140,40 @@ fun BuiltInPlaylistSongs(
                     },
                     modifier = Modifier.padding(bottom = 8.dp)
                 ) {
-                    SecondaryTextButton(
-                        text = stringResource(R.string.enqueue),
-                        enabled = songs.isNotEmpty(),
-                        onClick = {
-                            binder?.player?.enqueue(songs.map(Song::asMediaItem))
+                    SongListActionsRow(
+                        mediaItems = mediaItems,
+                        showDownload = builtInPlaylist != BuiltInPlaylist.Offline,
+                        onEnqueue = { playbackActions.enqueue(mediaItems) },
+                        trailingContent = {
+                            if (builtInPlaylist.sortable) HeaderSongSortBy(
+                                sortBy = sortBy,
+                                setSortBy = { sortBy = it },
+                                sortOrder = sortOrder,
+                                setSortOrder = { sortOrder = it }
+                            )
+
+                            if (builtInPlaylist == BuiltInPlaylist.Top) {
+                                var dialogShowing by rememberSaveable { mutableStateOf(false) }
+
+                                SecondaryTextButton(
+                                    text = topListPeriod.displayName(),
+                                    onClick = { dialogShowing = true }
+                                )
+
+                                if (dialogShowing) ValueSelectorDialog(
+                                    onDismiss = { dialogShowing = false },
+                                    title = stringResource(
+                                        R.string.format_view_top_of_header,
+                                        topListLength
+                                    ),
+                                    selectedValue = topListPeriod,
+                                    values = DataPreferences.TopListPeriod.entries.toImmutableList(),
+                                    onValueSelect = { topListPeriod = it },
+                                    valueText = { it.displayName() }
+                                )
+                            }
                         }
                     )
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    if (builtInPlaylist != BuiltInPlaylist.Offline) PlaylistDownloadIcon(
-                        songs = songs.map(Song::asMediaItem).toImmutableList()
-                    )
-
-                    if (builtInPlaylist.sortable) HeaderSongSortBy(
-                        sortBy = sortBy,
-                        setSortBy = { sortBy = it },
-                        sortOrder = sortOrder,
-                        setSortOrder = { sortOrder = it }
-                    )
-
-                    if (builtInPlaylist == BuiltInPlaylist.Top) {
-                        var dialogShowing by rememberSaveable { mutableStateOf(false) }
-
-                        SecondaryTextButton(
-                            text = topListPeriod.displayName(),
-                            onClick = { dialogShowing = true }
-                        )
-
-                        if (dialogShowing) ValueSelectorDialog(
-                            onDismiss = { dialogShowing = false },
-                            title = stringResource(
-                                R.string.format_view_top_of_header,
-                                topListLength
-                            ),
-                            selectedValue = topListPeriod,
-                            values = DataPreferences.TopListPeriod.entries.toImmutableList(),
-                            onValueSelect = { topListPeriod = it },
-                            valueText = { it.displayName() }
-                        )
-                    }
                 }
             }
 
@@ -209,11 +203,7 @@ fun BuiltInPlaylistSongs(
                                 }
                             },
                             onClick = {
-                                binder?.stopRadio()
-                                binder?.player?.forcePlayAtIndex(
-                                    items = songs.map(Song::asMediaItem),
-                                    index = index
-                                )
+                                playbackActions.playAtIndex(mediaItems, index)
                             }
                         )
                         .animateItem(),
@@ -228,11 +218,7 @@ fun BuiltInPlaylistSongs(
             lazyListState = lazyListState,
             icon = R.drawable.shuffle,
             onClick = {
-                if (songs.isEmpty()) return@FloatingActionsContainerWithScrollToTop
-                binder?.stopRadio()
-                binder?.player?.forcePlayFromBeginning(
-                    songs.shuffled().map(Song::asMediaItem)
-                )
+                playbackActions.shufflePlay(mediaItems)
             }
         )
     }
