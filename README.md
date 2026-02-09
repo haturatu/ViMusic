@@ -53,6 +53,29 @@
      alt="Get it on F-Droid"
      height="80">](https://f-droid.org/packages/it.vfsfitvnm.vimusic/)
 
+## Build
+### Requirements
+- JDK 17 (OpenJDK)
+- Android SDK cmdline-tools (latest)
+- Android SDK
+- Android SDK platform-tools
+- Android SDK build-tools r36.1
+
+### Install (Arch Linux)
+```bash
+sudo pacman -S jdk17-openjdk
+yay -S android-sdk-cmdline-tools-latest android-sdk android-sdk-platform-tools android-sdk-build-tools
+```
+
+### Build APK
+```bash
+make build
+```
+
+The debug APK will be generated at:
+
+`app/build/outputs/apk/debug/app-debug.apk`
+
 ## Acknowledgments
 - [**YouTube-Internal-Clients**](https://github.com/zerodytrash/YouTube-Internal-Clients): A python script that discovers hidden YouTube API clients. Just a research project.
 - [**ionicons**](https://github.com/ionic-team/ionicons): Premium hand-crafted icons built by Ionic, for Ionic apps and web apps everywhere.

@@ -58,7 +58,8 @@ data class PlayerResponse(
             val url: String?,
             val signatureCipher: String?
         ) {
-            suspend fun findUrl() = url ?: signatureCipher?.let { Innertube.decodeSignatureCipher(it) }
+            suspend fun findUrl(videoId: String? = null) =
+                url ?: signatureCipher?.let { Innertube.decodeSignatureCipher(it, videoId) }
         }
     }
 

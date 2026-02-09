@@ -27,6 +27,4 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.foundation)
 
-    detektPlugins(libs.detekt.compose)
-    detektPlugins(libs.detekt.formatting)
 }

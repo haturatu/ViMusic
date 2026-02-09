@@ -37,8 +37,6 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.palette)
 
-    detektPlugins(libs.detekt.compose)
-    detektPlugins(libs.detekt.formatting)
 }
 
 kotlin {

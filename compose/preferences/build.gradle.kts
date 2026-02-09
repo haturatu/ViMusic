@@ -32,6 +32,4 @@ dependencies {
     implementation(libs.kotlin.coroutines)
     api(libs.ktor.serialization.json)
 
-    detektPlugins(libs.detekt.compose)
-    detektPlugins(libs.detekt.formatting)
 }

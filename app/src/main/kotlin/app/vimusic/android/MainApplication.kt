@@ -67,6 +67,7 @@ import androidx.work.Configuration
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.service.PlayerService
+import app.vimusic.android.extractor.NewPipeExtractorClient
 import app.vimusic.android.service.ServiceNotifications
 import app.vimusic.android.service.downloadState
 import app.vimusic.android.ui.components.BottomSheetMenu
@@ -552,6 +553,7 @@ object Dependencies {
     internal fun init(application: MainApplication) {
         this.application = application
         DatabaseInitializer()
+        NewPipeExtractorClient.ensureInitialized()
     }
 }
 

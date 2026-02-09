@@ -29,6 +29,4 @@ dependencies {
 
     implementation(libs.kotlin.immutable)
 
-    detektPlugins(libs.detekt.compose)
-    detektPlugins(libs.detekt.formatting)
 }

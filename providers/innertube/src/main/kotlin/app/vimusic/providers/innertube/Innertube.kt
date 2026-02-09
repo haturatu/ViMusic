@@ -102,30 +102,51 @@ object Innertube {
         }
     }
 
-    private suspend fun getJavaScriptChallenge(): JavaScriptChallenge? {
+    private suspend fun getJavaScriptChallenge(videoId: String? = null): JavaScriptChallenge? {
         if (javascriptChallenge != null) return javascriptChallenge
 
         val iframe = javascriptClient.get("https://www.youtube.com/iframe_api").bodyAsText()
         val version = "player\\\\?/([0-9a-fA-F]{8})\\\\?/".toRegex()
-            .matchEntire(iframe)
+            .find(iframe)
+            ?.groups
+            ?.get(1)
+            ?.value
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+
+        val sourceFile = when {
+            version != null -> javascriptClient
+                .get("https://www.youtube.com/s/player/$version/player_ias.vflset/en_US/base.js")
+                .bodyAsText()
+            videoId != null -> {
+                val embed = javascriptClient.get("https://www.youtube.com/embed/$videoId").bodyAsText()
+                val jsUrl = "\"jsUrl\":\"(/s/player/[A-Za-z0-9]+/player_ias\\.vflset/[A-Za-z_-]+/base\\.js)\""
+                    .toRegex()
+                    .find(embed)
+                    ?.groups
+                    ?.get(1)
+                    ?.value
+                    ?.takeIf { it.isNotBlank() }
+                    ?: return null
+                javascriptClient.get("https://www.youtube.com$jsUrl").bodyAsText()
+            }
+            else -> return null
+        }
+
+        val timestamp = "(?:signatureTimestamp|sts):(\\d{5})".toRegex()
+            .find(sourceFile)
             ?.groups
             ?.get(1)
             ?.value
             ?.trim()
             ?.takeIf { it.isNotBlank() } ?: return null
 
-        val sourceFile = javascriptClient
-            .get("https://www.youtube.com/s/player/$version/player_ias.vflset/en_US/base.js")
-            .bodyAsText()
-        val timestamp = "(?:signatureTimestamp|sts):(\\d{5})".toRegex()
-            .matchEntire(sourceFile)
-            ?.groups
-            ?.get(1)
-            ?.value
-            ?.trim()
-            ?.takeIf { it.isNotBlank() } ?: return null
-        val functionName = "(\\w+)=function\\(a\\)\\{a=a.split\\(\"\"\\);\\w+".toRegex()
-            .matchEntire(sourceFile)
+        val functionName = listOf(
+            "(\\w+)=function\\(a\\)\\{a=a.split\\(\"\"\\);\\w+",
+            "function\\s+(\\w+)\\(a\\)\\{a=a\\.split\\(\"\"\\);\\w+"
+        ).asSequence()
+            .map { it.toRegex().find(sourceFile) }
+            .firstOrNull { it != null }
             ?.groups
             ?.get(1)
             ?.value
@@ -140,19 +161,20 @@ object Innertube {
     }
 
     // TODO: not stable as of right now, is the implementation correct?
-    suspend fun decodeSignatureCipher(cipher: String): String? = runCatchingCancellable {
+    suspend fun decodeSignatureCipher(cipher: String, videoId: String? = null): String? =
+        runCatchingCancellable {
         val params = parseQueryString(cipher)
         val signature = params["s"] ?: return@runCatchingCancellable null
-        val signatureParam = params["sp"] ?: return@runCatchingCancellable null
+        val signatureParam = params["sp"] ?: "signature"
         val url = params["url"] ?: return@runCatchingCancellable null
 
-        val actualSignature = getJavaScriptChallenge()?.decode(signature)
+        val actualSignature = getJavaScriptChallenge(videoId)?.decode(signature)
             ?: return@runCatchingCancellable null
         "$url&$signatureParam=$actualSignature"
     }?.onFailure { it.printStackTrace() }?.getOrNull()
 
-    suspend fun getSignatureTimestamp(): String? = runCatchingCancellable {
-        getJavaScriptChallenge()?.timestamp
+    suspend fun getSignatureTimestamp(videoId: String? = null): String? = runCatchingCancellable {
+        getJavaScriptChallenge(videoId)?.timestamp
     }?.onFailure { it.printStackTrace() }?.getOrNull()
 
     private const val API_KEY = "AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30"

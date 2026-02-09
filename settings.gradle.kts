@@ -24,6 +24,15 @@ pluginManagement {
 
 rootProject.name = "vimusic"
 
+val newPipeExtractorDir = System.getenv("NEWPIPE_EXTRACTOR_DIR") ?: "NewPipeExtractor"
+
+includeBuild(newPipeExtractorDir) {
+    dependencySubstitution {
+        substitute(module("com.github.TeamNewPipe:NewPipeExtractor"))
+            .using(project(":extractor"))
+    }
+}
+
 include(":app")
 include(":core:data")
 include(":core:material-compat")

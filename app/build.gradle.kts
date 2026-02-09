@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    val appId = "${project.group}.android"
+    val appId = "app.vimusic.android"
 
     namespace = appId
     compileSdk = 35
@@ -163,6 +163,8 @@ dependencies {
     implementation(libs.log4j)
     implementation(libs.slf4j)
     implementation(libs.logback)
+    implementation(libs.okhttp)
+    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.25.2")
 
     implementation(projects.providers.github)
     implementation(projects.providers.innertube)
@@ -174,6 +176,4 @@ dependencies {
     implementation(projects.core.data)
     implementation(projects.core.ui)
 
-    detektPlugins(libs.detekt.compose)
-    detektPlugins(libs.detekt.formatting)
 }

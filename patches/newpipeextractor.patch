@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex <codex@example.com>
+Date: Mon, 9 Feb 2026 00:00:00 +0000
+Subject: [PATCH] Use Java 17 toolchain
+
+---
+ build.gradle.kts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/build.gradle.kts b/build.gradle.kts
+index 1111111..2222222 100644
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -17,7 +17,7 @@ allprojects {
+ 
+     extensions.configure<JavaPluginExtension> {
+         toolchain {
+-            languageVersion.set(JavaLanguageVersion.of(11))
++            languageVersion.set(JavaLanguageVersion.of(17))
+         }
+     }
+ }

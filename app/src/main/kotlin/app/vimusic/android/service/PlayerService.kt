@@ -65,6 +65,7 @@ import androidx.media3.extractor.DefaultExtractorsFactory
 import app.vimusic.android.Database
 import app.vimusic.android.MainActivity
 import app.vimusic.android.R
+import app.vimusic.android.extractor.NewPipeExtractorClient
 import app.vimusic.android.models.Event
 import app.vimusic.android.models.Format
 import app.vimusic.android.models.QueuedMediaItem
@@ -116,15 +117,19 @@ import app.vimusic.core.ui.utils.songBundle
 import app.vimusic.core.ui.utils.streamVolumeFlow
 import app.vimusic.providers.innertube.Innertube
 import app.vimusic.providers.innertube.models.NavigationEndpoint
-import app.vimusic.providers.innertube.models.bodies.PlayerBody
 import app.vimusic.providers.innertube.models.bodies.SearchBody
-import app.vimusic.providers.innertube.requests.player
 import app.vimusic.providers.innertube.requests.searchPage
 import app.vimusic.providers.innertube.utils.from
 import app.vimusic.providers.sponsorblock.SponsorBlock
 import app.vimusic.providers.sponsorblock.models.Action
 import app.vimusic.providers.sponsorblock.models.Category
 import app.vimusic.providers.sponsorblock.requests.segments
+import org.schabi.newpipe.extractor.exceptions.ContentNotAvailableException
+import org.schabi.newpipe.extractor.exceptions.ContentNotSupportedException
+import org.schabi.newpipe.extractor.exceptions.ExtractionException
+import org.schabi.newpipe.extractor.exceptions.ParsingException
+import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
+import org.schabi.newpipe.extractor.stream.StreamInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -1287,6 +1292,43 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     companion object {
         private const val DEFAULT_CACHE_DIRECTORY = "exoplayer"
         private const val DEFAULT_CHUNK_LENGTH = 512 * 1024L
+        private val youtubeIdRegex = Regex("^[A-Za-z0-9_-]{11}$")
+
+        private fun extractYouTubeVideoId(raw: String): String {
+            val trimmed = raw.trim()
+            if (youtubeIdRegex.matches(trimmed)) return trimmed
+
+            val uri = runCatching { trimmed.toUri() }.getOrNull()
+            if (uri != null) {
+                uri.getQueryParameter("v")?.takeIf { it.isNotBlank() }?.let { return it }
+
+                val host = uri.host.orEmpty()
+                val path = uri.path.orEmpty()
+                if (host.endsWith("youtu.be")) {
+                    uri.lastPathSegment?.takeIf { youtubeIdRegex.matches(it) }?.let { return it }
+                }
+                if (path.startsWith("/shorts/")) {
+                    path.substringAfter("/shorts/")
+                        .substringBefore("/")
+                        .takeIf { youtubeIdRegex.matches(it) }
+                        ?.let { return it }
+                }
+                if (path.startsWith("/embed/")) {
+                    path.substringAfter("/embed/")
+                        .substringBefore("/")
+                        .takeIf { youtubeIdRegex.matches(it) }
+                        ?.let { return it }
+                }
+            }
+
+            Regex("[?&]v=([A-Za-z0-9_-]{11})")
+                .find(trimmed)
+                ?.groupValues
+                ?.getOrNull(1)
+                ?.let { return it }
+
+            return trimmed
+        }
 
         fun createDatabaseProvider(context: Context) = StandaloneDatabaseProvider(context)
         fun createCache(
@@ -1320,7 +1362,8 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 shouldCache = { !it.isLocal }
             )
         ) { dataSpec ->
-            val mediaId = dataSpec.key?.removePrefix("https://youtube.com/watch?v=")
+            val mediaId = dataSpec.key
+                ?.let(::extractYouTubeVideoId)
                 ?: error("A key must be set")
 
             fun DataSpec.ranged(contentLength: Long?) = contentLength?.let {
@@ -1346,85 +1389,82 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     .withUri(cachedUri.uri)
                     .ranged(cachedUri.meta)
             } ?: run {
-                val body = runBlocking(Dispatchers.IO) {
-                    Innertube.player(PlayerBody(videoId = mediaId))
-                }?.getOrThrow()
+                val result = try {
+                    runBlocking(Dispatchers.IO) {
+                        NewPipeExtractorClient.resolveAudioStream(mediaId)
+                    }
+                } catch (error: ContentNotSupportedException) {
+                    throw PlayableFormatNotFoundException(error)
+                } catch (error: StreamInfo.StreamExtractException) {
+                    throw PlayableFormatNotFoundException(error)
+                } catch (error: ContentNotAvailableException) {
+                    throw UnplayableException(error)
+                } catch (error: ReCaptchaException) {
+                    throw LoginRequiredException(error)
+                } catch (error: ParsingException) {
+                    throw UnplayableException(error)
+                } catch (error: ExtractionException) {
+                    throw UnplayableException(error)
+                }
 
-                if (body?.videoDetails?.videoId != mediaId) throw VideoIdMismatchException()
+                val streamInfo = result.streamInfo
+                if (streamInfo.id != mediaId) {
+                    throw VideoIdMismatchException()
+                }
 
-                val format = body.streamingData?.highestQualityFormat
-                    ?: throw PlayableFormatNotFoundException()
-                val url = when (val status = body.playabilityStatus?.status) {
-                    "OK" -> {
-                        val mediaItem = runCatching {
-                            runBlocking(Dispatchers.IO) { findMediaItem(mediaId) }
-                        }.getOrNull()
-                        val extras = mediaItem?.mediaMetadata?.extras?.songBundle
+                val audioStream = result.audioStream
+                if (!audioStream.isUrl) {
+                    throw PlayableFormatNotFoundException()
+                }
 
-                        if (extras?.durationText == null) format.approxDurationMs
-                            ?.div(1000)
-                            ?.let(DateUtils::formatElapsedTime)
-                            ?.removePrefix("0")
-                            ?.let { durationText ->
+                val mediaItem = runCatching {
+                    runBlocking(Dispatchers.IO) { findMediaItem(mediaId) }
+                }.getOrNull()
+                val extras = mediaItem?.mediaMetadata?.extras?.songBundle
+
+                if (extras?.durationText == null) {
+                    val durationSeconds = streamInfo.duration
+                    if (durationSeconds > 0) {
+                        DateUtils.formatElapsedTime(durationSeconds)
+                            .removePrefix("0")
+                            .let { durationText ->
                                 extras?.durationText = durationText
                                 Database.updateDurationText(mediaId, durationText)
                             }
-
-                        transaction {
-                            runCatching {
-                                mediaItem?.let(Database::insert)
-
-                                Database.insert(
-                                    Format(
-                                        songId = mediaId,
-                                        itag = format.itag,
-                                        mimeType = format.mimeType,
-                                        bitrate = format.bitrate,
-                                        loudnessDb = body.playerConfig?.audioConfig?.normalizedLoudnessDb,
-                                        contentLength = format.contentLength,
-                                        lastModified = format.lastModified
-                                    )
-                                )
-                            }
-                        }
-
-                        runCatching {
-                            runBlocking(Dispatchers.IO) {
-                                format.findUrl()
-                            }
-                        }.getOrElse {
-                            throw RestrictedVideoException(it)
-                        }
                     }
-
-                    "UNPLAYABLE" -> throw UnplayableException()
-                    "LOGIN_REQUIRED" -> throw LoginRequiredException()
-
-                    else -> throw PlaybackException(
-                        /* message = */ status,
-                        /* cause = */ null,
-                        /* errorCode = */ PlaybackException.ERROR_CODE_REMOTE_ERROR
-                    )
-                } ?: throw UnplayableException()
-
-                val uri = url.toUri().let {
-                    if (body.cpn == null) it
-                    else it
-                        .buildUpon()
-                        .appendQueryParameter("cpn", body.cpn)
-                        .build()
                 }
+
+                transaction {
+                    runCatching {
+                        mediaItem?.let(Database::insert)
+                        Database.insert(
+                            Format(
+                                songId = mediaId,
+                                itag = audioStream.itag.takeIf { it > 0 },
+                                mimeType = audioStream.format?.mimeType,
+                                bitrate = audioStream.averageBitrate
+                                    .takeIf { it > 0 }
+                                    ?.toLong(),
+                                loudnessDb = null,
+                                contentLength = null,
+                                lastModified = null
+                            )
+                        )
+                    }
+                }
+
+                val uri = audioStream.content.toUri()
 
                 uriCache.push(
                     key = mediaId,
-                    meta = format.contentLength,
+                    meta = null,
                     uri = uri,
-                    validUntil = body.streamingData?.expiresInSeconds?.seconds?.let { Clock.System.now() + it }
+                    validUntil = null
                 )
 
                 dataSpec
                     .withUri(uri)
-                    .ranged(format.contentLength)
+                    .ranged(null)
             }
         }
             .handleUnknownErrors {

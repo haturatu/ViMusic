@@ -19,8 +19,6 @@ dependencies {
     implementation(libs.rhino)
     implementation(libs.log4j)
 
-    detektPlugins(libs.detekt.compose)
-    detektPlugins(libs.detekt.formatting)
 }
 
 kotlin {
