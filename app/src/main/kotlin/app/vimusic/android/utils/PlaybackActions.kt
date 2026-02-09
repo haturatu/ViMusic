@@ -38,7 +38,7 @@ fun rememberPlaybackActions(binder: PlayerService.Binder?): PlaybackActions = re
         }
 
         override fun enqueue(items: List<MediaItem>) {
-            binder?.player?.enqueue(items)
+            binder?.enqueue(items)
         }
     }
 }

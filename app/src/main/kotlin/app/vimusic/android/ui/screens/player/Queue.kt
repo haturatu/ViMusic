@@ -372,7 +372,7 @@ fun Queue(
                                         BaseMediaItemMenu(
                                             onDismiss = { menuState.hide() },
                                             mediaItem = it,
-                                            onEnqueue = { binder.player.enqueue(it) },
+                                            onEnqueue = { binder.enqueue(it) },
                                             onPlayNext = { binder.player.addNext(it) }
                                         )
                                     }
@@ -396,7 +396,7 @@ fun Queue(
                                             icon = R.drawable.enqueue,
                                             color = colorPalette.text,
                                             onClick = {
-                                                binder.player.enqueue(it)
+                                                binder.enqueue(it)
                                             },
                                             modifier = Modifier.size(18.dp)
                                         )

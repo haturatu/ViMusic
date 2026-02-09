@@ -85,6 +85,7 @@ import app.vimusic.android.utils.activityPendingIntent
 import app.vimusic.android.utils.asDataSource
 import app.vimusic.android.utils.broadcastPendingIntent
 import app.vimusic.android.utils.defaultDataSource
+import app.vimusic.android.utils.enqueue
 import app.vimusic.android.utils.findCause
 import app.vimusic.android.utils.findNextMediaItemById
 import app.vimusic.android.utils.forcePlayFromBeginning
@@ -186,6 +187,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private lateinit var mediaSession: MediaSession
     private lateinit var cache: SimpleCache
     private lateinit var player: ExoPlayer
+    private val uriCache = UriCache<String, Long?>(size = 64)
 
     private val defaultActions =
         PlaybackState.ACTION_PLAY or
@@ -1050,7 +1052,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 }
             },
             context = applicationContext,
-            cache = cache
+            cache = cache,
+            uriCache = uriCache,
+            dbWriteScope = coroutineScope
         ),
         /* extractorsFactory = */ DefaultExtractorsFactory()
     ).setLoadErrorHandlingPolicy(
@@ -1178,6 +1182,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 isLoadingRadio = true
                 radioJob = coroutineScope.launch {
                     val items = radioData.process().let { Database.filterBlacklistedSongs(it) }
+                    prefetchMediaItems(items)
 
                     withContext(Dispatchers.Main) {
                         if (justAdd) player.addMediaItems(items.drop(1))
@@ -1194,6 +1199,20 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             isLoadingRadio = false
             radioJob?.cancel()
             radio = null
+        }
+
+        fun prefetchMediaItems(mediaItems: List<MediaItem>) {
+            this@PlayerService.prefetchMediaItems(mediaItems)
+        }
+
+        fun enqueue(mediaItem: MediaItem) {
+            prefetchMediaItems(listOf(mediaItem))
+            player.enqueue(mediaItem)
+        }
+
+        fun enqueue(mediaItems: List<MediaItem>) {
+            prefetchMediaItems(mediaItems)
+            player.enqueue(mediaItems)
         }
 
         /**
@@ -1237,6 +1256,42 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             }
         }
     }.let { }
+
+    private fun shouldPrefetch(mediaItem: MediaItem) =
+        !mediaItem.isLocal && mediaItem.mediaId.isNotBlank()
+
+    private fun prefetchMediaItems(mediaItems: List<MediaItem>) {
+        val ids = mediaItems
+            .asSequence()
+            .filter(::shouldPrefetch)
+            .map { extractYouTubeVideoId(it.mediaId) }
+            .distinct()
+            .take(PREFETCH_MAX)
+            .toList()
+
+        if (ids.isEmpty()) return
+
+        coroutineScope.launch(Dispatchers.IO) {
+            ids.forEach { mediaId ->
+                if (uriCache[mediaId] != null) return@forEach
+
+                runCatching {
+                    val result = NewPipeExtractorClient.resolveAudioStream(mediaId)
+                    val streamInfo = result.streamInfo
+                    if (streamInfo.id != mediaId) return@runCatching
+                    val audioStream = result.audioStream
+                    if (!audioStream.isUrl) return@runCatching
+
+                    uriCache.push(
+                        key = mediaId,
+                        meta = null,
+                        uri = audioStream.content.toUri(),
+                        validUntil = null
+                    )
+                }.onFailure { it.printStackTrace() }
+            }
+        }
+    }
 
     private inner class SessionCallback : MediaSession.Callback() {
         override fun onPlay() = player.play()
@@ -1292,6 +1347,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     companion object {
         private const val DEFAULT_CACHE_DIRECTORY = "exoplayer"
         private const val DEFAULT_CHUNK_LENGTH = 512 * 1024L
+        private const val PREFETCH_MAX = 6
         private val youtubeIdRegex = Regex("^[A-Za-z0-9_-]{11}$")
 
         private fun extractYouTubeVideoId(raw: String): String {
@@ -1354,7 +1410,8 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             cache: Cache,
             chunkLength: Long? = DEFAULT_CHUNK_LENGTH,
             findMediaItem: suspend (videoId: String) -> MediaItem? = { null },
-            uriCache: UriCache<String, Long?> = UriCache()
+            uriCache: UriCache<String, Long?> = UriCache(),
+            dbWriteScope: CoroutineScope? = null
         ): DataSource.Factory = ResolvingDataSource.Factory(
             ConditionalCacheDataSourceFactory(
                 cacheDataSourceFactory = cache.readOnlyWhen { PlayerPreferences.pauseCache }.asDataSource,
@@ -1440,23 +1497,31 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     }
                 }
 
-                transaction {
-                    runCatching {
-                        mediaItem?.let(Database::insert)
-                        Database.insert(
-                            Format(
-                                songId = mediaId,
-                                itag = audioStream.itag.takeIf { it > 0 },
-                                mimeType = audioStream.format?.mimeType,
-                                bitrate = audioStream.averageBitrate
-                                    .takeIf { it > 0 }
-                                    ?.toLong(),
-                                loudnessDb = null,
-                                contentLength = null,
-                                lastModified = null
+                val writeTask = {
+                    transaction {
+                        runCatching {
+                            mediaItem?.let(Database::insert)
+                            Database.insert(
+                                Format(
+                                    songId = mediaId,
+                                    itag = audioStream.itag.takeIf { it > 0 },
+                                    mimeType = audioStream.format?.mimeType,
+                                    bitrate = audioStream.averageBitrate
+                                        .takeIf { it > 0 }
+                                        ?.toLong(),
+                                    loudnessDb = null,
+                                    contentLength = null,
+                                    lastModified = null
+                                )
                             )
-                        )
+                        }
                     }
+                }
+
+                if (dbWriteScope != null) {
+                    dbWriteScope.launch(Dispatchers.IO) { writeTask() }
+                } else {
+                    writeTask()
                 }
 
                 val uri = audioStream.content.toUri()

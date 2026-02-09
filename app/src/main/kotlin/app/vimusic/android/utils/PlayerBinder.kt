@@ -6,6 +6,7 @@ import app.vimusic.android.service.PlayerService
 fun PlayerService.Binder?.playMediaItem(mediaItem: MediaItem) {
     if (this == null) return
     stopRadio()
+    prefetchMediaItems(listOf(mediaItem))
     player.forcePlay(mediaItem)
 }
 
@@ -15,11 +16,13 @@ fun PlayerService.Binder?.playSongAtIndex(
 ) {
     if (this == null) return
     stopRadio()
+    prefetchMediaItems(mediaItems)
     player.forcePlayAtIndex(mediaItems, index)
 }
 
 fun PlayerService.Binder?.shufflePlay(mediaItems: List<MediaItem>) {
     if (this == null || mediaItems.isEmpty()) return
     stopRadio()
+    prefetchMediaItems(mediaItems)
     player.forcePlayFromBeginning(mediaItems.shuffled())
 }
