@@ -1425,12 +1425,12 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     runCatching { Database.likedAtNow(mediaId) != null }.getOrDefault(false)
                 }
             )
-        ) { dataSpec ->
+        ) resolver@{ dataSpec ->
             val mediaId = dataSpec.key
                 ?.let(::extractYouTubeVideoId)
                 ?: run {
                     Log.w(TAG, "DataSpec key missing; skipping cache resolution")
-                    return@ResolvingDataSource.Factory dataSpec
+                    return@resolver dataSpec
                 }
 
             fun DataSpec.ranged(contentLength: Long?) = contentLength?.let {
