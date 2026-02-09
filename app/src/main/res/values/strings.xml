@@ -247,8 +247,15 @@
     <string name="format_cache_space_used">%1$s used</string>
     <string name="format_cache_space_used_percentage">%1$s used (%2$s%%)</string>
     <string name="song_cache">Song cache</string>
+    <string name="clear_image_cache">Clear image cache</string>
+    <string name="clear_image_cache_description">Remove all cached images</string>
+    <string name="clear_song_cache">Clear song cache</string>
+    <string name="clear_song_cache_description">Remove all cached songs</string>
+    <string name="cache_cleared">Cache cleared</string>
     <string name="pause_song_cache">Pause cache</string>
     <string name="pause_song_cache_description">Temporarily pauses new songs being added to cache</string>
+    <string name="cache_favorites_only">Cache favorites only</string>
+    <string name="cache_favorites_only_description">Only cache songs you have liked</string>
     <string name="database">Database</string>
 
     <string name="cleanup">Cleanup</string>

@@ -21,6 +21,7 @@ import androidx.media3.exoplayer.scheduler.Requirements
 import androidx.media3.exoplayer.workmanager.WorkManagerScheduler
 import app.vimusic.android.Database
 import app.vimusic.android.R
+import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.transaction
 import app.vimusic.android.utils.ActionReceiver
 import app.vimusic.android.utils.download
@@ -242,6 +243,10 @@ class PrecacheService : DownloadService(
     companion object {
         fun scheduleCache(context: Context, mediaItem: MediaItem) {
             if (mediaItem.isLocal) return
+            if (DataPreferences.cacheFavoritesOnly) {
+                val isFavorite = runCatching { Database.likedAtNow(mediaItem.mediaId) != null }.getOrDefault(false)
+                if (!isFavorite) return
+            }
 
             val downloadRequest = DownloadRequest
                 .Builder(

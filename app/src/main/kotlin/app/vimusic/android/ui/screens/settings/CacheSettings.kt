@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
@@ -21,8 +22,12 @@ import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.preferences.PlayerPreferences
 import app.vimusic.android.ui.components.themed.LinearProgressIndicator
 import app.vimusic.android.ui.screens.Route
+import app.vimusic.android.utils.toast
 import app.vimusic.core.data.enums.ExoPlayerDiskCacheSize
 import coil3.imageLoader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(UnstableApi::class)
 @Route
@@ -30,6 +35,7 @@ import coil3.imageLoader
 fun CacheSettings() = with(DataPreferences) {
     val context = LocalContext.current
     val binder = LocalPlayerServiceBinder.current
+    val coroutineScope = rememberCoroutineScope()
 
     SettingsCategoryScreen(title = stringResource(R.string.cache)) {
         SettingsDescription(text = stringResource(R.string.cache_description))
@@ -63,6 +69,18 @@ fun CacheSettings() = with(DataPreferences) {
                     title = stringResource(R.string.max_size),
                     selectedValue = coilDiskCacheMaxSize,
                     onValueSelect = { coilDiskCacheMaxSize = it }
+                )
+                SettingsEntry(
+                    title = stringResource(R.string.clear_image_cache),
+                    text = stringResource(R.string.clear_image_cache_description),
+                    onClick = {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            diskCache.clear()
+                            withContext(Dispatchers.Main) {
+                                context.toast(context.getString(R.string.cache_cleared))
+                            }
+                        }
+                    }
                 )
             }
         }
@@ -107,6 +125,26 @@ fun CacheSettings() = with(DataPreferences) {
                     text = stringResource(R.string.pause_song_cache_description),
                     isChecked = PlayerPreferences.pauseCache,
                     onCheckedChange = { PlayerPreferences.pauseCache = it }
+                )
+                SwitchSettingsEntry(
+                    title = stringResource(R.string.cache_favorites_only),
+                    text = stringResource(R.string.cache_favorites_only_description),
+                    isChecked = cacheFavoritesOnly,
+                    onCheckedChange = { cacheFavoritesOnly = it }
+                )
+                SettingsEntry(
+                    title = stringResource(R.string.clear_song_cache),
+                    text = stringResource(R.string.clear_song_cache_description),
+                    onClick = {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            cache.keys.toList().forEach { key ->
+                                cache.removeResource(key)
+                            }
+                            withContext(Dispatchers.Main) {
+                                context.toast(context.getString(R.string.cache_cleared))
+                            }
+                        }
+                    }
                 )
             }
         }

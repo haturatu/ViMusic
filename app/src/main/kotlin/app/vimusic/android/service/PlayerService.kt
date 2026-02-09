@@ -1359,7 +1359,13 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             ConditionalCacheDataSourceFactory(
                 cacheDataSourceFactory = cache.readOnlyWhen { PlayerPreferences.pauseCache }.asDataSource,
                 upstreamDataSourceFactory = context.defaultDataSource,
-                shouldCache = { !it.isLocal }
+                shouldCache = { dataSpec ->
+                    if (dataSpec.isLocal) return@ConditionalCacheDataSourceFactory false
+                    if (!DataPreferences.cacheFavoritesOnly) return@ConditionalCacheDataSourceFactory true
+
+                    val mediaId = dataSpec.key?.let(::extractYouTubeVideoId) ?: return@ConditionalCacheDataSourceFactory false
+                    runCatching { Database.likedAtNow(mediaId) != null }.getOrDefault(false)
+                }
             )
         ) { dataSpec ->
             val mediaId = dataSpec.key
