@@ -420,4 +420,11 @@
         <item quantity="one">%1$d песма</item>
         <item quantity="other">%1$d песама</item>
     </plurals>
+    <string name="cache_cleared">Кеш обрисан</string>
+    <string name="cache_favorites_only">Кеширај само омиљене</string>
+    <string name="cache_favorites_only_description">Кеширај само песме које си означио/ла као омиљене</string>
+    <string name="clear_image_cache">Обриши кеш слика</string>
+    <string name="clear_image_cache_description">Уклони све кеширане слике</string>
+    <string name="clear_song_cache">Обриши кеш песама</string>
+    <string name="clear_song_cache_description">Уклони све кеширане песме</string>
 </resources>

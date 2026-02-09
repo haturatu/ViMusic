@@ -404,4 +404,16 @@
         <item quantity="one">%1$d şarkı</item>
         <item quantity="other">%1$d şarkı</item>
     </plurals>
+    <string name="cache_cleared">Önbellek temizlendi</string>
+    <string name="cache_favorites_only">Yalnızca favorileri önbelleğe al</string>
+    <string name="cache_favorites_only_description">Yalnızca beğendiğin şarkıları önbelleğe al</string>
+    <string name="clear_image_cache">Görsel önbelleğini temizle</string>
+    <string name="clear_image_cache_description">Tüm önbelleğe alınmış görselleri kaldır</string>
+    <string name="clear_song_cache">Şarkı önbelleğini temizle</string>
+    <string name="clear_song_cache_description">Tüm önbelleğe alınmış şarkıları kaldır</string>
+    <string name="confirm_delete_piped_session">Bu Piped oturumunu silmek istiyor musunuz?</string>
+    <string name="lyrics_keep_screen_awake">Ekranı açık tut (şarkı sözleri)</string>
+    <string name="lyrics_keep_screen_awake_description">Şarkı sözleri görüntülenirken ekranı açık tutar</string>
+    <string name="more">Daha fazla</string>
+    <string name="piped_session_created_successfully">Piped oturumu başarıyla oluşturuldu</string>
 </resources>

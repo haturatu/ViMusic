@@ -424,4 +424,11 @@
         <item quantity="one">%1$d laul</item>
         <item quantity="other">%1$d laulu</item>
     </plurals>
+    <string name="cache_cleared">Vahemälu tühjendatud</string>
+    <string name="cache_favorites_only">Vahemällu ainult lemmikud</string>
+    <string name="cache_favorites_only_description">Vahemällu salvestatakse ainult meeldivaks märgitud lood</string>
+    <string name="clear_image_cache">Pildi vahemälu tühjendamine</string>
+    <string name="clear_image_cache_description">Eemalda kõik vahemälus olevad pildid</string>
+    <string name="clear_song_cache">Loo vahemälu tühjendamine</string>
+    <string name="clear_song_cache_description">Eemalda kõik vahemälus olevad lood</string>
 </resources>

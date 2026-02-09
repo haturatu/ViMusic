@@ -427,4 +427,11 @@
         <item quantity="few">%1$d песни</item>
         <item quantity="many">%1$d песен</item>
     </plurals>
+    <string name="cache_cleared">Кэш очищен</string>
+    <string name="cache_favorites_only">Кэшировать только избранное</string>
+    <string name="cache_favorites_only_description">Кэшировать только понравившиеся песни</string>
+    <string name="clear_image_cache">Очистить кэш изображений</string>
+    <string name="clear_image_cache_description">Удалить все кэшированные изображения</string>
+    <string name="clear_song_cache">Очистить кэш песен</string>
+    <string name="clear_song_cache_description">Удалить все кэшированные песни</string>
 </resources>

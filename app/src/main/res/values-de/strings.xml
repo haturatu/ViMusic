@@ -408,4 +408,11 @@
         <item quantity="one">%1$d Lied</item>
         <item quantity="other">%1$d Lieder</item>
     </plurals>
+    <string name="cache_cleared">Cache geleert</string>
+    <string name="cache_favorites_only">Nur Favoriten zwischenspeichern</string>
+    <string name="cache_favorites_only_description">Nur Songs, die du geliked hast, zwischenspeichern</string>
+    <string name="clear_image_cache">Bilder-Cache leeren</string>
+    <string name="clear_image_cache_description">Alle zwischengespeicherten Bilder entfernen</string>
+    <string name="clear_song_cache">Song-Cache leeren</string>
+    <string name="clear_song_cache_description">Alle zwischengespeicherten Songs entfernen</string>
 </resources>

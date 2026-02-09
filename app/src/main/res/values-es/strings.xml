@@ -419,4 +419,11 @@
         <item quantity="many">%1$d canciones</item>
         <item quantity="other">%1$d canciones</item>
     </plurals>
+    <string name="cache_cleared">Caché limpiada</string>
+    <string name="cache_favorites_only">Solo guardar favoritos en caché</string>
+    <string name="cache_favorites_only_description">Solo guarda en caché canciones que te han gustado</string>
+    <string name="clear_image_cache">Limpiar caché de imágenes</string>
+    <string name="clear_image_cache_description">Eliminar todas las imágenes en caché</string>
+    <string name="clear_song_cache">Limpiar caché de canciones</string>
+    <string name="clear_song_cache_description">Eliminar todas las canciones en caché</string>
 </resources>

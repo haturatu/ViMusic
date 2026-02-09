@@ -430,4 +430,11 @@
         <item quantity="one">%1$d nummer</item>
         <item quantity="other">%1$d nummers</item>
     </plurals>
+    <string name="cache_cleared">Cache geleegd</string>
+    <string name="cache_favorites_only">Alleen favorieten cachen</string>
+    <string name="cache_favorites_only_description">Cache alleen nummers die je leuk vindt</string>
+    <string name="clear_image_cache">Afbeeldingscache wissen</string>
+    <string name="clear_image_cache_description">Alle gecachte afbeeldingen verwijderen</string>
+    <string name="clear_song_cache">Songcache wissen</string>
+    <string name="clear_song_cache_description">Alle gecachte nummers verwijderen</string>
 </resources>

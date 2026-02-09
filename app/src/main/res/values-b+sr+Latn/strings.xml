@@ -420,4 +420,11 @@
         <item quantity="one">%1$d pesma</item>
         <item quantity="other">%1$d pesama</item>
     </plurals>
+    <string name="cache_cleared">Keš obrisan</string>
+    <string name="cache_favorites_only">Keširaj samo omiljene</string>
+    <string name="cache_favorites_only_description">Keširaj samo pesme koje si označio/la kao omiljene</string>
+    <string name="clear_image_cache">Obriši keš slika</string>
+    <string name="clear_image_cache_description">Ukloni sve keširane slike</string>
+    <string name="clear_song_cache">Obriši keš pesama</string>
+    <string name="clear_song_cache_description">Ukloni sve keširane pesme</string>
 </resources>

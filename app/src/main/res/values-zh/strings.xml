@@ -424,4 +424,11 @@
     <plurals name="song_count_plural">
         <item quantity="other">%1$d 首歌曲</item>
     </plurals>
+    <string name="cache_cleared">缓存已清除</string>
+    <string name="cache_favorites_only">仅缓存收藏</string>
+    <string name="cache_favorites_only_description">仅缓存你喜欢的歌曲</string>
+    <string name="clear_image_cache">清除图片缓存</string>
+    <string name="clear_image_cache_description">删除所有缓存的图片</string>
+    <string name="clear_song_cache">清除歌曲缓存</string>
+    <string name="clear_song_cache_description">删除所有缓存的歌曲</string>
 </resources>
