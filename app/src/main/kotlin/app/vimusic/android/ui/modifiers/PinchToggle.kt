@@ -26,7 +26,7 @@ value class PinchDirection private constructor(private val out: Boolean) {
     ) = when (this) {
         Out -> value >= threshold
         In -> value <= threshold
-        else -> error("Unreachable")
+        else -> false
     }
 }
 

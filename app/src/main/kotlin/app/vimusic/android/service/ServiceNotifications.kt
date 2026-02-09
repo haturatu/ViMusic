@@ -7,6 +7,7 @@ import android.app.Service
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.annotation.StringRes
 import androidx.core.app.NotificationChannelCompat
@@ -37,7 +38,6 @@ abstract class NotificationChannels {
     ) {
         private val Context.notificationManager
             get() = getSystemService<NotificationManager>()
-                ?: error("No NotificationManager available")
 
         private fun createNotification(
             context: Context,
@@ -65,6 +65,10 @@ abstract class NotificationChannels {
         ) = runCatching {
             handler.post {
                 val manager = context.notificationManager
+                if (manager == null) {
+                    Log.w("ServiceNotifications", "No NotificationManager available; skipping notify")
+                    return@post
+                }
                 upsertChannel(context)
                 val (id, notif) = createNotification(context, notification)
                 manager.notify(id, notif)
@@ -87,7 +91,17 @@ abstract class NotificationChannels {
             notificationId: Int? = null
         ) = runCatching {
             handler.post {
-                context.notificationManager.cancel((this.notificationId ?: notificationId)!!)
+                val manager = context.notificationManager
+                if (manager == null) {
+                    Log.w("ServiceNotifications", "No NotificationManager available; skipping cancel")
+                    return@post
+                }
+                val id = this.notificationId ?: notificationId
+                if (id == null) {
+                    Log.w("ServiceNotifications", "No notification id available; skipping cancel")
+                    return@post
+                }
+                manager.cancel(id)
             }
         }
     }
@@ -119,8 +133,12 @@ abstract class NotificationChannels {
         val channel = Channel(
             id = "${name?.lowercase() ?: property.name.lowercase()}_channel_id",
             description = description,
-            notificationId = if (singleNotification) index.getAndIncrement().also {
-                if (it > 2001) error("More than 1000 unique notifications created!")
+            notificationId = if (singleNotification) {
+                val nextId = index.getAndIncrement()
+                if (nextId > 2001) {
+                    Log.w("ServiceNotifications", "More than 1000 unique notifications created; using random id")
+                    randomNotificationId()
+                } else nextId
             } else null,
             importance = importance,
             options = options

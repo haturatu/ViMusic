@@ -18,6 +18,7 @@ import app.vimusic.android.ui.screens.Route
 import app.vimusic.android.utils.currentLocale
 import app.vimusic.android.utils.findActivity
 import app.vimusic.android.utils.startLanguagePicker
+import app.vimusic.android.utils.toast
 import app.vimusic.core.ui.BuiltInFontFamily
 import app.vimusic.core.ui.ColorMode
 import app.vimusic.core.ui.ColorSource
@@ -86,7 +87,8 @@ fun AppearanceSettings() = with(AppearancePreferences) {
                 text = currentLocale()?.displayLanguage
                     ?: stringResource(R.string.color_source_default),
                 onClick = {
-                    context.findActivity().startLanguagePicker()
+                    context.findActivity()?.startLanguagePicker()
+                        ?: context.toast(context.getString(R.string.error_message))
                 }
             )
 

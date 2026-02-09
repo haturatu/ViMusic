@@ -22,6 +22,7 @@ import android.media.session.PlaybackState
 import android.os.Bundle
 import android.support.v4.media.session.MediaSessionCompat
 import android.text.format.DateUtils
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -1456,10 +1457,13 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     runCatching { Database.likedAtNow(mediaId) != null }.getOrDefault(false)
                 }
             )
-        ) { dataSpec ->
+        ) resolver@{ dataSpec ->
             val mediaId = dataSpec.key
                 ?.let(::extractYouTubeVideoId)
-                ?: error("A key must be set")
+                ?: run {
+                    Log.w(TAG, "DataSpec key missing; skipping cache resolution")
+                    return@resolver dataSpec
+                }
 
             fun DataSpec.ranged(contentLength: Long?) = contentLength?.let {
                 if (chunkLength == null) return@let null
