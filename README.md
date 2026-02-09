@@ -107,7 +107,7 @@ cp local.properties.example local.properties
 Then edit `local.properties` to match your SDK path:
 
 ```
-sdk.dir=/home/haturatu/.android-sdk
+sdk.dir=/home/youruser/.android-sdk
 ```
 
 ### Build APK
