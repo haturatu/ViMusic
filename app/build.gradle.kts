@@ -134,6 +134,7 @@ dependencies {
     implementation(libs.compose.shimmer)
     implementation(libs.compose.lottie)
     implementation(libs.compose.material3)
+    implementation(libs.compose.lifecycle)
 
     implementation(libs.coil.compose)
     implementation(libs.coil.ktor)

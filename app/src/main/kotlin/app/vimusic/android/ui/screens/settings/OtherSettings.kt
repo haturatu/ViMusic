@@ -20,7 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SnapshotMutationPolicy
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -103,7 +103,7 @@ fun OtherSettings() {
 
     val queriesCount by remember {
         Database.queriesCount().distinctUntilChanged()
-    }.collectAsState(initial = 0)
+    }.collectAsStateWithLifecycle(initialValue = 0)
 
     SettingsCategoryScreen(
         title = stringResource(R.string.other),

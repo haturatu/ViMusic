@@ -28,7 +28,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -347,7 +347,7 @@ fun MediaItemMenu(
                     sortBy = PlaylistSortBy.DateAdded,
                     sortOrder = SortOrder.Descending
                 )
-            }.collectAsState(initial = emptyList(), context = Dispatchers.IO)
+            }.collectAsStateWithLifecycle(initialValue = emptyList(), context = Dispatchers.IO)
 
             var isCreatingNewPlaylist by rememberSaveable { mutableStateOf(false) }
 

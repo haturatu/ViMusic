@@ -10,7 +10,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,7 +66,7 @@ fun SyncSettings(
     val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
 
-    val pipedSessions by Database.pipedSessions().collectAsState(initial = listOf())
+    val pipedSessions by Database.pipedSessions().collectAsStateWithLifecycle(initialValue = listOf())
 
     var linkingPiped by remember { mutableStateOf(false) }
     if (linkingPiped) DefaultDialog(

@@ -8,7 +8,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,7 +47,7 @@ fun PlaylistDownloadIcon(
     val context = LocalContext.current
     val (colorPalette) = LocalAppearance.current
 
-    val isDownloading by downloadState.collectAsState()
+    val isDownloading by downloadState.collectAsStateWithLifecycle()
 
     AnimatedContent(
         targetState = isDownloading,

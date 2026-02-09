@@ -5,7 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -36,10 +36,10 @@ fun DatabaseSettings() = with(DataPreferences) {
     val context = LocalContext.current
 
     val eventsCount by remember { Database.eventsCount().distinctUntilChanged() }
-        .collectAsState(initial = 0)
+        .collectAsStateWithLifecycle(initialValue = 0)
 
     val blacklistLength by remember { Database.blacklistLength().distinctUntilChanged() }
-        .collectAsState(initial = 0)
+        .collectAsStateWithLifecycle(initialValue = 0)
 
     val backupLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument(mimeType = "application/vnd.sqlite3")

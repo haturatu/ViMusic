@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -92,7 +92,7 @@ fun PlaylistItem(
                 .map { urls ->
                     urls.map { it.thumbnail(thumbnailSizePx / 2) }
                 }
-    }.collectAsState(initial = emptyList(), context = Dispatchers.IO)
+    }.collectAsStateWithLifecycle(initialValue = emptyList(), context = Dispatchers.IO)
 
     PlaylistItem(
         thumbnailContent = {

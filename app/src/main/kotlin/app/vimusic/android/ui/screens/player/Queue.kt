@@ -35,7 +35,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -505,7 +505,7 @@ fun Queue(
                                             sortOrder = SortOrder.Descending
                                         )
                                         .onFirst { isCreatingNewPlaylist = it.isEmpty() }
-                                }.collectAsState(initial = null, context = Dispatchers.IO)
+                                }.collectAsStateWithLifecycle(initialValue = null, context = Dispatchers.IO)
 
                                 if (isCreatingNewPlaylist) TextFieldDialog(
                                     hintText = stringResource(R.string.enter_playlist_name_prompt),

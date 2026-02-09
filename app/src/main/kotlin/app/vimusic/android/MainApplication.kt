@@ -39,7 +39,7 @@ import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -300,7 +300,7 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                 ) else CompositionLocalProvider(
                     LocalPlayerAwareWindowInsets provides playerAwareWindowInsets
                 ) {
-                    val isDownloading by downloadState.collectAsState()
+                    val isDownloading by downloadState.collectAsStateWithLifecycle()
 
                     Box {
                         HomeScreen()
