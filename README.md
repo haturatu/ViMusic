@@ -69,6 +69,8 @@ yay -S android-sdk-cmdline-tools-latest android-sdk android-sdk-platform-tools a
 
 ### Environment variables (.bashrc)
 ```bash
+. "/home/haturatu/.deno/env"export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+export PATH=$JAVA_HOME/bin:$PATH
 export ANDROID_HOME=/opt/android-sdk
 export ANDROID_SDK_ROOT=/opt/android-sdk
 export PATH=$PATH:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools
