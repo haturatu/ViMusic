@@ -35,7 +35,9 @@ fun RowScope.SongListActionsRow(
     leadingContent?.invoke(this)
 
     if (showDownload && hasItems) {
-        PlaylistDownloadIcon(songs = mediaItems!!.toImmutableList())
+        mediaItems?.let { items ->
+            PlaylistDownloadIcon(songs = items.toImmutableList())
+        }
     }
 
     trailingContent?.invoke(this)
