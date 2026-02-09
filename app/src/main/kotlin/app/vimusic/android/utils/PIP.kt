@@ -177,6 +177,12 @@ fun Pip(
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
 
+    if (activity == null) {
+        Log.w("Pip", "No Activity available; skipping PIP setup")
+        Box(modifier = modifier, content = content)
+        return
+    }
+
     DisposableEffect(context, actions) {
         val currentActions = actions ?: return@DisposableEffect onDispose { }
         currentActions.register(context)

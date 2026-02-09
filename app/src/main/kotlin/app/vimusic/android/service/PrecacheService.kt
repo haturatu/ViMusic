@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.ServiceConnection
 import android.net.Uri
 import android.os.IBinder
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
@@ -151,8 +152,9 @@ class PrecacheService : DownloadService(
                 waiters += { it.resume(Unit) }
             }
             binder?.cache ?: run {
+                Log.w("PrecacheService", "PlayerService not bound; falling back to standalone cache")
                 toast(getString(R.string.error_pre_cache))
-                error("PlayerService failed to start, crashing...")
+                PlayerService.createCache(this@PrecacheService)
             }
         }
 

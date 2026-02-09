@@ -67,13 +67,20 @@ fun RouteHandlerScope.GlobalRoutes() {
     }
 
     pipedPlaylistRoute { apiBaseUrl, sessionToken, playlistId ->
+        val safeApiBaseUrl = runCatching { Url(apiBaseUrl) }.getOrNull()
+        if (safeApiBaseUrl == null) {
+            context.toast(context.getString(R.string.error_url, apiBaseUrl))
+            return@pipedPlaylistRoute
+        }
+        val safePlaylistId = runCatching { UUID.fromString(playlistId) }.getOrNull()
+        if (safePlaylistId == null) {
+            context.toast(context.getString(R.string.error_message))
+            return@pipedPlaylistRoute
+        }
         PipedPlaylistScreen(
-            apiBaseUrl = runCatching { Url(apiBaseUrl) }.getOrNull()
-                ?: error("Invalid apiBaseUrl: $apiBaseUrl is not a valid Url"),
+            apiBaseUrl = safeApiBaseUrl,
             sessionToken = sessionToken,
-            playlistId = runCatching {
-                UUID.fromString(playlistId)
-            }.getOrNull() ?: error("Invalid playlistId: $playlistId is not a valid UUID")
+            playlistId = safePlaylistId
         )
     }
 

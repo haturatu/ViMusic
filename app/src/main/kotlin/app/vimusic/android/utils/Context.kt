@@ -100,13 +100,13 @@ fun launchYouTubeMusic(
     }
 }
 
-fun Context.findActivity(): Activity {
+fun Context.findActivity(): Activity? {
     var context = this
     while (context is ContextWrapper) {
         if (context is Activity) return context
         context = context.baseContext
     }
-    error("Should be called in the context of an Activity")
+    return null
 }
 
 fun Context.hasPermission(permission: String) = ContextCompat.checkSelfPermission(

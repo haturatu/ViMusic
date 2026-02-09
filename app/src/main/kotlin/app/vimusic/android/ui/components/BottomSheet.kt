@@ -39,6 +39,7 @@ import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import android.util.Log
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.coerceAtMost
@@ -260,7 +261,10 @@ internal constructor(
                 0 -> Dismissed
                 1 -> Collapsed
                 2 -> Expanded
-                else -> error("Anchor $value does not exist!")
+                else -> {
+                    Log.w("BottomSheet", "Anchor $value does not exist; falling back to Dismissed")
+                    Dismissed
+                }
             }
 
             override fun SaverScope.save(value: Anchor) = value.value
@@ -295,7 +299,10 @@ fun rememberBottomSheetState(
                 BottomSheetState.Anchor.Dismissed -> dismissedBound
                 BottomSheetState.Anchor.Collapsed -> collapsedBound
                 BottomSheetState.Anchor.Expanded -> expandedBound
-                else -> error("Unknown BottomSheet anchor")
+                else -> {
+                    Log.w("BottomSheet", "Unknown BottomSheet anchor; falling back to dismissed")
+                    dismissedBound
+                }
             }
         )
     }

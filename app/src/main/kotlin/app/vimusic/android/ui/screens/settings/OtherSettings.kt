@@ -292,7 +292,7 @@ fun OtherSettings() {
                     onClick = {
                         binder?.stopRadio()
                         binder?.invincible = false
-                        context.findActivity().finishAndRemoveTask()
+                        context.findActivity()?.finishAndRemoveTask()
                         binder?.restartForegroundOrStop()
                         troubleshootScope.launch {
                             delay(500L)

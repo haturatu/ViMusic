@@ -500,7 +500,7 @@ fun handleUrl(
 
 val LocalPlayerServiceBinder = staticCompositionLocalOf<PlayerService.Binder?> { null }
 val LocalPlayerAwareWindowInsets =
-    compositionLocalOf<WindowInsets> { error("No player insets provided") }
+    compositionLocalOf { WindowInsets(0.dp, 0.dp, 0.dp, 0.dp) }
 val LocalCredentialManager = staticCompositionLocalOf { Dependencies.credentialManager }
 
 class MainApplication : Application(), SingletonImageLoader.Factory, Configuration.Provider {
