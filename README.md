@@ -67,15 +67,6 @@ sudo pacman -S jdk17-openjdk
 yay -S android-sdk-cmdline-tools-latest android-sdk android-sdk-platform-tools android-sdk-build-tools
 ```
 
-### Environment variables (.bashrc)
-```bash
-export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
-export PATH=$JAVA_HOME/bin:$PATH
-export ANDROID_HOME=/opt/android-sdk
-export ANDROID_SDK_ROOT=/opt/android-sdk
-export PATH=$PATH:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools
-```
-
 ### User-local SDK (copy cmdline-tools)
 If your SDK under `/opt/android-sdk` is read-only, copy cmdline-tools to a user-writable SDK:
 
@@ -91,6 +82,17 @@ Accept licenses and install required packages:
 ```bash
 sdkmanager --licenses
 sdkmanager "platforms;android-36" "build-tools;34.0.0"
+```
+
+### Environment variables (.bashrc)
+```bash
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+export PATH=$JAVA_HOME/bin:$PATH
+
+export ANDROID_SDK_ROOT=$HOME/.android-sdk
+export ANDROID_HOME=$HOME/.android-sdk
+export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
+
 ```
 
 ### local.properties
