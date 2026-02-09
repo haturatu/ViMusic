@@ -12,13 +12,13 @@ android {
     val appId = "app.vimusic.android"
 
     namespace = appId
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = appId
 
-        minSdk = 21
-        targetSdk = 35
+        minSdk = 23
+        targetSdk = 36
 
         versionCode = System.getenv("ANDROID_VERSION_CODE")?.toIntOrNull() ?: 13
         versionName = project.version.toString()
@@ -86,10 +86,6 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
-    kotlinOptions {
-        freeCompilerArgs = freeCompilerArgs + listOf("-Xcontext-receivers")
-    }
-
     packaging {
         resources.excludes.add("META-INF/**/*")
     }
@@ -102,8 +98,9 @@ android {
 
 kotlin {
     jvmToolchain(libs.versions.jvm.get().toInt())
-
-    task("testClasses")
+    compilerOptions {
+        freeCompilerArgs.add("-Xcontext-receivers")
+    }
 }
 
 ksp {
@@ -112,7 +109,6 @@ ksp {
 
 composeCompiler {
     featureFlags = setOf(
-        ComposeFeatureFlag.StrongSkipping,
         ComposeFeatureFlag.OptimizeNonSkippingGroups
     )
 

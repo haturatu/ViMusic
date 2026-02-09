@@ -90,7 +90,7 @@ Accept licenses and install required packages:
 
 ```bash
 sdkmanager --licenses
-sdkmanager "platforms;android-35" "build-tools;34.0.0"
+sdkmanager "platforms;android-36" "build-tools;34.0.0"
 ```
 
 ### local.properties

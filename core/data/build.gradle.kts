@@ -5,10 +5,10 @@ plugins {
 
 android {
     namespace = "app.vimusic.core.data"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
-        minSdk = 21
+        minSdk = 23
     }
 
     sourceSets.all {
@@ -18,8 +18,6 @@ android {
 
 kotlin {
     jvmToolchain(libs.versions.jvm.get().toInt())
-
-    task("testClasses")
 }
 
 dependencies {

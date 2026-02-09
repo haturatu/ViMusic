@@ -17,42 +17,15 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.isActive
 import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format.char
-import kotlinx.datetime.toInstant
 import kotlinx.parcelize.Parceler
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.WriteWith
 import java.io.IOException
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
-private val logcatDateTimeFormat = LocalDateTime.Format {
-    date(
-        LocalDate.Format {
-            year()
-            char('-')
-            monthNumber()
-            char('-')
-            dayOfMonth()
-        }
-    )
-
-    char(' ')
-
-    time(
-        LocalTime.Format {
-            hour()
-            char(':')
-            minute()
-            char(':')
-            second()
-            char('.')
-            secondFraction(3)
-        }
-    )
-}
+private val logcatDateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
 
 @Immutable
 sealed interface Logcat : Parcelable {
@@ -69,11 +42,11 @@ sealed interface Logcat : Parcelable {
             val (timestamp, level, tag, pid, message) = results.drop(1).take(5)
                 .mapNotNull { it?.value }
 
+            val parsedInstant = LocalDateTime.parse(timestamp, logcatDateTimeFormat)
+                .toInstant(ZoneOffset.UTC)
+
             FormattedLine(
-                timestamp = LocalDateTime.parse(
-                    input = timestamp,
-                    format = logcatDateTimeFormat
-                ).toInstant(TimeZone.UTC),
+                timestamp = Instant.fromEpochMilliseconds(parsedInstant.toEpochMilli()),
                 level = FormattedLine.Level.codeLut[level.firstOrNull()]
                     ?: FormattedLine.Level.Unknown,
                 tag = tag,

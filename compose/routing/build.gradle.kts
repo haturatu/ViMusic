@@ -7,21 +7,20 @@ plugins {
 
 android {
     namespace = "app.vimusic.compose.routing"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
-        minSdk = 21
+        minSdk = 23
     }
 
-    kotlinOptions {
-        freeCompilerArgs = freeCompilerArgs + listOf("-Xcontext-receivers")
-    }
 }
 
 kotlin {
     jvmToolchain(libs.versions.jvm.get().toInt())
 
-    task("testClasses")
+    compilerOptions {
+        freeCompilerArgs.add("-Xcontext-receivers")
+    }
 }
 
 dependencies {
