@@ -13,6 +13,7 @@ workmanager = "2.9.1"
 credentials = "1.5.0-alpha06"
 coil = "3.0.0-rc01"
 okhttp = "4.12.0"
+re2j = "1.7"
 
 [plugins]
 android_application = { id = "com.android.application", version.ref = "agp" }
@@ -86,6 +87,7 @@ monet = { module = "com.github.KieronQuinn:MonetCompat", version = "0.4.1" }
 desugaring = { module = "com.android.tools:desugar_jdk_libs", version = "2.1.2" }
 
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+re2j = { module = "com.google.re2j:re2j", version.ref = "re2j" }
 
 detekt_compose = { module = "io.nlopez.compose.rules:detekt", version = "0.4.5" }
 detekt_formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }

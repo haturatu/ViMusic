@@ -86,3 +86,12 @@ The debug APK will be generated at:
 This project and its contents are not affiliated with, funded, authorized, endorsed by, or in any way associated with YouTube, Google LLC or any of its affiliates and subsidiaries.
 
 Any trademark, service mark, trade name, or other intellectual property rights used in this project are owned by the respective owners.
+
+## Maintainers
+If you plan to maintain or release this app yourself, generate your own signing certificate before creating a release build:
+
+```bash
+keytool -genkeypair -v -keystore vimusic-release.jks -keyalg RSA -keysize 4096 -validity 10000 -alias vimusic
+```
+
+When updating the app version, bump the `version` value in `gradle.properties`.

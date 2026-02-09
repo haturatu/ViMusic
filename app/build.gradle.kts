@@ -20,7 +20,7 @@ android {
         minSdk = 21
         targetSdk = 35
 
-        versionCode = System.getenv("ANDROID_VERSION_CODE")?.toIntOrNull() ?: 12
+        versionCode = System.getenv("ANDROID_VERSION_CODE")?.toIntOrNull() ?: 13
         versionName = project.version.toString()
 
         multiDexEnabled = true
@@ -40,6 +40,12 @@ android {
             keyAlias = System.getenv("ANDROID_NIGHTLY_KEYSTORE_ALIAS")
             keyPassword = System.getenv("ANDROID_NIGHTLY_KEYSTORE_PASSWORD")
         }
+        create("release") {
+            storeFile = rootProject.file("vimusic-release.jks")
+            storePassword = providers.gradleProperty("VIMUSIC_KEYSTORE_PASSWORD").orNull
+            keyAlias = providers.gradleProperty("VIMUSIC_KEY_ALIAS").orNull ?: "vimusic"
+            keyPassword = providers.gradleProperty("VIMUSIC_KEY_PASSWORD").orNull
+        }
     }
 
     buildTypes {
@@ -58,6 +64,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
 
         create("nightly") {
@@ -164,6 +171,7 @@ dependencies {
     implementation(libs.slf4j)
     implementation(libs.logback)
     implementation(libs.okhttp)
+    implementation(libs.re2j)
     implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.25.2")
 
     implementation(projects.providers.github)
