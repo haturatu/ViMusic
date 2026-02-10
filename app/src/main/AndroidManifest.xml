@@ -188,13 +188,13 @@
         </receiver>
 
         <service
-            android:name=".service.PlayerMediaBrowserService"
+            android:name=".service.PlayerMediaLibraryService"
             android:enabled="false"
             android:exported="true"
             tools:ignore="ExportedService">
 
             <intent-filter>
-                <action android:name="android.media.browse.MediaBrowserService" />
+                <action android:name="androidx.media3.session.MediaLibraryService" />
             </intent-filter>
 
             <intent-filter>
