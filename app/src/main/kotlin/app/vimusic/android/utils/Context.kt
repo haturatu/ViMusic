@@ -114,6 +114,10 @@ fun Context.hasPermission(permission: String) = ContextCompat.checkSelfPermissio
     permission
 ) == PackageManager.PERMISSION_GRANTED
 
+fun Context.safeUnregisterReceiver(receiver: BroadcastReceiver) {
+    runCatching { unregisterReceiver(receiver) }
+}
+
 @OptIn(UnstableApi::class)
 inline fun <reified T : DownloadService> Context.download(request: DownloadRequest) = runCatching {
     sendAddDownload(

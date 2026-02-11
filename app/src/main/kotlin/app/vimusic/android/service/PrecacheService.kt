@@ -27,6 +27,7 @@ import app.vimusic.android.transaction
 import app.vimusic.android.utils.ActionReceiver
 import app.vimusic.android.utils.download
 import app.vimusic.android.utils.intent
+import app.vimusic.android.utils.safeUnregisterReceiver
 import app.vimusic.android.utils.toast
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
@@ -238,7 +239,7 @@ class PrecacheService : DownloadService(
             if (bound) unbindService(serviceConnection)
         }
 
-        unregisterReceiver(notificationActionReceiver)
+        safeUnregisterReceiver(notificationActionReceiver)
         mutableDownloadState.update { false }
     }
 

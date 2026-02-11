@@ -102,7 +102,7 @@ abstract class InvincibleService : Service() {
             if (!isStarted) return
 
             handler.removeCallbacks(this)
-            unregisterReceiver(this)
+            safeUnregisterReceiver(this)
             isStarted = false
         }
 

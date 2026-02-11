@@ -314,7 +314,7 @@ fun MediaItemMenu(
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
-            if (albumInfo == null) albumInfo = Database.songAlbumInfo(mediaItem.mediaId)
+            if (albumInfo == null) albumInfo = Database.songAlbumInfo(mediaItem.mediaId).firstOrNull()
             if (artistsInfo == null) artistsInfo = Database.songArtistInfo(mediaItem.mediaId)
 
             launch {

@@ -95,6 +95,7 @@ import app.vimusic.android.utils.intent
 import app.vimusic.android.utils.mediaItems
 import app.vimusic.android.utils.progress
 import app.vimusic.android.utils.readOnlyWhen
+import app.vimusic.android.utils.safeUnregisterReceiver
 import app.vimusic.android.utils.setPlaybackPitch
 import app.vimusic.android.utils.shouldBePlaying
 import app.vimusic.android.utils.thumbnail
@@ -380,7 +381,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             player.stop()
             player.release()
 
-            unregisterReceiver(notificationActionReceiver)
+            safeUnregisterReceiver(notificationActionReceiver)
 
             mediaSession.release()
             cache.release()
