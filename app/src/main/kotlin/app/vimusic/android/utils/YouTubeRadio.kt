@@ -1,5 +1,6 @@
 package app.vimusic.android.utils
 
+import android.util.Log
 import androidx.media3.common.MediaItem
 import app.vimusic.providers.innertube.Innertube
 import app.vimusic.providers.innertube.models.bodies.ContinuationBody
@@ -14,37 +15,47 @@ data class YouTubeRadio(
     private var playlistSetVideoId: String? = null,
     private var parameters: String? = null
 ) {
+    private companion object {
+        private const val TAG = "YouTubeRadio"
+    }
+
     private var nextContinuation: String? = null
 
     suspend fun process(): List<MediaItem> {
-        var mediaItems: List<MediaItem>? = null
+        return runCatching {
+            var mediaItems: List<MediaItem>? = null
 
-        nextContinuation = withContext(Dispatchers.IO) {
-            val continuation = nextContinuation
+            nextContinuation = withContext(Dispatchers.IO) {
+                val continuation = nextContinuation
 
-            if (continuation == null) {
-                Innertube.nextPage(
-                    NextBody(
-                        videoId = videoId,
-                        playlistId = playlistId,
-                        params = parameters,
-                        playlistSetVideoId = playlistSetVideoId
-                    )
-                )?.map { nextResult ->
-                    playlistId = nextResult.playlistId
-                    parameters = nextResult.params
-                    playlistSetVideoId = nextResult.playlistSetVideoId
+                if (continuation == null) {
+                    Innertube.nextPage(
+                        NextBody(
+                            videoId = videoId,
+                            playlistId = playlistId,
+                            params = parameters,
+                            playlistSetVideoId = playlistSetVideoId
+                        )
+                    )?.map { nextResult ->
+                        playlistId = nextResult.playlistId
+                        parameters = nextResult.params
+                        playlistSetVideoId = nextResult.playlistSetVideoId
 
-                    nextResult.itemsPage
+                        nextResult.itemsPage
+                    }
+                } else {
+                    Innertube.nextPage(ContinuationBody(continuation = continuation))
+                }?.getOrNull()?.let { songsPage ->
+                    mediaItems = songsPage.items?.map(Innertube.SongItem::asMediaItem)
+                    songsPage.continuation?.takeUnless { nextContinuation == it }
                 }
-            } else {
-                Innertube.nextPage(ContinuationBody(continuation = continuation))
-            }?.getOrNull()?.let { songsPage ->
-                mediaItems = songsPage.items?.map(Innertube.SongItem::asMediaItem)
-                songsPage.continuation?.takeUnless { nextContinuation == it }
             }
-        }
 
-        return mediaItems ?: emptyList()
+            mediaItems ?: emptyList()
+        }.getOrElse { error ->
+            Log.e(TAG, "Radio fetch failed", error)
+            nextContinuation = null
+            emptyList()
+        }
     }
 }
