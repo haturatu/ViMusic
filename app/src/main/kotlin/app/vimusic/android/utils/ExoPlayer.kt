@@ -72,7 +72,10 @@ fun DataSource.Factory.handleUnknownErrors(
     onError = onError
 )
 
-val Cache.asDataSource get() = CacheDataSource.Factory().setCache(this)
+val Cache.asDataSource
+    get() = CacheDataSource.Factory()
+        .setCache(this)
+        .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
 
 val Context.defaultDataSource
     get() = DefaultDataSource.Factory(

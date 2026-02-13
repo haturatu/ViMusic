@@ -23,6 +23,7 @@ import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.TransferListener
 import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.FileDataSource
 import app.vimusic.android.Database
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
@@ -36,6 +37,7 @@ import app.vimusic.android.ui.components.themed.HeaderIconButton
 import app.vimusic.core.ui.LocalAppearance
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.distinctUntilChanged
+import java.io.FileNotFoundException
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
@@ -133,8 +135,23 @@ class ConditionalCacheDataSourceFactory(
             }
         }
 
-        override fun read(buffer: ByteArray, offset: Int, length: Int) =
+        override fun read(buffer: ByteArray, offset: Int, length: Int): Int = runCatching {
             source.read(buffer, offset, length)
+        }.getOrElse { error ->
+            if (
+                ::selectedFactory.isInitialized &&
+                selectedFactory === cacheDataSourceFactory &&
+                (error is FileDataSource.FileDataSourceException ||
+                        error.findCause<FileNotFoundException>() != null)
+            ) {
+                // Cache file disappeared; fall back to upstream and retry once.
+                selectedFactory = upstreamDataSourceFactory
+                source = createSource(upstreamDataSourceFactory)
+                source.read(buffer, offset, length)
+            } else {
+                throw error
+            }
+        }
 
         override fun addTransferListener(transferListener: TransferListener) {
             if (::selectedFactory.isInitialized) source.addTransferListener(transferListener)
@@ -149,7 +166,11 @@ class ConditionalCacheDataSourceFactory(
             return runCatching {
                 source.open(dataSpec)
             }.getOrElse {
-                if (it is ReadOnlyException) {
+                if (
+                    it is ReadOnlyException ||
+                    it is FileDataSource.FileDataSourceException ||
+                    it.findCause<FileNotFoundException>() != null
+                ) {
                     source = createSource(upstreamDataSourceFactory)
                     source.open(dataSpec)
                 } else throw it
