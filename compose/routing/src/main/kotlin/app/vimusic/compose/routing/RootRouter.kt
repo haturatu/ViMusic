@@ -14,6 +14,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -155,9 +156,13 @@ private fun RouteHandler(
 ) = ProvideRootRouter {
     val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
     val parameters = rememberSaveable { arrayOfNulls<Any?>(4) }
+    val currentChild by rememberUpdatedState(child)
 
-    if (listenToGlobalEmitter && child == null) OnGlobalRoute { (route, args) ->
+    if (listenToGlobalEmitter) OnGlobalRoute { (route, args) ->
         args.forEachIndexed(parameters::set)
+        if (currentChild == route) {
+            setChild(null)
+        }
         setChild(route)
     }
 
