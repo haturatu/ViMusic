@@ -100,11 +100,16 @@ fun RouteHandlerScope.GlobalRoutes() {
     searchRoute { initialTextInput ->
         SearchScreen(
             initialTextInput = initialTextInput,
-            onSearch = { query ->
-                searchResultRoute(query)
+            onSearch = { rawQuery ->
+                val query = rawQuery.trim()
+                if (query.isNotEmpty()) {
+                    if (!DataPreferences.pauseSearchHistory) query {
+                        Database.insert(SearchQuery(query = query))
+                    }
 
-                if (!DataPreferences.pauseSearchHistory) query {
-                    Database.insert(SearchQuery(query = query))
+                    args[0] = query
+                    if (child == searchResultRoute) replace(null)
+                    replace(searchResultRoute)
                 }
             },
             onViewPlaylist = { url ->
