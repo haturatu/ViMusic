@@ -77,24 +77,38 @@ class RootRouter : Router {
         }
     }
 
-    override operator fun Route0.invoke() = push(this)
+    override operator fun Route0.invoke() = route {
+        if (child == this@invoke) {
+            replace(null)
+        }
+        replace(this@invoke)
+    }
 
     override operator fun <P0> Route1<P0>.invoke(p0: P0) = route {
         args[0] = p0
-        push(this@invoke)
+        if (child == this@invoke) {
+            replace(null)
+        }
+        replace(this@invoke)
     }
 
     override operator fun <P0, P1> Route2<P0, P1>.invoke(p0: P0, p1: P1) = route {
         args[0] = p0
         args[1] = p1
-        push(this@invoke)
+        if (child == this@invoke) {
+            replace(null)
+        }
+        replace(this@invoke)
     }
 
     override operator fun <P0, P1, P2> Route3<P0, P1, P2>.invoke(p0: P0, p1: P1, p2: P2) = route {
         args[0] = p0
         args[1] = p1
         args[2] = p2
-        push(this@invoke)
+        if (child == this@invoke) {
+            replace(null)
+        }
+        replace(this@invoke)
     }
 
     override operator fun <P0, P1, P2, P3> Route4<P0, P1, P2, P3>.invoke(
@@ -107,7 +121,10 @@ class RootRouter : Router {
         args[1] = p1
         args[2] = p2
         args[3] = p3
-        push(this@invoke)
+        if (child == this@invoke) {
+            replace(null)
+        }
+        replace(this@invoke)
     }
 }
 
