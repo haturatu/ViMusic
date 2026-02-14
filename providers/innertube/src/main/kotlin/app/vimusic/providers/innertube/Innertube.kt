@@ -9,6 +9,7 @@ import app.vimusic.providers.utils.runCatchingCancellable
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.compression.brotli
@@ -58,6 +59,10 @@ object Innertube {
             retryOnServerErrors()
             exponentialDelay()
             maxRetries = 3
+        }
+
+        install(HttpTimeout) {
+            connectTimeoutMillis = 500
         }
 
         install(Logging)
@@ -111,6 +116,10 @@ object Innertube {
             retryOnServerErrors()
             exponentialDelay()
             maxRetries = 3
+        }
+
+        install(HttpTimeout) {
+            connectTimeoutMillis = 500
         }
 
         install(Logging) {

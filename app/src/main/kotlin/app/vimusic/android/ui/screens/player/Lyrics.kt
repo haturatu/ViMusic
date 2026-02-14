@@ -206,32 +206,67 @@ fun Lyrics(
                             lyrics = null
                             error = false
 
-                            val fixed = currentLyrics?.fixed ?: Innertube
-                                .lyrics(NextBody(videoId = mediaId))
-                                ?.getOrNull()
-                            ?: LrcLib.bestLyrics(
-                                artist = artist,
-                                title = title,
-                                duration = duration.milliseconds,
-                                album = album,
-                                synced = false
-                            )?.map { it?.text }?.getOrNull()
+                            val normalizedTitle = title.split("(")[0].trim()
+                            var fixed = currentLyrics?.fixed
+                            var synced = currentLyrics?.synced
 
-                            val synced = currentLyrics?.synced ?: LrcLib.bestLyrics(
-                                artist = artist,
-                                title = title,
-                                duration = duration.milliseconds,
-                                album = album
-                            )?.map { it?.text }?.getOrNull() ?: LrcLib.bestLyrics(
-                                artist = artist,
-                                title = title.split("(")[0].trim(),
-                                duration = duration.milliseconds,
-                                album = album
-                            )?.map { it?.text }?.getOrNull() ?: KuGou.lyrics(
-                                artist = artist,
-                                title = title,
-                                duration = duration / 1000
-                            )?.map { it?.value }?.getOrNull()
+                            var attempt = 0
+                            while (attempt < 3) {
+                                if (fixed.isNullOrBlank()) {
+                                    fixed = Innertube
+                                        .lyrics(NextBody(videoId = mediaId))
+                                        ?.getOrNull()
+                                }
+
+                                if (fixed.isNullOrBlank()) {
+                                    fixed = LrcLib.bestLyrics(
+                                        artist = artist,
+                                        title = title,
+                                        duration = duration.milliseconds,
+                                        album = album,
+                                        synced = false
+                                    )?.map { it?.text }?.getOrNull()
+                                }
+
+                                if (synced.isNullOrBlank()) {
+                                    synced = LrcLib.bestLyrics(
+                                        artist = artist,
+                                        title = title,
+                                        duration = duration.milliseconds,
+                                        album = album
+                                    )?.map { it?.text }?.getOrNull()
+                                }
+
+                                if (synced.isNullOrBlank()) {
+                                    synced = LrcLib.bestLyrics(
+                                        artist = artist,
+                                        title = normalizedTitle,
+                                        duration = duration.milliseconds,
+                                        album = album
+                                    )?.map { it?.text }?.getOrNull()
+                                }
+
+                                if (fixed.isNullOrBlank()) {
+                                    fixed = LrcLib.bestLyrics(
+                                        artist = artist,
+                                        title = normalizedTitle,
+                                        duration = duration.milliseconds,
+                                        album = album,
+                                        synced = false
+                                    )?.map { it?.text }?.getOrNull()
+                                }
+
+                                if (synced.isNullOrBlank()) {
+                                    synced = KuGou.lyrics(
+                                        artist = artist,
+                                        title = title,
+                                        duration = duration / 1000
+                                    )?.map { it?.value }?.getOrNull()
+                                }
+
+                                if (!fixed.isNullOrBlank() && !synced.isNullOrBlank()) break
+                                attempt++
+                            }
 
                             Lyrics(
                                 songId = mediaId,
