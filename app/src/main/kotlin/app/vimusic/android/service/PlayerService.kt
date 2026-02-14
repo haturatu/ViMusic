@@ -1314,13 +1314,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     .withAdditionalHeaders(mapOf("Range" to "bytes=$rangeText"))
             } ?: this
 
-            if (
-                dataSpec.isLocal || (chunkLength != null && cache.isCached(
-                    /* key = */ mediaId,
-                    /* position = */ dataSpec.position,
-                    /* length = */ chunkLength
-                ))
-            ) dataSpec
+            if (dataSpec.isLocal) dataSpec
             else uriCache[mediaId]?.let { cachedUri ->
                 dataSpec
                     .withUri(cachedUri.uri)
