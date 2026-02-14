@@ -7,6 +7,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.compression.brotli
@@ -51,7 +52,11 @@ object LrcLib {
                 retryOnExceptionIf { _, cause -> cause is IOException }
                 retryOnServerErrors()
                 exponentialDelay()
-                maxRetries = 3
+                maxRetries = 0
+            }
+
+            install(HttpTimeout) {
+                connectTimeoutMillis = 500
             }
 
             install(ContentEncoding) {

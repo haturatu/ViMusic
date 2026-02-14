@@ -8,6 +8,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.BrowserUserAgent
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.compression.brotli
@@ -31,7 +32,7 @@ object KuGou {
             engine {
                 config {
                     protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
-                    retryOnConnectionFailure(true)
+                    retryOnConnectionFailure(false)
                 }
             }
 
@@ -61,7 +62,11 @@ object KuGou {
                 retryOnExceptionIf { _, cause -> cause is IOException }
                 retryOnServerErrors()
                 exponentialDelay()
-                maxRetries = 3
+                maxRetries = 0
+            }
+
+            install(HttpTimeout) {
+                connectTimeoutMillis = 500
             }
 
             defaultRequest {
