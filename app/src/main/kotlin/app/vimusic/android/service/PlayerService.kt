@@ -58,7 +58,6 @@ import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaStyleNotificationHelper
-import app.vimusic.android.Database
 import app.vimusic.android.MainActivity
 import app.vimusic.android.R
 import app.vimusic.android.appContainer
@@ -71,8 +70,6 @@ import app.vimusic.android.models.SongWithContentLength
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.preferences.PlayerPreferences
-import app.vimusic.android.query
-import app.vimusic.android.transaction
 import app.vimusic.android.utils.ActionReceiver
 import app.vimusic.android.utils.ConditionalCacheDataSourceFactory
 import app.vimusic.android.utils.GlyphInterface
@@ -415,15 +412,15 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
         val mediaItem = eventTime.timeline[eventTime.windowIndex].mediaItem
 
-        if (!DataPreferences.pausePlaytime) query {
+        if (!DataPreferences.pausePlaytime) {
             runCatching {
-                Database.incrementTotalPlayTimeMs(mediaItem.mediaId, totalPlayTimeMs)
+                playerRepository.incrementTotalPlayTimeMs(mediaItem.mediaId, totalPlayTimeMs)
             }
         }
 
-        if (!DataPreferences.pauseHistory) query {
+        if (!DataPreferences.pauseHistory) {
             runCatching {
-                Database.insert(
+                playerRepository.insertEvent(
                     Event(
                         songId = mediaItem.mediaId,
                         timestamp = System.currentTimeMillis(),
@@ -546,34 +543,34 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         val mediaItemIndex = player.currentMediaItemIndex
         val mediaItemPosition = player.currentPosition
 
-        transaction {
-            runCatching {
-                Database.clearQueue()
-                Database.insert(
-                    mediaItems.mapIndexed { index, mediaItem ->
-                        QueuedMediaItem(
-                            mediaItem = mediaItem,
-                            position = if (index == mediaItemIndex) mediaItemPosition else null
-                        )
-                    }
-                )
-            }
+        runCatching {
+            playerRepository.saveQueue(
+                mediaItems.mapIndexed { index, mediaItem ->
+                    QueuedMediaItem(
+                        mediaItem = mediaItem,
+                        position = if (index == mediaItemIndex) mediaItemPosition else null
+                    )
+                }
+            )
         }
     }
 
     private fun maybeRestorePlayerQueue() {
         if (!PlayerPreferences.persistentQueue) return
 
-        transaction {
-            val queue = Database.queue()
-            if (queue.isEmpty()) return@transaction
-            Database.clearQueue()
+        coroutineScope.launch {
+            val queue = withContext(Dispatchers.IO) {
+                playerRepository.loadQueue().also {
+                    if (it.isNotEmpty()) playerRepository.clearQueue()
+                }
+            }
+            if (queue.isEmpty()) return@launch
 
             val index = queue
                 .indexOfFirst { it.position != null }
                 .coerceAtLeast(0)
 
-            handler.post {
+            withContext(Dispatchers.Main) {
                 runCatching {
                     player.setMediaItems(
                         /* mediaItems = */ queue.map { item ->
@@ -1077,7 +1074,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             ).let { radioData ->
                 isLoadingRadio = true
                 radioJob = coroutineScope.launch {
-                    val items = radioData.process().let { Database.filterBlacklistedSongs(it) }
+                    val items = radioData.process().let { playerRepository.filterBlacklistedSongs(it) }
                     prefetchMediaItems(items)
 
                     withContext(Dispatchers.Main) {
@@ -1284,7 +1281,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     if (!DataPreferences.cacheFavoritesOnly) return@ConditionalCacheDataSourceFactory true
 
                     val mediaId = dataSpec.key?.let(::extractYouTubeVideoId) ?: return@ConditionalCacheDataSourceFactory false
-                    runCatching { Database.likedAtNow(mediaId) != null }.getOrDefault(false)
+                    context.appContainer.playerRepository.isFavoriteNow(mediaId)
                 }
             )
         ) resolver@{ dataSpec ->
@@ -1352,29 +1349,29 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                             .removePrefix("0")
                             .let { durationText ->
                                 extras?.durationText = durationText
-                                Database.updateDurationText(mediaId, durationText)
+                                context.appContainer.playerRepository.updateDurationText(mediaId, durationText)
                             }
                     }
                 }
 
                 val writeTask = {
-                    transaction {
-                        runCatching {
-                            mediaItem?.let(Database::insert)
-                            Database.insert(
-                                Format(
-                                    songId = mediaId,
-                                    itag = audioStream.itag.takeIf { it > 0 },
-                                    mimeType = audioStream.format?.mimeType,
-                                    bitrate = audioStream.averageBitrate
-                                        .takeIf { it > 0 }
-                                        ?.toLong(),
-                                    loudnessDb = null,
-                                    contentLength = null,
-                                    lastModified = null
-                                )
-                            )
+                    runCatching {
+                        mediaItem?.let { item ->
+                            context.appContainer.playerRepository.insertSong(item)
                         }
+                        context.appContainer.playerRepository.insertFormat(
+                            Format(
+                                songId = mediaId,
+                                itag = audioStream.itag.takeIf { it > 0 },
+                                mimeType = audioStream.format?.mimeType,
+                                bitrate = audioStream.averageBitrate
+                                    .takeIf { it > 0 }
+                                    ?.toLong(),
+                                loudnessDb = null,
+                                contentLength = null,
+                                lastModified = null
+                            )
+                        )
                     }
                 }
 
