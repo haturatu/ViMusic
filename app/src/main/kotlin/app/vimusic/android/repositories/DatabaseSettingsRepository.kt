@@ -17,8 +17,8 @@ interface DatabaseSettingsRepository {
     fun observeBlacklistLength(): Flow<Int>
     fun clearEvents()
     fun resetBlacklist()
-    fun backupTo(output: OutputStream)
-    fun restoreFrom(input: InputStream)
+    suspend fun backupTo(output: OutputStream)
+    suspend fun restoreFrom(input: InputStream)
 }
 
 object DefaultDatabaseSettingsRepository : DatabaseSettingsRepository {
@@ -34,18 +34,16 @@ object DefaultDatabaseSettingsRepository : DatabaseSettingsRepository {
         transaction { Database.resetBlacklist() }
     }
 
-    override fun backupTo(output: OutputStream) {
-        query {
-            Database.checkpoint()
-            FileInputStream(Database.internal.dbPath).use { input -> input.copyTo(output) }
-        }
+    override suspend fun backupTo(output: OutputStream) {
+        Database.checkpoint()
+        val path = requireNotNull(Database.internal.dbPath) { "Database path is null" }
+        FileInputStream(path).use { input -> input.copyTo(output) }
     }
 
-    override fun restoreFrom(input: InputStream) {
-        query {
-            Database.checkpoint()
-            Database.internal.close()
-            FileOutputStream(Database.internal.dbPath).use { output -> input.copyTo(output) }
-        }
+    override suspend fun restoreFrom(input: InputStream) {
+        Database.checkpoint()
+        val path = requireNotNull(Database.internal.dbPath) { "Database path is null" }
+        Database.internal.close()
+        FileOutputStream(path).use { output -> input.copyTo(output) }
     }
 }

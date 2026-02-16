@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
@@ -19,6 +20,9 @@ import app.vimusic.android.ui.screens.Route
 import app.vimusic.android.ui.viewmodels.DatabaseSettingsViewModel
 import app.vimusic.android.utils.intent
 import app.vimusic.android.utils.toast
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -32,6 +36,7 @@ fun DatabaseSettings() = with(DataPreferences) {
         factory = DatabaseSettingsViewModel.factory(LocalAppContainer.current.databaseSettingsRepository)
     )
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     val eventsCount by viewModel.observeEventsCount().collectAsStateWithLifecycle(initialValue = 0)
 
@@ -42,7 +47,16 @@ fun DatabaseSettings() = with(DataPreferences) {
     ) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
 
-        context.applicationContext.contentResolver.openOutputStream(uri)?.use(viewModel::backupTo)
+        coroutineScope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    context.applicationContext.contentResolver.openOutputStream(uri)
+                        ?.use { output -> viewModel.backupTo(output) }
+                }
+            }.onFailure {
+                context.toast(context.getString(R.string.error_message))
+            }
+        }
     }
 
     val restoreLauncher = rememberLauncherForActivityResult(
@@ -50,9 +64,18 @@ fun DatabaseSettings() = with(DataPreferences) {
     ) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
 
-        context.applicationContext.contentResolver.openInputStream(uri)?.use(viewModel::restoreFrom)
-        context.stopService(context.intent<PlayerService>())
-        exitProcess(0)
+        coroutineScope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    context.applicationContext.contentResolver.openInputStream(uri)
+                        ?.use { input -> viewModel.restoreFrom(input) }
+                }
+                context.stopService(context.intent<PlayerService>())
+                exitProcess(0)
+            }.onFailure {
+                context.toast(context.getString(R.string.error_message))
+            }
+        }
     }
 
     SettingsCategoryScreen(title = stringResource(R.string.database)) {
