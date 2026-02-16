@@ -28,7 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import app.vimusic.android.Database
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.R
 import app.vimusic.android.models.PipedSession
@@ -36,7 +37,6 @@ import app.vimusic.android.models.Playlist
 import app.vimusic.android.models.PlaylistPreview
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.preferences.OrderPreferences
-import app.vimusic.android.query
 import app.vimusic.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.HeaderIconButton
@@ -46,6 +46,7 @@ import app.vimusic.android.ui.items.PlaylistItem
 import app.vimusic.android.ui.screens.Route
 import app.vimusic.android.ui.screens.settings.SettingsEntryGroupText
 import app.vimusic.android.ui.screens.settings.SettingsGroupSpacer
+import app.vimusic.android.ui.viewmodels.HomePlaylistsViewModel
 import app.vimusic.compose.persist.persist
 import app.vimusic.compose.persist.persistList
 import app.vimusic.core.data.enums.BuiltInPlaylist
@@ -53,10 +54,8 @@ import app.vimusic.core.data.enums.PlaylistSortBy
 import app.vimusic.core.data.enums.SortOrder
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
-import app.vimusic.providers.piped.Piped
 import app.vimusic.providers.piped.models.Session
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.async
 import app.vimusic.providers.piped.models.PlaylistPreview as PipedPlaylistPreview
 
 @Route
@@ -67,6 +66,9 @@ fun HomePlaylists(
     onPipedPlaylistClick: (Session, PipedPlaylistPreview) -> Unit,
     onSearchClick: () -> Unit
 ) = with(OrderPreferences) {
+    val viewModel: HomePlaylistsViewModel = viewModel(
+        factory = HomePlaylistsViewModel.factory(LocalAppContainer.current.homePlaylistsRepository)
+    )
     val (colorPalette) = LocalAppearance.current
 
     var isCreatingANewPlaylist by rememberSaveable { mutableStateOf(false) }
@@ -74,29 +76,19 @@ fun HomePlaylists(
     if (isCreatingANewPlaylist) TextFieldDialog(
         hintText = stringResource(R.string.enter_playlist_name_prompt),
         onDismiss = { isCreatingANewPlaylist = false },
-        onAccept = { text ->
-            query {
-                Database.insert(Playlist(name = text))
-            }
-        }
+        onAccept = viewModel::createPlaylist
     )
     var items by persistList<PlaylistPreview>("home/playlists")
     var pipedSessions by persist<Map<PipedSession, List<PipedPlaylistPreview>?>>("home/piped")
 
     LaunchedEffect(playlistSortBy, playlistSortOrder) {
-        Database
-            .playlistPreviews(playlistSortBy, playlistSortOrder)
+        viewModel
+            .observePlaylistPreviews(playlistSortBy, playlistSortOrder)
             .collect { items = it.toImmutableList() }
     }
 
     LaunchedEffect(Unit) {
-        Database.pipedSessions().collect { sessions ->
-            pipedSessions = sessions.associateWith { session ->
-                async {
-                    Piped.playlist.list(session = session.toApiSession())?.getOrNull()
-                }
-            }.mapValues { (_, value) -> value.await() }
-        }
+        viewModel.observePipedPlaylists().collect { pipedSessions = it }
     }
 
     val sortOrderIconRotation by animateFloatAsState(

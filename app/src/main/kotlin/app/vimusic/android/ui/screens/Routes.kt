@@ -3,14 +3,12 @@ package app.vimusic.android.ui.screens
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
-import app.vimusic.android.Database
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
 import app.vimusic.android.handleUrl
 import app.vimusic.android.models.Mood
-import app.vimusic.android.models.SearchQuery
 import app.vimusic.android.preferences.DataPreferences
-import app.vimusic.android.query
 import app.vimusic.android.ui.screens.album.AlbumScreen
 import app.vimusic.android.ui.screens.artist.ArtistScreen
 import app.vimusic.android.ui.screens.pipedplaylist.PipedPlaylistScreen
@@ -53,6 +51,7 @@ val settingsRoute = Route0("settingsRoute")
 fun RouteHandlerScope.GlobalRoutes() {
     val context = LocalContext.current
     val binder = LocalPlayerServiceBinder.current
+    val onlineSearchRepository = LocalAppContainer.current.onlineSearchRepository
 
     albumRoute { browseId ->
         AlbumScreen(browseId = browseId)
@@ -103,9 +102,7 @@ fun RouteHandlerScope.GlobalRoutes() {
             onSearch = { rawQuery ->
                 val query = rawQuery.trim()
                 if (query.isNotEmpty()) {
-                    if (!DataPreferences.pauseSearchHistory) query {
-                        Database.insert(SearchQuery(query = query))
-                    }
+                    if (!DataPreferences.pauseSearchHistory) onlineSearchRepository.saveHistory(query)
 
                     args[0] = query
                     if (child == searchResultRoute) replace(null)

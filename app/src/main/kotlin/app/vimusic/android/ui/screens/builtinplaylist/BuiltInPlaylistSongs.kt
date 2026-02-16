@@ -22,7 +22,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import app.vimusic.android.Database
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
@@ -40,6 +41,7 @@ import app.vimusic.android.ui.components.themed.ValueSelectorDialog
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.screens.home.HeaderSongSortBy
+import app.vimusic.android.ui.viewmodels.BuiltInPlaylistSongsViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.rememberMediaItems
@@ -51,19 +53,16 @@ import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.enumSaver
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.cancellable
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BuiltInPlaylistSongs(
     builtInPlaylist: BuiltInPlaylist,
     modifier: Modifier = Modifier
 ) = with(DataPreferences) {
+    val viewModel: BuiltInPlaylistSongsViewModel = viewModel(
+        factory = BuiltInPlaylistSongsViewModel.factory(LocalAppContainer.current.builtInPlaylistRepository)
+    )
     val (colorPalette) = LocalAppearance.current
     val binder = LocalPlayerServiceBinder.current
     val menuState = LocalMenuState.current
@@ -77,41 +76,14 @@ fun BuiltInPlaylistSongs(
     var sortOrder by rememberSaveable(stateSaver = enumSaver()) { mutableStateOf(SortOrder.Descending) }
 
     LaunchedEffect(binder, sortBy, sortOrder) {
-        when (builtInPlaylist) {
-            BuiltInPlaylist.Favorites -> Database.favorites(
-                sortBy = sortBy,
-                sortOrder = sortOrder
-            )
-
-            BuiltInPlaylist.Offline ->
-                Database
-                    .songsWithContentLength(
-                        sortBy = sortBy,
-                        sortOrder = sortOrder
-                    )
-                    .map { songs ->
-                        songs.filter { binder?.isCached(it) ?: false }.map { it.song }
-                    }
-
-            BuiltInPlaylist.Top -> combine(
-                flow = topListPeriodProperty.stateFlow,
-                flow2 = topListLengthProperty.stateFlow
-            ) { period, length -> period to length }.flatMapLatest { (period, length) ->
-                if (period.duration == null) Database
-                    .songsByPlayTimeDesc(limit = length)
-                    .distinctUntilChanged()
-                    .cancellable()
-                else Database
-                    .trending(
-                        limit = length,
-                        period = period.duration.inWholeMilliseconds
-                    )
-                    .distinctUntilChanged()
-                    .cancellable()
-            }
-
-            BuiltInPlaylist.History -> Database.history()
-        }.collect { songs = it.toImmutableList() }
+        viewModel.observeSongs(
+            builtInPlaylist = builtInPlaylist,
+            sortBy = sortBy,
+            sortOrder = sortOrder,
+            topPeriodMillis = topListPeriod.duration?.inWholeMilliseconds,
+            topLength = topListLength,
+            isOfflineCached = { songWithContentLength -> binder?.isCached(songWithContentLength) ?: false }
+        ).collect { songs = it.toImmutableList() }
     }
 
     val lazyListState = rememberLazyListState()

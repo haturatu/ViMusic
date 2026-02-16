@@ -43,15 +43,16 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import app.vimusic.android.Database
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.R
 import app.vimusic.android.models.SearchQuery
 import app.vimusic.android.preferences.DataPreferences
-import app.vimusic.android.query
 import app.vimusic.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
+import app.vimusic.android.ui.viewmodels.OnlineSearchViewModel
 import app.vimusic.android.utils.align
 import app.vimusic.android.utils.center
 import app.vimusic.android.utils.disabled
@@ -60,13 +61,9 @@ import app.vimusic.android.utils.secondary
 import app.vimusic.compose.persist.persist
 import app.vimusic.compose.persist.persistList
 import app.vimusic.core.ui.LocalAppearance
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.SearchSuggestionsBody
-import app.vimusic.providers.innertube.requests.searchSuggestions
 import io.ktor.http.Url
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun OnlineSearch(
@@ -78,6 +75,9 @@ fun OnlineSearch(
     focused: Boolean,
     modifier: Modifier = Modifier
 ) = Box(modifier = modifier) {
+    val viewModel: OnlineSearchViewModel = viewModel(
+        factory = OnlineSearchViewModel.factory(LocalAppContainer.current.onlineSearchRepository)
+    )
     val (colorPalette, typography) = LocalAppearance.current
 
     var history by persistList<SearchQuery>("search/online/history")
@@ -86,8 +86,7 @@ fun OnlineSearch(
     LaunchedEffect(textFieldValue.text) {
         if (DataPreferences.pauseSearchHistory) return@LaunchedEffect
 
-        Database.queries("%${textFieldValue.text}%")
-            .distinctUntilChanged { old, new -> old.size == new.size }
+        viewModel.observeHistory(textFieldValue.text)
             .collect { history = it.toImmutableList() }
     }
 
@@ -95,9 +94,7 @@ fun OnlineSearch(
         if (textFieldValue.text.isEmpty()) return@LaunchedEffect
 
         delay(500)
-        suggestionsResult = Innertube.searchSuggestions(
-            body = SearchSuggestionsBody(input = textFieldValue.text)
-        )
+        suggestionsResult = viewModel.fetchSuggestions(textFieldValue.text)
     }
 
     val playlistId = remember(textFieldValue.text) {
@@ -218,11 +215,7 @@ fun OnlineSearch(
                         .clickable(
                             indication = ripple(bounded = false),
                             interactionSource = remember { MutableInteractionSource() },
-                            onClick = {
-                                query {
-                                    Database.delete(searchQuery)
-                                }
-                            }
+                            onClick = { viewModel.deleteHistory(searchQuery) }
                         )
                         .padding(horizontal = 8.dp)
                         .size(20.dp)
