@@ -35,6 +35,7 @@ import app.vimusic.android.ui.components.themed.TextFieldDialog
 import app.vimusic.android.ui.components.themed.adaptiveThumbnailContent
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
+import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.InnertubeSongMediaItemMapper
 import app.vimusic.android.utils.asMediaItem
@@ -197,6 +198,10 @@ fun PlaylistSongList(
                                 playbackActions.playAtIndex(items, index)
                             }
                         }
+                    )
+                    .songSwipeActions(
+                        key = playlistItems ?: emptyList<Innertube.SongItem>(),
+                        mediaItem = song.asMediaItem
                     )
             )
         }

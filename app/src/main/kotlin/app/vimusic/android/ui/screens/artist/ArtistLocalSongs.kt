@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,11 +20,13 @@ import app.vimusic.android.models.Song
 import app.vimusic.android.ui.components.LocalMenuState
 import app.vimusic.android.ui.components.ShimmerHost
 import app.vimusic.android.ui.components.rememberSongListState
+import app.vimusic.android.ui.components.themed.HideSongDialog
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
 import app.vimusic.android.ui.components.themed.SongListScaffold
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
+import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.rememberMediaItems
@@ -44,6 +48,7 @@ fun ArtistLocalSongs(
     val menuState = LocalMenuState.current
 
     var songs by persist<List<Song>?>("artist/$browseId/localSongs")
+    var hidingSong by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         Database.artistSongs(browseId).collect { songs = it }
@@ -80,22 +85,35 @@ fun ArtistLocalSongs(
                 items = listState.items,
                 key = { _, song -> song.id }
             ) { index, song ->
+                if (hidingSong == song.id) HideSongDialog(
+                    song = song,
+                    onDismiss = { hidingSong = null },
+                    onConfirm = { hidingSong = null }
+                )
+
                 SongItem(
-                    modifier = Modifier.combinedClickable(
-                        onLongClick = {
-                            menuState.display {
-                                NonQueuedMediaItemMenu(
-                                    onDismiss = menuState::hide,
-                                    mediaItem = song.asMediaItem
-                                )
+                    modifier = Modifier
+                        .combinedClickable(
+                            onLongClick = {
+                                menuState.display {
+                                    NonQueuedMediaItemMenu(
+                                        onDismiss = menuState::hide,
+                                        mediaItem = song.asMediaItem
+                                    )
+                                }
+                            },
+                            onClick = {
+                                mediaItems?.let { items ->
+                                    playbackActions.playAtIndex(items, index)
+                                }
                             }
-                        },
-                        onClick = {
-                            mediaItems?.let { items ->
-                                playbackActions.playAtIndex(items, index)
-                            }
-                        }
-                    ),
+                        )
+                        .songSwipeActions(
+                            key = listState.items,
+                            mediaItem = song.asMediaItem,
+                            songToHide = song,
+                            onSwipeLeftRequested = { hidingSong = it.id }
+                        ),
                     song = song,
                     thumbnailSize = Dimensions.thumbnails.song
                 )
