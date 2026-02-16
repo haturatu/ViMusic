@@ -21,12 +21,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import app.vimusic.android.Database
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.preferences.PlayerPreferences
 import app.vimusic.android.ui.modifiers.PinchDirection
 import app.vimusic.android.ui.modifiers.onSwipe
 import app.vimusic.android.ui.modifiers.pinchToToggle
+import app.vimusic.android.ui.viewmodels.PlayerViewModel
 import app.vimusic.android.utils.FullScreenState
 import app.vimusic.android.utils.forceSeekToNext
 import app.vimusic.android.utils.forceSeekToPrevious
@@ -41,6 +43,10 @@ fun LyricsDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) = Dialog(onDismissRequest = onDismiss) {
+    val viewModel: PlayerViewModel = viewModel(
+        key = "player",
+        factory = PlayerViewModel.factory(LocalAppContainer.current.playerRepository)
+    )
     val currentOnDismiss by rememberUpdatedState(onDismiss)
 
     FullScreenState(shown = PlayerPreferences.lyricsShowSystemBars)
@@ -121,7 +127,7 @@ fun LyricsDialog(
                 onDismiss = { },
                 mediaMetadataProvider = currentWindow.mediaItem::mediaMetadata,
                 durationProvider = player::getDuration,
-                ensureSongInserted = { Database.insert(currentWindow.mediaItem) },
+                ensureSongInserted = { viewModel.insertSong(currentWindow.mediaItem) },
                 onMenuLaunch = onDismiss,
                 modifier = Modifier.height(maxHeight),
                 shouldKeepScreenAwake = false, // otherwise the keepScreenOn flag resets after dialog closes

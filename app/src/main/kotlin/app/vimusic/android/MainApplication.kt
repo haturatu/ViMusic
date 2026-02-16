@@ -79,6 +79,7 @@ import app.vimusic.android.repositories.DatabaseLibraryRepository
 import app.vimusic.android.repositories.DatabaseOnlineSearchRepository
 import app.vimusic.android.repositories.DatabasePlaylistRepository
 import app.vimusic.android.repositories.DatabaseSongsRepository
+import app.vimusic.android.repositories.DatabaseSettingsRepository
 import app.vimusic.android.repositories.HomeDiscoveryRepository
 import app.vimusic.android.repositories.InnertubeSearchResultRepository
 import app.vimusic.android.repositories.InnertubeHomeDiscoveryRepository
@@ -93,11 +94,14 @@ import app.vimusic.android.repositories.OnlineSearchRepository
 import app.vimusic.android.repositories.PipedPlaylistRepository
 import app.vimusic.android.repositories.PlaylistRepository
 import app.vimusic.android.repositories.PlayerRepository
+import app.vimusic.android.repositories.QueueRepository
 import app.vimusic.android.repositories.DatabasePlayerRepository
+import app.vimusic.android.repositories.DatabaseQueueRepository
 import app.vimusic.android.repositories.SearchResultRepository
 import app.vimusic.android.repositories.SongsRepository
 import app.vimusic.android.repositories.SyncSettingsRepository
 import app.vimusic.android.repositories.DatabaseSyncSettingsRepository
+import app.vimusic.android.repositories.DefaultDatabaseSettingsRepository
 import app.vimusic.android.service.PlayerService
 import app.vimusic.android.extractor.NewPipeExtractorClient
 import app.vimusic.android.service.ServiceNotifications
@@ -562,6 +566,8 @@ class AppContainer(
     val localPlaylistRepository: LocalPlaylistRepository by lazy { DatabaseLocalPlaylistRepository }
     val syncSettingsRepository: SyncSettingsRepository by lazy { DatabaseSyncSettingsRepository }
     val playerRepository: PlayerRepository by lazy { DatabasePlayerRepository }
+    val queueRepository: QueueRepository by lazy { DatabaseQueueRepository }
+    val databaseSettingsRepository: DatabaseSettingsRepository by lazy { DefaultDatabaseSettingsRepository }
 
     fun initialize() {
         DatabaseInitializer(application.applicationContext)

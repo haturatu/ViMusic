@@ -45,8 +45,9 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
-import app.vimusic.android.Database
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
 import app.vimusic.android.preferences.PlayerPreferences
@@ -57,6 +58,7 @@ import app.vimusic.android.service.UnplayableException
 import app.vimusic.android.service.VideoIdMismatchException
 import app.vimusic.android.service.isLocal
 import app.vimusic.android.ui.modifiers.onSwipe
+import app.vimusic.android.ui.viewmodels.PlayerViewModel
 import app.vimusic.android.utils.forceSeekToNext
 import app.vimusic.android.utils.forceSeekToPrevious
 import app.vimusic.android.utils.thumbnail
@@ -86,6 +88,10 @@ fun Thumbnail(
     },
     showLyricsControls: Boolean = true
 ) {
+    val viewModel: PlayerViewModel = viewModel(
+        key = "player",
+        factory = PlayerViewModel.factory(LocalAppContainer.current.playerRepository)
+    )
     val binder = LocalPlayerServiceBinder.current
     val (colorPalette, _, _, thumbnailShape) = LocalAppearance.current
 
@@ -205,7 +211,7 @@ fun Thumbnail(
                 mediaId = currentWindow.mediaItem.mediaId,
                 isDisplayed = isShowingLyrics && error == null,
                 onDismiss = { onShowLyrics(false) },
-                ensureSongInserted = { Database.insert(currentWindow.mediaItem) },
+                ensureSongInserted = { viewModel.insertSong(currentWindow.mediaItem) },
                 mediaMetadataProvider = currentWindow.mediaItem::mediaMetadata,
                 durationProvider = { binder?.player?.duration ?: C.TIME_UNSET },
                 onOpenDialog = onOpenDialog,

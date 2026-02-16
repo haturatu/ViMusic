@@ -57,17 +57,16 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
-import app.vimusic.android.Database
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.R
 import app.vimusic.android.models.Playlist
-import app.vimusic.android.models.SongPlaylistMap
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.preferences.PlayerPreferences
 import app.vimusic.android.service.PlayerService
-import app.vimusic.android.transaction
 import app.vimusic.android.ui.components.BottomSheet
 import app.vimusic.android.ui.components.BottomSheetState
 import app.vimusic.android.ui.components.LocalMenuState
@@ -86,6 +85,7 @@ import app.vimusic.android.ui.components.themed.TextToggle
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.modifiers.swipeToClose
+import app.vimusic.android.ui.viewmodels.QueueViewModel
 import app.vimusic.android.utils.DisposableListener
 import app.vimusic.android.utils.addNext
 import app.vimusic.android.utils.asMediaItem
@@ -107,9 +107,6 @@ import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.onOverlay
 import app.vimusic.core.ui.utils.roundedShape
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.NextBody
-import app.vimusic.providers.innertube.requests.nextPage
 import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -131,6 +128,10 @@ fun Queue(
     scrollConnection: NestedScrollConnection = remember(layoutState::preUpPostDownNestedScrollConnection),
     windowInsets: WindowInsets = WindowInsets.systemBars
 ) {
+    val viewModel: QueueViewModel = viewModel(
+        key = "queue",
+        factory = QueueViewModel.factory(LocalAppContainer.current.queueRepository)
+    )
     val (colorPalette, typography, _, thumbnailShape) = LocalAppearance.current
     val menuState = LocalMenuState.current
 
@@ -172,12 +173,8 @@ fun Queue(
     LaunchedEffect(mediaItemIndex, shouldLoadSuggestions) {
         if (shouldLoadSuggestions) withContext(Dispatchers.IO) {
             suggestions = runCatching {
-                Innertube.nextPage(
-                    NextBody(videoId = windows[mediaItemIndex].mediaItem.mediaId)
-                )?.mapCatching { page ->
-                    page.itemsPage?.items?.map { it.asMediaItem }
-                }
-            }.also { it.exceptionOrNull()?.printStackTrace() }.getOrNull()
+                viewModel.fetchSuggestions(videoId = windows[mediaItemIndex].mediaItem.mediaId)
+            }.also { it.exceptionOrNull()?.printStackTrace() }
         }
     }
 
@@ -476,34 +473,20 @@ fun Queue(
                     modifier = Modifier
                         .clip(16.dp.roundedShape)
                         .clickable {
-                            fun addToPlaylist(playlist: Playlist, index: Int) = transaction {
-                                val playlistId = Database
-                                    .insert(playlist)
-                                    .takeIf { it != -1L } ?: playlist.id
-
-                                windows.forEachIndexed { i, window ->
-                                    val mediaItem = window.mediaItem
-
-                                    Database.insert(mediaItem)
-                                    Database.insert(
-                                        SongPlaylistMap(
-                                            songId = mediaItem.mediaId,
-                                            playlistId = playlistId,
-                                            position = index + i
-                                        )
-                                    )
-                                }
-                            }
+                            fun addToPlaylist(playlist: Playlist, index: Int) = viewModel.addQueueToPlaylist(
+                                playlist = playlist,
+                                index = index,
+                                mediaItems = windows.map { it.mediaItem }
+                            )
 
                             menuState.display {
                                 var isCreatingNewPlaylist by rememberSaveable { mutableStateOf(false) }
 
                                 val playlistPreviews by remember {
-                                    Database
-                                        .playlistPreviews(
-                                            sortBy = PlaylistSortBy.DateAdded,
-                                            sortOrder = SortOrder.Descending
-                                        )
+                                    viewModel.observePlaylistPreviews(
+                                        sortBy = PlaylistSortBy.DateAdded,
+                                        sortOrder = SortOrder.Descending
+                                    )
                                         .onFirst { isCreatingNewPlaylist = it.isEmpty() }
                                 }.collectAsStateWithLifecycle(initialValue = null, context = Dispatchers.IO)
 

@@ -29,23 +29,21 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheSpan
-import app.vimusic.android.Database
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
 import app.vimusic.android.models.Format
-import app.vimusic.android.service.PlayerService
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
+import app.vimusic.android.ui.viewmodels.PlayerViewModel
 import app.vimusic.android.utils.color
 import app.vimusic.android.utils.medium
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.onOverlay
 import app.vimusic.core.ui.overlay
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.PlayerBody
-import app.vimusic.providers.innertube.requests.player
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -66,6 +64,10 @@ fun StatsForNerds(
     enter = fadeIn(),
     exit = fadeOut()
 ) {
+    val viewModel: PlayerViewModel = viewModel(
+        key = "player",
+        factory = PlayerViewModel.factory(LocalAppContainer.current.playerRepository)
+    )
     val (colorPalette, typography) = LocalAppearance.current
     val context = LocalContext.current
     val binder = LocalPlayerServiceBinder.current
@@ -80,44 +82,28 @@ fun StatsForNerds(
 
     var hasReloaded by rememberSaveable { mutableStateOf(false) }
 
-    suspend fun reload(binder: PlayerService.Binder) {
-        binder.player.currentMediaItem
+    suspend fun reload() {
+        val currentBinder = binder ?: return
+
+        currentBinder.player.currentMediaItem
             ?.takeIf { it.mediaId == mediaId }
             ?.let { mediaItem ->
                 withContext(Dispatchers.IO) {
                     delay(2000)
-
-                    Innertube
-                        .player(PlayerBody(videoId = mediaId))
-                        ?.onSuccess { response ->
-                            response?.streamingData?.highestQualityFormat?.let { format ->
-                                Database.insert(mediaItem)
-                                Database.insert(
-                                    Format(
-                                        songId = mediaId,
-                                        itag = format.itag,
-                                        mimeType = format.mimeType,
-                                        bitrate = format.bitrate,
-                                        loudnessDb = response.playerConfig?.audioConfig?.normalizedLoudnessDb,
-                                        contentLength = format.contentLength,
-                                        lastModified = format.lastModified
-                                    )
-                                )
-                            }
-                        }
+                    viewModel.refreshFormat(songId = mediaId, mediaItem = mediaItem)
                 }
             }
     }
 
     LaunchedEffect(binder, mediaId) {
-        val currentBinder = binder ?: return@LaunchedEffect
+        binder ?: return@LaunchedEffect
 
-        Database
-            .format(mediaId)
+        viewModel
+            .observeFormat(mediaId)
             .distinctUntilChanged()
             .collectLatest { currentFormat ->
                 if (currentFormat?.itag != null) format = currentFormat
-                else reload(currentBinder)
+                else reload()
             }
     }
 
@@ -215,7 +201,7 @@ fun StatsForNerds(
                     hasReloaded = true
 
                     coroutineScope.launch {
-                        reload(it)
+                        reload()
                     }
                 },
                 enabled = !hasReloaded

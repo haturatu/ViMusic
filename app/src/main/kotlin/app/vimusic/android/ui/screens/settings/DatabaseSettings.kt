@@ -7,24 +7,18 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import app.vimusic.android.Database
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.R
-import app.vimusic.android.internal
-import app.vimusic.android.dbPath
 import app.vimusic.android.preferences.DataPreferences
-import app.vimusic.android.query
 import app.vimusic.android.service.PlayerService
-import app.vimusic.android.transaction
 import app.vimusic.android.ui.screens.Route
+import app.vimusic.android.ui.viewmodels.DatabaseSettingsViewModel
 import app.vimusic.android.utils.intent
 import app.vimusic.android.utils.toast
-import kotlinx.coroutines.flow.distinctUntilChanged
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -33,26 +27,22 @@ import kotlin.system.exitProcess
 @Route
 @Composable
 fun DatabaseSettings() = with(DataPreferences) {
+    val viewModel: DatabaseSettingsViewModel = viewModel(
+        key = "database_settings",
+        factory = DatabaseSettingsViewModel.factory(LocalAppContainer.current.databaseSettingsRepository)
+    )
     val context = LocalContext.current
 
-    val eventsCount by remember { Database.eventsCount().distinctUntilChanged() }
-        .collectAsStateWithLifecycle(initialValue = 0)
+    val eventsCount by viewModel.observeEventsCount().collectAsStateWithLifecycle(initialValue = 0)
 
-    val blacklistLength by remember { Database.blacklistLength().distinctUntilChanged() }
-        .collectAsStateWithLifecycle(initialValue = 0)
+    val blacklistLength by viewModel.observeBlacklistLength().collectAsStateWithLifecycle(initialValue = 0)
 
     val backupLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument(mimeType = "application/vnd.sqlite3")
     ) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
 
-        query {
-            Database.checkpoint()
-
-            context.applicationContext.contentResolver.openOutputStream(uri)?.use { output ->
-                FileInputStream(Database.internal.dbPath).use { input -> input.copyTo(output) }
-            }
-        }
+        context.applicationContext.contentResolver.openOutputStream(uri)?.use(viewModel::backupTo)
     }
 
     val restoreLauncher = rememberLauncherForActivityResult(
@@ -60,20 +50,9 @@ fun DatabaseSettings() = with(DataPreferences) {
     ) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
 
-        query {
-            Database.checkpoint()
-            Database.internal.close()
-
-            context.applicationContext.contentResolver.openInputStream(uri)
-                ?.use { inputStream ->
-                    FileOutputStream(Database.internal.dbPath).use { outputStream ->
-                        inputStream.copyTo(outputStream)
-                    }
-                }
-
-            context.stopService(context.intent<PlayerService>())
-            exitProcess(0)
-        }
+        context.applicationContext.contentResolver.openInputStream(uri)?.use(viewModel::restoreFrom)
+        context.stopService(context.intent<PlayerService>())
+        exitProcess(0)
     }
 
     SettingsCategoryScreen(title = stringResource(R.string.database)) {
@@ -101,7 +80,7 @@ fun DatabaseSettings() = with(DataPreferences) {
                         eventsCount
                     )
                     else stringResource(R.string.quick_picks_empty),
-                    onClick = { query(Database::clearEvents) },
+                    onClick = viewModel::clearEvents,
                     isEnabled = eventsCount > 0
                 )
             }
@@ -124,11 +103,7 @@ fun DatabaseSettings() = with(DataPreferences) {
                     blacklistLength
                 ) else stringResource(R.string.blacklist_empty),
                 isEnabled = blacklistLength > 0,
-                onClick = {
-                    transaction {
-                        Database.resetBlacklist()
-                    }
-                }
+                onClick = viewModel::resetBlacklist
             )
         }
         SettingsGroup(
