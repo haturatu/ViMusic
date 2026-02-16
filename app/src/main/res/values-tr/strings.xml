@@ -357,8 +357,10 @@
 
     <string name="pre_cache">Önbellek</string>
 
-    <string name="swipe_to_hide_song">Şarkıyı gizlemek için kaydır</string>
+    <string name="swipe_to_hide_song">Şarkıyı gizlemek için sola kaydır</string>
     <string name="swipe_to_hide_song_description">Bir şarkıyı sola kaydırdığınızda, veritabanından ve önbellekten kaldırılır</string>
+    <string name="swipe_right_to_play_next">Sonrakini çalmak için sağa kaydır</string>
+    <string name="swipe_right_to_play_next_description">Bir şarkıyı sağa kaydırdığınızda, kuyrukta bir sonraki şarkı olarak eklenir</string>
     <string name="swipe_to_hide_song_confirm">Şarkıyı gizlemek için kaydırmayı onayla</string>
     <string name="swipe_to_hide_song_confirm_description">Gizlemek için kaydırdığınızda önce onaylamanız gerekir</string>
 

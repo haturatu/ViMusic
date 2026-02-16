@@ -369,8 +369,10 @@
 
     <string name="pre_cache">プリキャッシュ</string>
 
-    <string name="swipe_to_hide_song">スワイプして曲を削除</string>
+    <string name="swipe_to_hide_song">左スワイプして曲を削除</string>
     <string name="swipe_to_hide_song_description">曲を左にスワイプすると、データベースとキャッシュから削除されます</string>
+    <string name="swipe_right_to_play_next">右スワイプで次を再生</string>
+    <string name="swipe_right_to_play_next_description">曲を右にスワイプすると、次に再生する曲としてキューに追加されます</string>
     <string name="swipe_to_hide_song_confirm">スワイプを確認する</string>
     <string name="swipe_to_hide_song_confirm_description">スワイプして削除する場合は、確認する必要があります</string>
 

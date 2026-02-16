@@ -375,8 +375,10 @@
 
     <string name="pre_cache">Eelvahemälu</string>
 
-    <string name="swipe_to_hide_song">Pühkige, et peita laul</string>
+    <string name="swipe_to_hide_song">Laulu peitmiseks pühi vasakule</string>
     <string name="swipe_to_hide_song_description">Kui pühkite laulu vasakule, eemaldatakse see andmebaasist ja vahemälust</string>
+    <string name="swipe_right_to_play_next">Järgmise loo esitamiseks pühi paremale</string>
+    <string name="swipe_right_to_play_next_description">Kui pühkite laulu paremale, lisatakse see järjekorda järgmise loona</string>
     <string name="swipe_to_hide_song_confirm">Kinnita laulu peitmine</string>
     <string name="swipe_to_hide_song_confirm_description">Kui pühkite peitmiseks, peate esmalt kinnitama</string>
     <string name="hide_explicit">Peida täiskasvanutele mõeldud lood</string>

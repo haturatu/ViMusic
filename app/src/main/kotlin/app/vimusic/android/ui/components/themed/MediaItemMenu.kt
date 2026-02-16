@@ -66,7 +66,6 @@ import app.vimusic.android.transaction
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.screens.albumRoute
 import app.vimusic.android.ui.screens.artistRoute
-import app.vimusic.android.ui.screens.home.HideSongDialog
 import app.vimusic.android.utils.addNext
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.enqueue

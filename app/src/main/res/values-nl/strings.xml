@@ -379,8 +379,10 @@
 
     <string name="pre_cache">Van tevoren cachen</string>
 
-    <string name="swipe_to_hide_song">Swipe om song te verbergen</string>
+    <string name="swipe_to_hide_song">Swipe naar links om song te verbergen</string>
     <string name="swipe_to_hide_song_description">Wanneer je een song naar links swipet wordt deze verwijderd uit de database en cache</string>
+    <string name="swipe_right_to_play_next">Swipe naar rechts om volgende af te spelen</string>
+    <string name="swipe_right_to_play_next_description">Wanneer je een song naar rechts swipet, wordt deze als volgende song aan de wachtrij toegevoegd</string>
     <string name="swipe_to_hide_song_confirm">Bevestig swipen</string>
     <string name="swipe_to_hide_song_confirm_description">Als je een song swipet word je eerst om bevestiging gevraagd</string>
     <string name="hide_explicit">Verberg expliciete nummers</string>

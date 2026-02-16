@@ -361,8 +361,10 @@
     <string name="blacklist_empty">Schwarze Liste ist leer</string>
 
     <string name="pre_cache">In den Cache laden</string>
-    <string name="swipe_to_hide_song">Wischen, um Lied zu löschen</string>
+    <string name="swipe_to_hide_song">Nach links wischen, um Lied zu löschen</string>
     <string name="swipe_to_hide_song_description">Wenn Sie einen Titel nach links wischen, wird er aus der Datenbank und dem Zwischenspeicher entfernt.</string>
+    <string name="swipe_right_to_play_next">Nach rechts wischen, um als Nächstes abzuspielen</string>
+    <string name="swipe_right_to_play_next_description">Wenn Sie einen Titel nach rechts wischen, wird er als nächster Titel zur Warteschlange hinzugefügt.</string>
     <string name="swipe_to_hide_song_confirm">Wischen zum Löschen bestätigen</string>
     <string name="swipe_to_hide_song_confirm_description">Wenn Sie zum Löschen wischen, müssen Sie zunächst bestätigen.</string>
     
