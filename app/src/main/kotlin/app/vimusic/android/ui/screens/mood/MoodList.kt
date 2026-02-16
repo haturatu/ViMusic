@@ -22,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.R
 import app.vimusic.android.models.Mood
@@ -36,6 +38,7 @@ import app.vimusic.android.ui.items.PlaylistItem
 import app.vimusic.android.ui.screens.albumRoute
 import app.vimusic.android.ui.screens.artistRoute
 import app.vimusic.android.ui.screens.playlistRoute
+import app.vimusic.android.ui.viewmodels.MoodListViewModel
 import app.vimusic.android.utils.center
 import app.vimusic.android.utils.secondary
 import app.vimusic.android.utils.semiBold
@@ -43,9 +46,7 @@ import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.BrowseBody
 import app.vimusic.providers.innertube.requests.BrowseResult
-import app.vimusic.providers.innertube.requests.browse
 import com.valentinilk.shimmer.shimmer
 
 private const val DEFAULT_BROWSE_ID = "FEmusic_moods_and_genres_category"
@@ -55,6 +56,10 @@ fun MoodList(
     mood: Mood,
     modifier: Modifier = Modifier
 ) = Column(modifier = modifier) {
+    val viewModel: MoodListViewModel = viewModel(
+        key = "mood_list:${mood.browseId ?: DEFAULT_BROWSE_ID}:${mood.params.orEmpty()}",
+        factory = MoodListViewModel.factory(LocalAppContainer.current.moodRepository)
+    )
     val (colorPalette, typography) = LocalAppearance.current
     val windowInsets = LocalPlayerAwareWindowInsets.current
 
@@ -66,7 +71,7 @@ fun MoodList(
     LaunchedEffect(Unit) {
         if (moodPage?.isSuccess == true) return@LaunchedEffect
 
-        moodPage = Innertube.browse(BrowseBody(browseId = browseId, params = mood.params))
+        moodPage = viewModel.fetchMoodPage(browseId = browseId, params = mood.params)
     }
 
     val lazyListState = rememberLazyListState()

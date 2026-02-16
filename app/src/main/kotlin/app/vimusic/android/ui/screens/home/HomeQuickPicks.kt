@@ -37,13 +37,13 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import app.vimusic.android.Database
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
 import app.vimusic.android.models.Song
 import app.vimusic.android.preferences.DataPreferences
-import app.vimusic.android.query
 import app.vimusic.android.ui.components.LocalMenuState
 import app.vimusic.android.ui.components.ShimmerHost
 import app.vimusic.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
@@ -59,6 +59,7 @@ import app.vimusic.android.ui.items.PlaylistItemPlaceholder
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.screens.Route
+import app.vimusic.android.ui.viewmodels.HomeQuickPicksViewModel
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.center
 import app.vimusic.android.utils.forcePlay
@@ -71,8 +72,6 @@ import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.isLandscape
 import app.vimusic.providers.innertube.Innertube
 import app.vimusic.providers.innertube.models.NavigationEndpoint
-import app.vimusic.providers.innertube.models.bodies.NextBody
-import app.vimusic.providers.innertube.requests.relatedPage
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -84,6 +83,10 @@ fun QuickPicks(
     onPlaylistClick: (Innertube.PlaylistItem) -> Unit,
     onSearchClick: () -> Unit
 ) {
+    val viewModel: HomeQuickPicksViewModel = viewModel(
+        key = "home_quick_picks",
+        factory = HomeQuickPicksViewModel.factory(LocalAppContainer.current.homeQuickPicksRepository)
+    )
     val (colorPalette, typography) = LocalAppearance.current
     val binder = LocalPlayerServiceBinder.current
     val menuState = LocalMenuState.current
@@ -111,24 +114,22 @@ fun QuickPicks(
 
         suspend fun handleSong(song: Song?) {
             if (relatedPageResult == null || trending?.id != song?.id) relatedPageResult =
-                Innertube.relatedPage(
-                    body = NextBody(videoId = (song?.id ?: "J7p4bzqLvCw"))
-                )
+                viewModel.fetchRelatedPage(videoId = (song?.id ?: "J7p4bzqLvCw"))
             trending = song
         }
 
         when (DataPreferences.quickPicksSource) {
             DataPreferences.QuickPicksSource.Trending ->
-                Database
-                    .trending()
+                viewModel
+                    .observeTrendingSong()
                     .distinctUntilChanged()
-                    .collect { handleSong(it.firstOrNull()) }
+                    .collect(::handleSong)
 
             DataPreferences.QuickPicksSource.LastInteraction ->
-                Database
-                    .events()
+                viewModel
+                    .observeLastInteractionSong()
                     .distinctUntilChanged()
-                    .collect { handleSong(it.firstOrNull()?.song) }
+                    .collect(::handleSong)
         }
     }
 
@@ -192,9 +193,7 @@ fun QuickPicks(
                                                     onDismiss = menuState::hide,
                                                     mediaItem = song.asMediaItem,
                                                     onRemoveFromQuickPicks = {
-                                                        query {
-                                                            Database.clearEventsFor(song.id)
-                                                        }
+                                                        viewModel.removeFromQuickPicks(song.id)
                                                     }
                                                 )
                                             }

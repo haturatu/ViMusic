@@ -45,6 +45,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
@@ -60,6 +62,7 @@ import app.vimusic.android.ui.items.AlbumItem
 import app.vimusic.android.ui.items.AlbumItemPlaceholder
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.screens.Route
+import app.vimusic.android.ui.viewmodels.HomeDiscoveryViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.center
@@ -74,7 +77,6 @@ import app.vimusic.core.ui.shimmer
 import app.vimusic.core.ui.utils.isLandscape
 import app.vimusic.providers.innertube.Innertube
 import app.vimusic.providers.innertube.models.NavigationEndpoint
-import app.vimusic.providers.innertube.requests.discoverPage
 
 @OptIn(ExperimentalFoundationApi::class)
 @Route
@@ -87,6 +89,10 @@ fun HomeDiscovery(
     onMoreAlbumsClick: () -> Unit,
     onPlaylistClick: (browseId: String) -> Unit
 ) {
+    val viewModel: HomeDiscoveryViewModel = viewModel(
+        key = "home_discovery",
+        factory = HomeDiscoveryViewModel.factory(LocalAppContainer.current.homeDiscoveryRepository)
+    )
     val (colorPalette, typography) = LocalAppearance.current
     val windowInsets = LocalPlayerAwareWindowInsets.current
     val menuState = LocalMenuState.current
@@ -108,7 +114,7 @@ fun HomeDiscovery(
     var discoverPage by persist<Result<Innertube.DiscoverPage>>("home/discovery")
 
     LaunchedEffect(Unit) {
-        if (discoverPage?.isSuccess != true) discoverPage = Innertube.discoverPage()
+        if (discoverPage?.isSuccess != true) discoverPage = viewModel.fetchDiscoverPage()
     }
 
     BoxWithConstraints {

@@ -74,13 +74,19 @@ import app.vimusic.android.repositories.DatabaseAlbumRepository
 import app.vimusic.android.repositories.DatabaseArtistRepository
 import app.vimusic.android.repositories.DatabaseBuiltInPlaylistRepository
 import app.vimusic.android.repositories.DatabaseHomePlaylistsRepository
+import app.vimusic.android.repositories.DatabaseHomeQuickPicksRepository
 import app.vimusic.android.repositories.DatabaseLibraryRepository
 import app.vimusic.android.repositories.DatabaseOnlineSearchRepository
 import app.vimusic.android.repositories.DatabasePlaylistRepository
 import app.vimusic.android.repositories.DatabaseSongsRepository
+import app.vimusic.android.repositories.HomeDiscoveryRepository
 import app.vimusic.android.repositories.InnertubeSearchResultRepository
+import app.vimusic.android.repositories.InnertubeHomeDiscoveryRepository
+import app.vimusic.android.repositories.InnertubeMoodRepository
+import app.vimusic.android.repositories.HomeQuickPicksRepository
 import app.vimusic.android.repositories.LibraryRepository
 import app.vimusic.android.repositories.HomePlaylistsRepository
+import app.vimusic.android.repositories.MoodRepository
 import app.vimusic.android.repositories.OnlineSearchRepository
 import app.vimusic.android.repositories.PipedPlaylistRepository
 import app.vimusic.android.repositories.PlaylistRepository
@@ -540,10 +546,13 @@ class AppContainer(
     val libraryRepository: LibraryRepository by lazy { DatabaseLibraryRepository }
     val onlineSearchRepository: OnlineSearchRepository by lazy { DatabaseOnlineSearchRepository }
     val homePlaylistsRepository: HomePlaylistsRepository by lazy { DatabaseHomePlaylistsRepository }
+    val homeQuickPicksRepository: HomeQuickPicksRepository by lazy { DatabaseHomeQuickPicksRepository }
     val builtInPlaylistRepository: BuiltInPlaylistRepository by lazy { DatabaseBuiltInPlaylistRepository }
     val albumRepository: AlbumRepository by lazy { DatabaseAlbumRepository }
     val playlistRepository: PlaylistRepository by lazy { DatabasePlaylistRepository }
     val pipedPlaylistRepository: PipedPlaylistRepository by lazy { ApiPipedPlaylistRepository }
+    val homeDiscoveryRepository: HomeDiscoveryRepository by lazy { InnertubeHomeDiscoveryRepository }
+    val moodRepository: MoodRepository by lazy { InnertubeMoodRepository }
 
     fun initialize() {
         DatabaseInitializer(application.applicationContext)
