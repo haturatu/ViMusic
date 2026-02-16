@@ -135,6 +135,7 @@ dependencies {
     implementation(libs.compose.lottie)
     implementation(libs.compose.material3)
     implementation(libs.compose.lifecycle)
+    implementation(libs.compose.viewmodel)
 
     implementation(libs.coil.compose)
     implementation(libs.coil.ktor)

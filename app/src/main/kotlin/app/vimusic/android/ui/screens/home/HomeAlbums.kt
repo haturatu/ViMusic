@@ -23,7 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import app.vimusic.android.Database
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.R
 import app.vimusic.android.models.Album
@@ -33,6 +34,7 @@ import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.HeaderIconButton
 import app.vimusic.android.ui.items.AlbumItem
 import app.vimusic.android.ui.screens.Route
+import app.vimusic.android.ui.viewmodels.HomeAlbumsViewModel
 import app.vimusic.compose.persist.persist
 import app.vimusic.core.data.enums.AlbumSortBy
 import app.vimusic.core.data.enums.SortOrder
@@ -45,12 +47,15 @@ fun HomeAlbums(
     onAlbumClick: (Album) -> Unit,
     onSearchClick: () -> Unit
 ) = with(OrderPreferences) {
+    val viewModel: HomeAlbumsViewModel = viewModel(
+        factory = HomeAlbumsViewModel.factory(LocalAppContainer.current.libraryRepository)
+    )
     val (colorPalette) = LocalAppearance.current
 
     var items by persist<List<Album>>(tag = "home/albums", emptyList())
 
     LaunchedEffect(albumSortBy, albumSortOrder) {
-        Database.albums(albumSortBy, albumSortOrder).collect { items = it }
+        viewModel.observeAlbums(albumSortBy, albumSortOrder).collect { items = it }
     }
 
     val sortOrderIconRotation by animateFloatAsState(

@@ -14,7 +14,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import app.vimusic.android.Database
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.R
 import app.vimusic.android.models.Song
 import app.vimusic.android.ui.components.LocalMenuState
@@ -27,6 +28,7 @@ import app.vimusic.android.ui.components.themed.SongListScaffold
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.modifiers.songSwipeActions
+import app.vimusic.android.ui.viewmodels.ArtistLocalSongsViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.rememberMediaItems
@@ -43,6 +45,13 @@ fun ArtistLocalSongs(
     thumbnailContent: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val viewModel: ArtistLocalSongsViewModel = viewModel(
+        key = "artist_local_songs:$browseId",
+        factory = ArtistLocalSongsViewModel.factory(
+            browseId = browseId,
+            repository = LocalAppContainer.current.libraryRepository
+        )
+    )
     val playbackActions = LocalPlaybackActions.current
     val (colorPalette) = LocalAppearance.current
     val menuState = LocalMenuState.current
@@ -51,7 +60,7 @@ fun ArtistLocalSongs(
     var hidingSong by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        Database.artistSongs(browseId).collect { songs = it }
+        viewModel.observeSongs().collect { songs = it }
     }
 
     val lazyListState = rememberLazyListState()

@@ -66,7 +66,13 @@ import androidx.media3.common.Player
 import androidx.work.Configuration
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.preferences.DataPreferences
+import app.vimusic.android.repositories.ArtistRepository
+import app.vimusic.android.repositories.DatabaseArtistRepository
+import app.vimusic.android.repositories.DatabaseLibraryRepository
 import app.vimusic.android.repositories.DatabaseSongsRepository
+import app.vimusic.android.repositories.InnertubeSearchResultRepository
+import app.vimusic.android.repositories.LibraryRepository
+import app.vimusic.android.repositories.SearchResultRepository
 import app.vimusic.android.repositories.SongsRepository
 import app.vimusic.android.service.PlayerService
 import app.vimusic.android.extractor.NewPipeExtractorClient
@@ -517,6 +523,9 @@ class AppContainer(
 ) {
     val credentialManager: CredentialManager by lazy { CredentialManager.create(application) }
     val songsRepository: SongsRepository by lazy { DatabaseSongsRepository }
+    val searchResultRepository: SearchResultRepository by lazy { InnertubeSearchResultRepository }
+    val artistRepository: ArtistRepository by lazy { DatabaseArtistRepository }
+    val libraryRepository: LibraryRepository by lazy { DatabaseLibraryRepository }
 
     fun initialize() {
         DatabaseInitializer(application.applicationContext)

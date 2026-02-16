@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
 import app.vimusic.android.preferences.UIStatePreferences
@@ -33,22 +35,25 @@ import app.vimusic.android.ui.screens.Route
 import app.vimusic.android.ui.screens.albumRoute
 import app.vimusic.android.ui.screens.artistRoute
 import app.vimusic.android.ui.screens.playlistRoute
+import app.vimusic.android.ui.viewmodels.SearchResultViewModel
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.forcePlay
 import app.vimusic.compose.persist.LocalPersistMap
 import app.vimusic.compose.persist.PersistMapCleanup
 import app.vimusic.compose.routing.RouteHandler
 import app.vimusic.core.ui.Dimensions
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.ContinuationBody
-import app.vimusic.providers.innertube.models.bodies.SearchBody
-import app.vimusic.providers.innertube.requests.searchPage
-import app.vimusic.providers.innertube.utils.from
 
 @OptIn(ExperimentalFoundationApi::class)
 @Route
 @Composable
 fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
+    val viewModel: SearchResultViewModel = viewModel(
+        key = "search_result:$query",
+        factory = SearchResultViewModel.factory(
+            query = query,
+            repository = LocalAppContainer.current.searchResultRepository
+        )
+    )
     val persistMap = LocalPersistMap.current
     val binder = LocalPlayerServiceBinder.current
     val menuState = LocalMenuState.current
@@ -91,18 +96,7 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
                     when (tabIndex) {
                         0 -> ItemsPage(
                             tag = "searchResults/$query/songs",
-                            provider = { continuation ->
-                                if (continuation == null) Innertube.searchPage(
-                                    body = SearchBody(
-                                        query = query,
-                                        params = Innertube.SearchFilter.Song.value
-                                    ),
-                                    fromMusicShelfRendererContent = Innertube.SongItem.Companion::from
-                                ) else Innertube.searchPage(
-                                    body = ContinuationBody(continuation = continuation),
-                                    fromMusicShelfRendererContent = Innertube.SongItem.Companion::from
-                                )
-                            },
+                            provider = viewModel::songsPage,
                             emptyItemsText = stringResource(R.string.no_search_results),
                             header = headerContent,
                             itemContent = { song ->
@@ -138,22 +132,7 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
 
                         1 -> ItemsPage(
                             tag = "searchResults/$query/albums",
-                            provider = { continuation ->
-                                if (continuation == null) {
-                                    Innertube.searchPage(
-                                        body = SearchBody(
-                                            query = query,
-                                            params = Innertube.SearchFilter.Album.value
-                                        ),
-                                        fromMusicShelfRendererContent = Innertube.AlbumItem::from
-                                    )
-                                } else {
-                                    Innertube.searchPage(
-                                        body = ContinuationBody(continuation = continuation),
-                                        fromMusicShelfRendererContent = Innertube.AlbumItem::from
-                                    )
-                                }
-                            },
+                            provider = viewModel::albumsPage,
                             emptyItemsText = stringResource(R.string.no_search_results),
                             header = headerContent,
                             itemContent = { album ->
@@ -170,22 +149,7 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
 
                         2 -> ItemsPage(
                             tag = "searchResults/$query/artists",
-                            provider = { continuation ->
-                                if (continuation == null) {
-                                    Innertube.searchPage(
-                                        body = SearchBody(
-                                            query = query,
-                                            params = Innertube.SearchFilter.Artist.value
-                                        ),
-                                        fromMusicShelfRendererContent = Innertube.ArtistItem::from
-                                    )
-                                } else {
-                                    Innertube.searchPage(
-                                        body = ContinuationBody(continuation = continuation),
-                                        fromMusicShelfRendererContent = Innertube.ArtistItem::from
-                                    )
-                                }
-                            },
+                            provider = viewModel::artistsPage,
                             emptyItemsText = stringResource(R.string.no_search_results),
                             header = headerContent,
                             itemContent = { artist ->
@@ -203,18 +167,7 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
 
                         3 -> ItemsPage(
                             tag = "searchResults/$query/videos",
-                            provider = { continuation ->
-                                if (continuation == null) Innertube.searchPage(
-                                    body = SearchBody(
-                                        query = query,
-                                        params = Innertube.SearchFilter.Video.value
-                                    ),
-                                    fromMusicShelfRendererContent = Innertube.VideoItem::from
-                                ) else Innertube.searchPage(
-                                    body = ContinuationBody(continuation = continuation),
-                                    fromMusicShelfRendererContent = Innertube.VideoItem::from
-                                )
-                            },
+                            provider = viewModel::videosPage,
                             emptyItemsText = stringResource(R.string.no_search_results),
                             header = headerContent,
                             itemContent = { video ->
@@ -249,18 +202,7 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
 
                         4 -> ItemsPage(
                             tag = "searchResults/$query/playlists",
-                            provider = { continuation ->
-                                if (continuation == null) Innertube.searchPage(
-                                    body = SearchBody(
-                                        query = query,
-                                        params = Innertube.SearchFilter.CommunityPlaylist.value
-                                    ),
-                                    fromMusicShelfRendererContent = Innertube.PlaylistItem::from
-                                ) else Innertube.searchPage(
-                                    body = ContinuationBody(continuation = continuation),
-                                    fromMusicShelfRendererContent = Innertube.PlaylistItem::from
-                                )
-                            },
+                            provider = viewModel::playlistsPage,
                             emptyItemsText = stringResource(R.string.no_search_results),
                             header = headerContent,
                             itemContent = { playlist ->
