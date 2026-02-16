@@ -26,7 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import app.vimusic.android.Dependencies
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.R
 import app.vimusic.android.models.Song
 import app.vimusic.android.preferences.OrderPreferences
@@ -63,7 +63,7 @@ else Manifest.permission.READ_EXTERNAL_STORAGE
 @Route
 @Composable
 fun HomeLocalSongs(onSearchClick: () -> Unit) = with(OrderPreferences) {
-    val songsRepository = Dependencies.songsRepository
+    val songsRepository = LocalAppContainer.current.songsRepository
     val context = LocalContext.current
     val (_, typography) = LocalAppearance.current
 

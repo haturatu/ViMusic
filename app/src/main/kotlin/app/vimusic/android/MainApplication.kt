@@ -152,6 +152,7 @@ class MainViewModel : ViewModel() {
 
 class MainActivity : ComponentActivity(), MonetColorsChangedListener {
     private val vm: MainViewModel by viewModels()
+    private val appContainer get() = applicationContext.appContainer
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -225,12 +226,13 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                 LocalAppearance provides appearance,
                 LocalPlayerServiceBinder provides vm.binder,
                 LocalPlaybackActions provides playbackActions,
-                LocalCredentialManager provides Dependencies.credentialManager,
+                LocalAppContainer provides appContainer,
+                LocalCredentialManager provides appContainer.credentialManager,
                 LocalIndication provides ripple(),
                 LocalRippleConfiguration provides rippleConfiguration(appearance = appearance),
                 LocalShimmerTheme provides shimmerTheme(),
                 LocalLayoutDirection provides LayoutDirection.Ltr,
-                LocalPersistMap provides Dependencies.application.persistMap,
+                LocalPersistMap provides appContainer.application.persistMap,
                 LocalMonetCompat provides monet
             ) {
                 content()
@@ -503,9 +505,32 @@ fun handleUrl(
 val LocalPlayerServiceBinder = staticCompositionLocalOf<PlayerService.Binder?> { null }
 val LocalPlayerAwareWindowInsets =
     compositionLocalOf { WindowInsets(0.dp, 0.dp, 0.dp, 0.dp) }
-val LocalCredentialManager = staticCompositionLocalOf { Dependencies.credentialManager }
+val LocalAppContainer = staticCompositionLocalOf<AppContainer> {
+    error("LocalAppContainer is not provided")
+}
+val LocalCredentialManager = staticCompositionLocalOf<CredentialManager> {
+    error("LocalCredentialManager is not provided")
+}
+
+class AppContainer(
+    val application: MainApplication
+) {
+    val credentialManager: CredentialManager by lazy { CredentialManager.create(application) }
+    val songsRepository: SongsRepository by lazy { DatabaseSongsRepository }
+
+    fun initialize() {
+        DatabaseInitializer(application.applicationContext)
+        NewPipeExtractorClient.ensureInitialized()
+    }
+}
+
+val Context.appContainer: AppContainer
+    get() = (applicationContext as MainApplication).appContainer
 
 class MainApplication : Application(), SingletonImageLoader.Factory, Configuration.Provider {
+    lateinit var appContainer: AppContainer
+        private set
+
     override fun onCreate() {
         StrictMode.setVmPolicy(
             VmPolicy.Builder()
@@ -521,7 +546,8 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         MonetCompat.debugLog = BuildConfig.DEBUG
         super.onCreate()
 
-        Dependencies.init(this)
+        MainApplicationProvider.application = this
+        appContainer = AppContainer(this).also(AppContainer::initialize)
         MonetCompat.enablePaletteCompat()
         ServiceNotifications.createAll(this)
     }
@@ -550,18 +576,11 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         .build()
 }
 
-object Dependencies {
+open class GlobalPreferencesHolder : PreferencesHolder(
+    application = MainApplicationProvider.application,
+    name = "preferences"
+)
+
+private object MainApplicationProvider {
     lateinit var application: MainApplication
-        private set
-
-    val credentialManager by lazy { CredentialManager.create(application) }
-    val songsRepository: SongsRepository by lazy { DatabaseSongsRepository }
-
-    internal fun init(application: MainApplication) {
-        this.application = application
-        DatabaseInitializer()
-        NewPipeExtractorClient.ensureInitialized()
-    }
 }
-
-open class GlobalPreferencesHolder : PreferencesHolder(Dependencies.application, "preferences")

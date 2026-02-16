@@ -1,6 +1,7 @@
 package app.vimusic.android
 
 import android.content.ContentValues
+import android.content.Context
 import android.database.SQLException
 import android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE
 import android.os.Parcel
@@ -821,9 +822,9 @@ abstract class DatabaseInitializer protected constructor() : RoomDatabase() {
         @Volatile
         lateinit var instance: DatabaseInitializer
 
-        private fun buildDatabase() = Room
+        private fun buildDatabase(context: Context) = Room
             .databaseBuilder(
-                context = Dependencies.application.applicationContext,
+                context = context.applicationContext,
                 klass = DatabaseInitializer::class.java,
                 name = "data.db"
             )
@@ -836,12 +837,12 @@ abstract class DatabaseInitializer protected constructor() : RoomDatabase() {
             )
             .build()
 
-        operator fun invoke() {
-            if (!::instance.isInitialized) reload()
+        operator fun invoke(context: Context) {
+            if (!::instance.isInitialized) reload(context)
         }
 
-        fun reload() = synchronized(this) {
-            instance = buildDatabase()
+        fun reload(context: Context) = synchronized(this) {
+            instance = buildDatabase(context)
         }
     }
 

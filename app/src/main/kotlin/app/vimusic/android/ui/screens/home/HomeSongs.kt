@@ -50,7 +50,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
-import app.vimusic.android.Dependencies
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
@@ -93,7 +93,7 @@ private val Song.formattedTotalPlayTime @Composable get() = totalPlayTimeMs.mill
 fun HomeSongs(
     onSearchClick: () -> Unit
 ) = with(OrderPreferences) {
-    val songsRepository = Dependencies.songsRepository
+    val songsRepository = LocalAppContainer.current.songsRepository
 
     HomeSongs(
         onSearchClick = onSearchClick,

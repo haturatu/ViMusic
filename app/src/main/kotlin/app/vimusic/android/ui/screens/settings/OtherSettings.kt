@@ -274,7 +274,7 @@ fun OtherSettings() {
                             reloading = true
                             context.stopService(context.intent<PrecacheService>())
                             binder?.restartForegroundOrStop()
-                            DatabaseInitializer.reload()
+                            DatabaseInitializer.reload(context.applicationContext)
                             reloading = false
                         }
                     },
