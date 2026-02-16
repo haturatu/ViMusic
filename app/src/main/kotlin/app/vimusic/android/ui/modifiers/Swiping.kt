@@ -244,3 +244,75 @@ fun Modifier.swipeToClose(
             bounds = bounds
         )
 }
+
+fun Modifier.swipeToAction(
+    key: Any = Unit,
+    state: SwipeState? = null,
+    delay: Duration = Duration.ZERO,
+    decay: Density.() -> DecayAnimationSpec<Float> = { splineBasedDecay(this) },
+    requireUnconsumed: Boolean = false,
+    enableSwipeLeft: Boolean = true,
+    enableSwipeRight: Boolean = true,
+    onSwipeLeft: suspend (animationJob: Job) -> Unit = { },
+    onSwipeRight: suspend (animationJob: Job) -> Unit = { }
+) = this.composed {
+    val swipeState = state ?: rememberSwipeState(key)
+
+    val density = LocalDensity.current
+
+    var currentWidth by remember { mutableIntStateOf(0) }
+    val currentWidthDp by remember { derivedStateOf { currentWidth.px.dp(density) } }
+    val bounds by remember(currentWidthDp, enableSwipeLeft, enableSwipeRight) {
+        derivedStateOf {
+            when {
+                enableSwipeLeft && enableSwipeRight -> -currentWidthDp..currentWidthDp
+                enableSwipeLeft -> -currentWidthDp..0.dp
+                enableSwipeRight -> 0.dp..currentWidthDp
+                else -> 0.dp..0.dp
+            }
+        }
+    }
+
+    val currentOffsetPx by remember { derivedStateOf { swipeState.offset.value } }
+    val alpha by remember(currentWidth, currentOffsetPx, enableSwipeLeft, enableSwipeRight) {
+        derivedStateOf {
+            if (currentWidth == 0) 1f
+            else {
+                val widthPx = currentWidth.toFloat()
+                val offsetAbs = kotlin.math.abs(currentOffsetPx)
+                when {
+                    enableSwipeLeft && enableSwipeRight ->
+                        ((widthPx - offsetAbs) / widthPx).coerceIn(0f, 1f)
+
+                    enableSwipeLeft ->
+                        ((widthPx + currentOffsetPx) / widthPx).coerceIn(0f, 1f)
+
+                    enableSwipeRight ->
+                        ((widthPx - currentOffsetPx) / widthPx).coerceIn(0f, 1f)
+
+                    else -> 1f
+                }
+            }
+        }
+    }
+
+    this
+        .onSizeChanged { currentWidth = it.width }
+        .alpha(alpha)
+        .onSwipe(
+            state = swipeState,
+            key = key,
+            animateOffset = true,
+            onSwipeLeft = {
+                if (enableSwipeLeft) onSwipeLeft(it)
+            },
+            onSwipeRight = {
+                if (enableSwipeRight) onSwipeRight(it)
+            },
+            orientation = Orientation.Horizontal,
+            delay = delay,
+            decay = decay,
+            requireUnconsumed = requireUnconsumed,
+            bounds = bounds
+        )
+}

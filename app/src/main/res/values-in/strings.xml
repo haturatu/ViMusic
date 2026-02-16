@@ -350,8 +350,10 @@
 
     <string name="pre_cache">Pra-cache</string>
 
-    <string name="swipe_to_hide_song">Geser untuk menyembunyikan lagu</string>
+    <string name="swipe_to_hide_song">Geser ke kiri untuk menyembunyikan lagu</string>
     <string name="swipe_to_hide_song_description">Ketika Anda menggeser lagu ke kiri, akan menghapus lagu dari database dan cache</string>
+    <string name="swipe_right_to_play_next">Geser ke kanan untuk memutar berikutnya</string>
+    <string name="swipe_right_to_play_next_description">Ketika Anda menggeser lagu ke kanan, lagu ditambahkan ke antrean sebagai lagu berikutnya</string>
     <string name="swipe_to_hide_song_confirm">Konfirmasi gesek untuk menyembunyikan lagu</string>
     <string name="swipe_to_hide_song_confirm_description">Ketika Anda menggeser untuk menyembunyikan, Anda harus mengkonfirmasi terlebih dahulu</string>
 

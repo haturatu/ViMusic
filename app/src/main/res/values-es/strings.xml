@@ -369,8 +369,10 @@
 
     <string name="pre_cache">Pre-caché</string>
 
-    <string name="swipe_to_hide_song">Deslizar para ocultar canción</string>
+    <string name="swipe_to_hide_song">Desliza a la izquierda para ocultar la canción</string>
     <string name="swipe_to_hide_song_description">Cuando deslizas una canción hacia la izquierda, se elimina de la base de datos y la caché</string>
+    <string name="swipe_right_to_play_next">Desliza a la derecha para reproducir la siguiente</string>
+    <string name="swipe_right_to_play_next_description">Cuando deslizas una canción hacia la derecha, se agrega a la cola como la siguiente canción</string>
     <string name="swipe_to_hide_song_confirm">Confirmar deslizamiento para ocultar canción</string>
     <string name="swipe_to_hide_song_confirm_description">Cuando deslizas para ocultar, primero tienes que confirmar</string>
 

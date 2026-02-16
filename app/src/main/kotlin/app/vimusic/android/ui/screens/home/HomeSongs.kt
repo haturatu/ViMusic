@@ -55,18 +55,16 @@ import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
 import app.vimusic.android.models.Song
-import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.preferences.OrderPreferences
-import app.vimusic.android.service.isLocal
 import app.vimusic.android.ui.components.LocalMenuState
-import app.vimusic.android.ui.components.themed.ConfirmationDialog
 import app.vimusic.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.HeaderIconButton
+import app.vimusic.android.ui.components.themed.HideSongDialog
 import app.vimusic.android.ui.components.themed.InHistoryMediaItemMenu
 import app.vimusic.android.ui.components.themed.TextField
 import app.vimusic.android.ui.items.SongItem
-import app.vimusic.android.ui.modifiers.swipeToClose
+import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.screens.Route
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.center
@@ -238,9 +236,9 @@ fun HomeSongs(
                     onDismiss = { hidingSong = null },
                     onConfirm = {
                         hidingSong = null
-                        onHideSong(song)
                         menuState.hide()
-                    }
+                    },
+                    onHideSong = onHideSong
                 )
 
                 SongItem(
@@ -266,20 +264,13 @@ fun HomeSongs(
                             }
                         )
                         .animateItem()
-                        .let {
-                            if (AppearancePreferences.swipeToHideSong) it.swipeToClose(
-                                key = filteredItems,
-                                requireUnconsumed = true
-                            ) { animationJob ->
-                                if (AppearancePreferences.swipeToHideSongConfirm)
-                                    hidingSong = song.id
-                                else {
-                                    if (!song.isLocal) binder?.cache?.removeResource(song.id)
-                                    onHideSong(song)
-                                }
-                                animationJob.join()
-                            } else it
-                        },
+                        .songSwipeActions(
+                            key = filteredItems,
+                            mediaItem = song.asMediaItem,
+                            songToHide = song,
+                            onSwipeLeftRequested = { hidingSong = it.id },
+                            onHideSong = onHideSong
+                        ),
                     song = song,
                     thumbnailSize = Dimensions.thumbnails.song,
                     onThumbnailContent = if (sortBy == SongSortBy.PlayTime) {
@@ -315,29 +306,6 @@ fun HomeSongs(
             onClick = onSearchClick
         )
     }
-}
-
-@OptIn(UnstableApi::class)
-@Composable
-fun HideSongDialog(
-    song: Song,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val binder = LocalPlayerServiceBinder.current
-
-    ConfirmationDialog(
-        text = stringResource(R.string.confirm_hide_song),
-        onDismiss = onDismiss,
-        onConfirm = {
-            onConfirm()
-            runCatching {
-                if (!song.isLocal) binder?.cache?.removeResource(song.id)
-            }
-        },
-        modifier = modifier
-    )
 }
 
 // Row content, for convenience, doesn't need modifier/receiver

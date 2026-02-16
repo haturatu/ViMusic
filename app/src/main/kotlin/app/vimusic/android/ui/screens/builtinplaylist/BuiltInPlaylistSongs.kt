@@ -31,12 +31,14 @@ import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.ui.components.LocalMenuState
 import app.vimusic.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import app.vimusic.android.ui.components.themed.Header
+import app.vimusic.android.ui.components.themed.HideSongDialog
 import app.vimusic.android.ui.components.themed.InHistoryMediaItemMenu
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
 import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.ValueSelectorDialog
 import app.vimusic.android.ui.items.SongItem
+import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.screens.home.HeaderSongSortBy
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.asMediaItem
@@ -68,6 +70,7 @@ fun BuiltInPlaylistSongs(
     val playbackActions = LocalPlaybackActions.current
 
     var songs by persistList<Song>("${builtInPlaylist.name}/songs")
+    var hidingSong by rememberSaveable { mutableStateOf<String?>(null) }
     val mediaItems = rememberMediaItems(songs)
 
     var sortBy by rememberSaveable(stateSaver = enumSaver()) { mutableStateOf(SongSortBy.DateAdded) }
@@ -182,6 +185,12 @@ fun BuiltInPlaylistSongs(
                 key = { _, song -> song.id },
                 contentType = { _, song -> song }
             ) { index, song ->
+                if (hidingSong == song.id) HideSongDialog(
+                    song = song,
+                    onDismiss = { hidingSong = null },
+                    onConfirm = { hidingSong = null }
+                )
+
                 SongItem(
                     modifier = Modifier
                         .combinedClickable(
@@ -205,6 +214,12 @@ fun BuiltInPlaylistSongs(
                             onClick = {
                                 playbackActions.playAtIndex(mediaItems, index)
                             }
+                        )
+                        .songSwipeActions(
+                            key = songs,
+                            mediaItem = song.asMediaItem,
+                            songToHide = song,
+                            onSwipeLeftRequested = { hidingSong = it.id }
                         )
                         .animateItem(),
                     song = song,

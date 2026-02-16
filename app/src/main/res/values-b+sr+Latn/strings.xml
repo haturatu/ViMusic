@@ -371,8 +371,10 @@
 
     <string name="pre_cache">Prethodno keširanje</string>
 
-    <string name="swipe_to_hide_song">Prevuci da sakriješ pesmu</string>
+    <string name="swipe_to_hide_song">Prevuci ulevo da sakriješ pesmu</string>
     <string name="swipe_to_hide_song_description">Kada prevučete pesmu ulevo, biće uklonjena iz baze i keša</string>
+    <string name="swipe_right_to_play_next">Prevuci udesno za reprodukciju sledeće pesme</string>
+    <string name="swipe_right_to_play_next_description">Kada prevučete pesmu udesno, dodaje se u red kao sledeća pesma</string>
     <string name="swipe_to_hide_song_confirm">Potvrdi prevlačenje za skrivanje pesme</string>
     <string name="swipe_to_hide_song_confirm_description">Kada prevučete za skrivanje, prvo morate potvrditi</string>
     <string name="hide_explicit">Sakrij eksplicitne pesme</string>

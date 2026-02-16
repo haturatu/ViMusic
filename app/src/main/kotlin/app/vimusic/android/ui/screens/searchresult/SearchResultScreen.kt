@@ -27,6 +27,7 @@ import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.items.VideoItem
 import app.vimusic.android.ui.items.VideoItemPlaceholder
+import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.screens.GlobalRoutes
 import app.vimusic.android.ui.screens.Route
 import app.vimusic.android.ui.screens.albumRoute
@@ -108,21 +109,26 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
                                 SongItem(
                                     song = song,
                                     thumbnailSize = Dimensions.thumbnails.song,
-                                    modifier = Modifier.combinedClickable(
-                                        onLongClick = {
-                                            menuState.display {
-                                                NonQueuedMediaItemMenu(
-                                                    onDismiss = menuState::hide,
-                                                    mediaItem = song.asMediaItem
-                                                )
+                                    modifier = Modifier
+                                        .combinedClickable(
+                                            onLongClick = {
+                                                menuState.display {
+                                                    NonQueuedMediaItemMenu(
+                                                        onDismiss = menuState::hide,
+                                                        mediaItem = song.asMediaItem
+                                                    )
+                                                }
+                                            },
+                                            onClick = {
+                                                binder?.stopRadio()
+                                                binder?.player?.forcePlay(song.asMediaItem)
+                                                binder?.setupRadio(song.info?.endpoint)
                                             }
-                                        },
-                                        onClick = {
-                                            binder?.stopRadio()
-                                            binder?.player?.forcePlay(song.asMediaItem)
-                                            binder?.setupRadio(song.info?.endpoint)
-                                        }
-                                    )
+                                        )
+                                        .songSwipeActions(
+                                            key = "searchResults/$query/songs",
+                                            mediaItem = song.asMediaItem
+                                        )
                                 )
                             },
                             itemPlaceholderContent = {

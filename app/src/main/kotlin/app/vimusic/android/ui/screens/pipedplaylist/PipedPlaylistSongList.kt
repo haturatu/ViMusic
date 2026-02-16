@@ -23,6 +23,7 @@ import app.vimusic.android.ui.components.themed.SongListScaffold
 import app.vimusic.android.ui.components.themed.adaptiveThumbnailContent
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
+import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.PipedPlaylistVideoMediaItemMapper
 import app.vimusic.android.utils.asMediaItem
@@ -98,21 +99,26 @@ fun PipedPlaylistSongList(
                 SongItem(
                     song = mediaItem,
                     thumbnailSize = Dimensions.thumbnails.song,
-                    modifier = Modifier.combinedClickable(
-                        onLongClick = {
-                            menuState.display {
-                                NonQueuedMediaItemMenu(
-                                    onDismiss = menuState::hide,
-                                    mediaItem = mediaItem
-                                )
+                    modifier = Modifier
+                        .combinedClickable(
+                            onLongClick = {
+                                menuState.display {
+                                    NonQueuedMediaItemMenu(
+                                        onDismiss = menuState::hide,
+                                        mediaItem = mediaItem
+                                    )
+                                }
+                            },
+                            onClick = {
+                                mediaItems?.let { items ->
+                                    playbackActions.playAtIndex(items, index)
+                                }
                             }
-                        },
-                        onClick = {
-                            mediaItems?.let { items ->
-                                playbackActions.playAtIndex(items, index)
-                            }
-                        }
-                    )
+                        )
+                        .songSwipeActions(
+                            key = playlistId,
+                            mediaItem = mediaItem
+                        )
                 )
             }
         }

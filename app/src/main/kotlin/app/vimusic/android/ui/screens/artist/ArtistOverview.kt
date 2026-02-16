@@ -39,6 +39,7 @@ import app.vimusic.android.ui.items.AlbumItem
 import app.vimusic.android.ui.items.AlbumItemPlaceholder
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
+import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.forcePlay
 import app.vimusic.android.utils.medium
@@ -159,6 +160,10 @@ fun ArtistOverview(
                                             NavigationEndpoint.Endpoint.Watch(videoId = mediaItem.mediaId)
                                         )
                                     }
+                                )
+                                .songSwipeActions(
+                                    key = songs,
+                                    mediaItem = song.asMediaItem
                                 )
                                 .padding(endPaddingValues)
                         )

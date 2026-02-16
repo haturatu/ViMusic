@@ -38,6 +38,7 @@ import app.vimusic.android.ui.components.themed.CircularProgressIndicator
 import app.vimusic.android.ui.components.themed.ConfirmationDialog
 import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.HeaderIconButton
+import app.vimusic.android.ui.components.themed.HideSongDialog
 import app.vimusic.android.ui.components.themed.InPlaylistMediaItemMenu
 import app.vimusic.android.ui.components.themed.Menu
 import app.vimusic.android.ui.components.themed.MenuEntry
@@ -46,6 +47,7 @@ import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.SongListScaffold
 import app.vimusic.android.ui.components.themed.TextFieldDialog
 import app.vimusic.android.ui.items.SongItem
+import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.completed
@@ -90,6 +92,7 @@ fun LocalPlaylistSongs(
     val mediaItems = rememberMediaItems(songs)
 
     var loading by remember { mutableStateOf(false) }
+    var hidingSong by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         if (DataPreferences.autoSyncPlaylists) playlist.browseId?.let { browseId ->
@@ -250,6 +253,12 @@ fun LocalPlaylistSongs(
                 key = { _, song -> song.id },
                 contentType = { _, song -> song }
             ) { index, song ->
+                if (hidingSong == song.id) HideSongDialog(
+                    song = song,
+                    onDismiss = { hidingSong = null },
+                    onConfirm = { hidingSong = null }
+                )
+
                 SongItem(
                     modifier = Modifier
                         .combinedClickable(
@@ -271,6 +280,12 @@ fun LocalPlaylistSongs(
                         .draggedItem(
                             reorderingState = reorderingState,
                             index = index
+                        )
+                        .songSwipeActions(
+                            key = songs,
+                            mediaItem = song.asMediaItem,
+                            songToHide = song,
+                            onSwipeLeftRequested = { hidingSong = it.id }
                         )
                         .background(colorPalette.background0),
                     song = song,
