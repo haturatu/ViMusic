@@ -102,6 +102,8 @@ import app.vimusic.android.repositories.SongsRepository
 import app.vimusic.android.repositories.SyncSettingsRepository
 import app.vimusic.android.repositories.DatabaseSyncSettingsRepository
 import app.vimusic.android.repositories.DefaultDatabaseSettingsRepository
+import app.vimusic.android.repositories.PlayerLyricsRepository
+import app.vimusic.android.repositories.DefaultPlayerLyricsRepository
 import app.vimusic.android.service.PlayerService
 import app.vimusic.android.extractor.NewPipeExtractorClient
 import app.vimusic.android.service.ServiceNotifications
@@ -568,6 +570,7 @@ class AppContainer(
     val playerRepository: PlayerRepository by lazy { DatabasePlayerRepository }
     val queueRepository: QueueRepository by lazy { DatabaseQueueRepository }
     val databaseSettingsRepository: DatabaseSettingsRepository by lazy { DefaultDatabaseSettingsRepository }
+    val playerLyricsRepository: PlayerLyricsRepository by lazy { DefaultPlayerLyricsRepository }
 
     fun initialize() {
         DatabaseInitializer(application.applicationContext)
