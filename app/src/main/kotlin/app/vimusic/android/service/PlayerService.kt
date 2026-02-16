@@ -1207,7 +1207,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
     companion object {
         private const val DEFAULT_CACHE_DIRECTORY = "exoplayer"
-        private const val DEFAULT_CHUNK_LENGTH = 512 * 1024L
+        private const val DEFAULT_CHUNK_LENGTH = 2 * 1024 * 1024L
         private const val PREFETCH_MAX = 6
         private val youtubeIdRegex = Regex("^[A-Za-z0-9_-]{11}$")
 
