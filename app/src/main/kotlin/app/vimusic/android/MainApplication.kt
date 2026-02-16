@@ -66,6 +66,8 @@ import androidx.media3.common.Player
 import androidx.work.Configuration
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.preferences.DataPreferences
+import app.vimusic.android.repositories.DatabaseSongsRepository
+import app.vimusic.android.repositories.SongsRepository
 import app.vimusic.android.service.PlayerService
 import app.vimusic.android.extractor.NewPipeExtractorClient
 import app.vimusic.android.service.ServiceNotifications
@@ -553,6 +555,7 @@ object Dependencies {
         private set
 
     val credentialManager by lazy { CredentialManager.create(application) }
+    val songsRepository: SongsRepository by lazy { DatabaseSongsRepository }
 
     internal fun init(application: MainApplication) {
         this.application = application

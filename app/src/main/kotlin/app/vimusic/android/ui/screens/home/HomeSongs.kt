@@ -50,16 +50,14 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
-import app.vimusic.android.Database
+import app.vimusic.android.Dependencies
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
 import app.vimusic.android.models.Song
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.preferences.OrderPreferences
-import app.vimusic.android.query
 import app.vimusic.android.service.isLocal
-import app.vimusic.android.transaction
 import app.vimusic.android.ui.components.LocalMenuState
 import app.vimusic.android.ui.components.themed.ConfirmationDialog
 import app.vimusic.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
@@ -95,12 +93,15 @@ private val Song.formattedTotalPlayTime @Composable get() = totalPlayTimeMs.mill
 fun HomeSongs(
     onSearchClick: () -> Unit
 ) = with(OrderPreferences) {
+    val songsRepository = Dependencies.songsRepository
+
     HomeSongs(
         onSearchClick = onSearchClick,
         songProvider = {
-            Database.songs(songSortBy, songSortOrder)
+            songsRepository.observeSongs(songSortBy, songSortOrder)
                 .map { songs -> songs.filter { it.totalPlayTimeMs > 0L } }
         },
+        onHideSong = songsRepository::deleteSong,
         sortBy = songSortBy,
         setSortBy = { songSortBy = it },
         sortOrder = songSortOrder,
@@ -116,6 +117,7 @@ fun HomeSongs(
 fun HomeSongs(
     onSearchClick: () -> Unit,
     songProvider: () -> Flow<List<Song>>,
+    onHideSong: (Song) -> Unit,
     sortBy: SongSortBy,
     setSortBy: (SongSortBy) -> Unit,
     sortOrder: SortOrder,
@@ -236,6 +238,7 @@ fun HomeSongs(
                     onDismiss = { hidingSong = null },
                     onConfirm = {
                         hidingSong = null
+                        onHideSong(song)
                         menuState.hide()
                     }
                 )
@@ -272,7 +275,7 @@ fun HomeSongs(
                                     hidingSong = song.id
                                 else {
                                     if (!song.isLocal) binder?.cache?.removeResource(song.id)
-                                    transaction { Database.delete(song) }
+                                    onHideSong(song)
                                 }
                                 animationJob.join()
                             } else it
@@ -329,11 +332,8 @@ fun HideSongDialog(
         onDismiss = onDismiss,
         onConfirm = {
             onConfirm()
-            query {
-                runCatching {
-                    if (!song.isLocal) binder?.cache?.removeResource(song.id)
-                    Database.delete(song)
-                }
+            runCatching {
+                if (!song.isLocal) binder?.cache?.removeResource(song.id)
             }
         },
         modifier = modifier

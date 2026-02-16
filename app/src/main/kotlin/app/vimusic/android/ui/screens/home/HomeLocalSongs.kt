@@ -26,12 +26,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import app.vimusic.android.Database
+import app.vimusic.android.Dependencies
 import app.vimusic.android.R
 import app.vimusic.android.models.Song
 import app.vimusic.android.preferences.OrderPreferences
+import app.vimusic.android.repositories.SongsRepository
 import app.vimusic.android.service.LOCAL_KEY_PREFIX
-import app.vimusic.android.transaction
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
 import app.vimusic.android.ui.screens.Route
 import app.vimusic.android.utils.AudioMediaCursor
@@ -63,6 +63,7 @@ else Manifest.permission.READ_EXTERNAL_STORAGE
 @Route
 @Composable
 fun HomeLocalSongs(onSearchClick: () -> Unit) = with(OrderPreferences) {
+    val songsRepository = Dependencies.songsRepository
     val context = LocalContext.current
     val (_, typography) = LocalAppearance.current
 
@@ -76,18 +77,19 @@ fun HomeLocalSongs(onSearchClick: () -> Unit) = with(OrderPreferences) {
     )
 
     LaunchedEffect(hasPermission) {
-        if (hasPermission) context.musicFilesAsFlow().collect()
+        if (hasPermission) context.musicFilesAsFlow(songsRepository).collect()
     }
 
     if (hasPermission) HomeSongs(
         onSearchClick = onSearchClick,
         songProvider = {
-            Database.songs(
+            songsRepository.observeSongs(
                 sortBy = localSongSortBy,
                 sortOrder = localSongSortOrder,
                 isLocal = true
             ).map { songs -> songs.filter { it.durationText != "0:00" } }
         },
+        onHideSong = songsRepository::deleteSong,
         sortBy = localSongSortBy,
         setSortBy = { localSongSortBy = it },
         sortOrder = localSongSortOrder,
@@ -122,7 +124,9 @@ fun HomeLocalSongs(onSearchClick: () -> Unit) = with(OrderPreferences) {
 }
 
 private val mediaScope = CoroutineScope(Dispatchers.IO + CoroutineName("MediaStore worker"))
-fun Context.musicFilesAsFlow(): StateFlow<List<Song>> = flow {
+fun Context.musicFilesAsFlow(
+    songsRepository: SongsRepository
+): StateFlow<List<Song>> = flow {
     var version: String? = null
 
     while (currentCoroutineContext().isActive) {
@@ -153,5 +157,5 @@ fun Context.musicFilesAsFlow(): StateFlow<List<Song>> = flow {
         delay(5.seconds)
     }
 }.distinctUntilChanged()
-    .onEach { songs -> transaction { songs.forEach(Database::insert) } }
+    .onEach(songsRepository::upsertSongs)
     .stateIn(mediaScope, SharingStarted.Eagerly, listOf())
