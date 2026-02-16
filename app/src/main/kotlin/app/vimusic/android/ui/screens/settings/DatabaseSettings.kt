@@ -50,8 +50,10 @@ fun DatabaseSettings() = with(DataPreferences) {
         coroutineScope.launch {
             runCatching {
                 withContext(Dispatchers.IO) {
-                    context.applicationContext.contentResolver.openOutputStream(uri)
-                        ?.use { output -> viewModel.backupTo(output) }
+                    requireNotNull(
+                        context.applicationContext.contentResolver.openOutputStream(uri)
+                    ) { "Failed to open backup output stream" }
+                        .use { output -> viewModel.backupTo(output) }
                 }
             }.onFailure {
                 context.toast(context.getString(R.string.error_message))
@@ -67,8 +69,10 @@ fun DatabaseSettings() = with(DataPreferences) {
         coroutineScope.launch {
             runCatching {
                 withContext(Dispatchers.IO) {
-                    context.applicationContext.contentResolver.openInputStream(uri)
-                        ?.use { input -> viewModel.restoreFrom(input) }
+                    requireNotNull(
+                        context.applicationContext.contentResolver.openInputStream(uri)
+                    ) { "Failed to open restore input stream" }
+                        .use { input -> viewModel.restoreFrom(input) }
                 }
                 context.stopService(context.intent<PlayerService>())
                 exitProcess(0)
