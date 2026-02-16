@@ -37,6 +37,7 @@ object AppearancePreferences : GlobalPreferencesHolder() {
     val isShowingThumbnailInLockscreenProperty = boolean(true)
     var isShowingThumbnailInLockscreen by isShowingThumbnailInLockscreenProperty
     var swipeToHideSong by boolean(false)
+    var swipeRightToPlayNext by boolean(false)
     var swipeToHideSongConfirm by boolean(true)
     var maxThumbnailSize by int(1920)
     var hideExplicit by boolean(false)

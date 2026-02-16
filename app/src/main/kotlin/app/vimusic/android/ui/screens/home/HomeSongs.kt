@@ -68,7 +68,8 @@ import app.vimusic.android.ui.components.themed.HeaderIconButton
 import app.vimusic.android.ui.components.themed.InHistoryMediaItemMenu
 import app.vimusic.android.ui.components.themed.TextField
 import app.vimusic.android.ui.items.SongItem
-import app.vimusic.android.ui.modifiers.swipeToClose
+import app.vimusic.android.ui.modifiers.swipeToAction
+import app.vimusic.android.utils.addNext
 import app.vimusic.android.ui.screens.Route
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.center
@@ -264,17 +265,28 @@ fun HomeSongs(
                         )
                         .animateItem()
                         .let {
-                            if (AppearancePreferences.swipeToHideSong) it.swipeToClose(
-                                key = filteredItems,
-                                requireUnconsumed = true
-                            ) { animationJob ->
-                                if (AppearancePreferences.swipeToHideSongConfirm)
-                                    hidingSong = song.id
-                                else {
-                                    if (!song.isLocal) binder?.cache?.removeResource(song.id)
-                                    transaction { Database.delete(song) }
-                                }
-                                animationJob.join()
+                            if (AppearancePreferences.swipeToHideSong ||
+                                AppearancePreferences.swipeRightToPlayNext
+                            ) {
+                                it.swipeToAction(
+                                    key = filteredItems,
+                                    requireUnconsumed = true,
+                                    enableSwipeLeft = AppearancePreferences.swipeToHideSong,
+                                    enableSwipeRight = AppearancePreferences.swipeRightToPlayNext,
+                                    onSwipeLeft = { animationJob ->
+                                        if (AppearancePreferences.swipeToHideSongConfirm)
+                                            hidingSong = song.id
+                                        else {
+                                            if (!song.isLocal) binder?.cache?.removeResource(song.id)
+                                            transaction { Database.delete(song) }
+                                        }
+                                        animationJob.join()
+                                    },
+                                    onSwipeRight = { animationJob ->
+                                        binder?.player?.addNext(song.asMediaItem)
+                                        animationJob.join()
+                                    }
+                                )
                             } else it
                         },
                     song = song,
