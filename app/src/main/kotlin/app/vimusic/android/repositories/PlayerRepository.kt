@@ -1,7 +1,9 @@
 package app.vimusic.android.repositories
 
 import app.vimusic.android.Database
+import app.vimusic.android.models.Event
 import app.vimusic.android.models.Format
+import app.vimusic.android.models.QueuedMediaItem
 import app.vimusic.android.query
 import app.vimusic.android.transaction
 import androidx.media3.common.MediaItem
@@ -12,6 +14,15 @@ import kotlinx.coroutines.flow.Flow
 
 interface PlayerRepository {
     fun insertSong(mediaItem: MediaItem)
+    fun incrementTotalPlayTimeMs(songId: String, totalPlayTimeMs: Long)
+    fun insertEvent(event: Event)
+    fun saveQueue(queue: List<QueuedMediaItem>)
+    fun loadQueue(): List<QueuedMediaItem>
+    fun clearQueue()
+    suspend fun filterBlacklistedSongs(items: List<MediaItem>): List<MediaItem>
+    fun isFavoriteNow(songId: String): Boolean
+    fun updateDurationText(songId: String, durationText: String)
+    fun insertFormat(format: Format)
     fun observeLikedAt(songId: String): Flow<Long?>
     fun setLikedAt(songId: String, likedAt: Long?)
     fun observeLoudnessDb(songId: String): Flow<Float?>
@@ -24,6 +35,41 @@ interface PlayerRepository {
 object DatabasePlayerRepository : PlayerRepository {
     override fun insertSong(mediaItem: MediaItem) {
         Database.insert(mediaItem)
+    }
+
+    override fun incrementTotalPlayTimeMs(songId: String, totalPlayTimeMs: Long) {
+        query { Database.incrementTotalPlayTimeMs(songId, totalPlayTimeMs) }
+    }
+
+    override fun insertEvent(event: Event) {
+        query { Database.insert(event) }
+    }
+
+    override fun saveQueue(queue: List<QueuedMediaItem>) {
+        transaction {
+            Database.clearQueue()
+            Database.insert(queue)
+        }
+    }
+
+    override fun loadQueue(): List<QueuedMediaItem> = Database.queue()
+
+    override fun clearQueue() {
+        transaction { Database.clearQueue() }
+    }
+
+    override suspend fun filterBlacklistedSongs(items: List<MediaItem>): List<MediaItem> =
+        Database.filterBlacklistedSongs(items)
+
+    override fun isFavoriteNow(songId: String): Boolean =
+        runCatching { Database.likedAtNow(songId) != null }.getOrDefault(false)
+
+    override fun updateDurationText(songId: String, durationText: String) {
+        Database.updateDurationText(songId, durationText)
+    }
+
+    override fun insertFormat(format: Format) {
+        transaction { Database.insert(format) }
     }
 
     override fun observeLikedAt(songId: String): Flow<Long?> = Database.likedAt(songId)
