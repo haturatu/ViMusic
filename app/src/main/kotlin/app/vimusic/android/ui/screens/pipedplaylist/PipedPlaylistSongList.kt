@@ -12,6 +12,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.R
 import app.vimusic.android.ui.components.LocalMenuState
 import app.vimusic.android.ui.components.ShimmerHost
@@ -24,6 +26,7 @@ import app.vimusic.android.ui.components.themed.adaptiveThumbnailContent
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.modifiers.songSwipeActions
+import app.vimusic.android.ui.viewmodels.PipedPlaylistViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.PipedPlaylistVideoMediaItemMapper
 import app.vimusic.android.utils.asMediaItem
@@ -35,7 +38,6 @@ import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.isLandscape
-import app.vimusic.providers.piped.Piped
 import app.vimusic.providers.piped.models.Playlist
 import app.vimusic.providers.piped.models.Session
 import com.valentinilk.shimmer.shimmer
@@ -51,6 +53,10 @@ fun PipedPlaylistSongList(
     playlistId: UUID,
     modifier: Modifier = Modifier
 ) {
+    val viewModel: PipedPlaylistViewModel = viewModel(
+        key = "piped_playlist:$playlistId",
+        factory = PipedPlaylistViewModel.factory(LocalAppContainer.current.pipedPlaylistRepository)
+    )
     val (colorPalette) = LocalAppearance.current
     val menuState = LocalMenuState.current
     val playbackActions = LocalPlaybackActions.current
@@ -60,10 +66,10 @@ fun PipedPlaylistSongList(
 
     LaunchedEffect(Unit) {
         playlist = withContext(Dispatchers.IO) {
-            Piped.playlist.songs(
+            viewModel.fetchPlaylist(
                 session = session,
-                id = playlistId
-            )?.getOrNull()
+                playlistId = playlistId
+            )
         }
     }
 

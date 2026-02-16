@@ -16,12 +16,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import app.vimusic.android.Database
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.R
-import app.vimusic.android.models.Playlist
-import app.vimusic.android.models.SongPlaylistMap
-import app.vimusic.android.query
-import app.vimusic.android.transaction
 import app.vimusic.android.ui.components.LocalMenuState
 import app.vimusic.android.ui.components.ShimmerHost
 import app.vimusic.android.ui.components.themed.Header
@@ -36,20 +33,17 @@ import app.vimusic.android.ui.components.themed.adaptiveThumbnailContent
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.modifiers.songSwipeActions
+import app.vimusic.android.ui.viewmodels.PlaylistSongListViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.InnertubeSongMediaItemMapper
 import app.vimusic.android.utils.asMediaItem
-import app.vimusic.android.utils.completed
 import app.vimusic.android.utils.rememberMediaItemsOrNull
 import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.isLandscape
 import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.BrowseBody
-import app.vimusic.providers.innertube.requests.playlistPage
 import com.valentinilk.shimmer.shimmer
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -62,6 +56,10 @@ fun PlaylistSongList(
     shouldDedup: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val viewModel: PlaylistSongListViewModel = viewModel(
+        key = "playlist:$browseId",
+        factory = PlaylistSongListViewModel.factory(LocalAppContainer.current.playlistRepository)
+    )
     val (colorPalette) = LocalAppearance.current
     val context = LocalContext.current
     val menuState = LocalMenuState.current
@@ -73,13 +71,12 @@ fun PlaylistSongList(
         if (playlistPage != null && playlistPage?.songsPage?.continuation == null) return@LaunchedEffect
 
         playlistPage = withContext(Dispatchers.IO) {
-            Innertube
-                .playlistPage(BrowseBody(browseId = browseId, params = params))
-                ?.completed(
-                    maxDepth = maxDepth ?: Int.MAX_VALUE,
-                    shouldDedup = shouldDedup
-                )
-                ?.getOrNull()
+            viewModel.fetchPlaylistPage(
+                browseId = browseId,
+                params = params,
+                maxDepth = maxDepth,
+                shouldDedup = shouldDedup
+            )
         }
     }
 
@@ -90,28 +87,12 @@ fun PlaylistSongList(
         initialTextInput = playlistPage?.title.orEmpty(),
         onDismiss = { isImportingPlaylist = false },
         onAccept = { text ->
-            query {
-                transaction {
-                    val playlistId = Database.insert(
-                        Playlist(
-                            name = text,
-                            browseId = browseId,
-                            thumbnail = playlistPage?.thumbnail?.url
-                        )
-                    )
-
-                    playlistPage?.songsPage?.items
-                        ?.map(Innertube.SongItem::asMediaItem)
-                        ?.onEach(Database::insert)
-                        ?.mapIndexed { index, mediaItem ->
-                            SongPlaylistMap(
-                                songId = mediaItem.mediaId,
-                                playlistId = playlistId,
-                                position = index
-                            )
-                        }?.let(Database::insertSongPlaylistMaps)
-                }
-            }
+            viewModel.importPlaylist(
+                name = text,
+                browseId = browseId,
+                thumbnailUrl = playlistPage?.thumbnail?.url,
+                songs = playlistPage?.songsPage?.items
+            )
         }
     )
 

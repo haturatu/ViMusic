@@ -67,17 +67,23 @@ import androidx.work.Configuration
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.repositories.ArtistRepository
+import app.vimusic.android.repositories.AlbumRepository
 import app.vimusic.android.repositories.BuiltInPlaylistRepository
+import app.vimusic.android.repositories.ApiPipedPlaylistRepository
+import app.vimusic.android.repositories.DatabaseAlbumRepository
 import app.vimusic.android.repositories.DatabaseArtistRepository
 import app.vimusic.android.repositories.DatabaseBuiltInPlaylistRepository
 import app.vimusic.android.repositories.DatabaseHomePlaylistsRepository
 import app.vimusic.android.repositories.DatabaseLibraryRepository
 import app.vimusic.android.repositories.DatabaseOnlineSearchRepository
+import app.vimusic.android.repositories.DatabasePlaylistRepository
 import app.vimusic.android.repositories.DatabaseSongsRepository
 import app.vimusic.android.repositories.InnertubeSearchResultRepository
 import app.vimusic.android.repositories.LibraryRepository
 import app.vimusic.android.repositories.HomePlaylistsRepository
 import app.vimusic.android.repositories.OnlineSearchRepository
+import app.vimusic.android.repositories.PipedPlaylistRepository
+import app.vimusic.android.repositories.PlaylistRepository
 import app.vimusic.android.repositories.SearchResultRepository
 import app.vimusic.android.repositories.SongsRepository
 import app.vimusic.android.service.PlayerService
@@ -535,6 +541,9 @@ class AppContainer(
     val onlineSearchRepository: OnlineSearchRepository by lazy { DatabaseOnlineSearchRepository }
     val homePlaylistsRepository: HomePlaylistsRepository by lazy { DatabaseHomePlaylistsRepository }
     val builtInPlaylistRepository: BuiltInPlaylistRepository by lazy { DatabaseBuiltInPlaylistRepository }
+    val albumRepository: AlbumRepository by lazy { DatabaseAlbumRepository }
+    val playlistRepository: PlaylistRepository by lazy { DatabasePlaylistRepository }
+    val pipedPlaylistRepository: PipedPlaylistRepository by lazy { ApiPipedPlaylistRepository }
 
     fun initialize() {
         DatabaseInitializer(application.applicationContext)

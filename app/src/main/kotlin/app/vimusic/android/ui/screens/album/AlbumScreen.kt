@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
@@ -13,13 +14,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import app.vimusic.android.Database
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.R
 import app.vimusic.android.models.Album
 import app.vimusic.android.models.Song
-import app.vimusic.android.models.SongAlbumMap
-import app.vimusic.android.query
-import app.vimusic.android.transaction
 import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.HeaderIconButton
 import app.vimusic.android.ui.components.themed.HeaderPlaceholder
@@ -32,6 +30,7 @@ import app.vimusic.android.ui.screens.GlobalRoutes
 import app.vimusic.android.ui.screens.Route
 import app.vimusic.android.ui.screens.albumRoute
 import app.vimusic.android.ui.screens.searchresult.ItemsPage
+import app.vimusic.android.ui.viewmodels.AlbumScreenViewModel
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.compose.persist.PersistMapCleanup
 import app.vimusic.compose.persist.persist
@@ -41,8 +40,6 @@ import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.stateFlowSaver
 import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.BrowseBody
-import app.vimusic.providers.innertube.requests.albumPage
 import com.valentinilk.shimmer.shimmer
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
@@ -57,6 +54,10 @@ import kotlinx.coroutines.withContext
 @Route
 @Composable
 fun AlbumScreen(browseId: String) {
+    val viewModel: AlbumScreenViewModel = viewModel(
+        key = "album:$browseId",
+        factory = AlbumScreenViewModel.factory(LocalAppContainer.current.albumRepository)
+    )
     val saveableStateHolder = rememberSaveableStateHolder()
 
     val tabIndexState = rememberSaveable(saver = stateFlowSaver()) { MutableStateFlow(0) }
@@ -69,12 +70,12 @@ fun AlbumScreen(browseId: String) {
     PersistMapCleanup(prefix = "album/$browseId/")
 
     LaunchedEffect(Unit) {
-        Database
-            .albumSongs(browseId)
+        viewModel
+            .observeAlbumSongs(browseId)
             .distinctUntilChanged()
             .combine(
-                Database
-                    .album(browseId)
+                viewModel
+                    .observeAlbum(browseId)
                     .distinctUntilChanged()
                     .cancellable()
             ) { currentSongs, currentAlbum ->
@@ -84,39 +85,14 @@ fun AlbumScreen(browseId: String) {
                 if (currentAlbum?.timestamp != null && currentSongs.isNotEmpty()) return@combine
 
                 withContext(Dispatchers.IO) {
-                    Innertube.albumPage(BrowseBody(browseId = browseId))
+                    viewModel.fetchAlbumPage(browseId)
                         ?.onSuccess { newAlbumPage ->
-                            albumPage = newAlbumPage
-
-                            transaction {
-                                Database.clearAlbum(browseId)
-
-                                Database.upsert(
-                                    album = Album(
-                                        id = browseId,
-                                        title = newAlbumPage.title,
-                                        description = newAlbumPage.description,
-                                        thumbnailUrl = newAlbumPage.thumbnail?.url,
-                                        year = newAlbumPage.year,
-                                        authorsText = newAlbumPage.authors
-                                            ?.joinToString("") { it.name.orEmpty() },
-                                        shareUrl = newAlbumPage.url,
-                                        timestamp = System.currentTimeMillis(),
-                                        bookmarkedAt = album?.bookmarkedAt,
-                                        otherInfo = newAlbumPage.otherInfo
-                                    ),
-                                    songAlbumMaps = newAlbumPage
-                                        .songsPage
-                                        ?.items
-                                        ?.map { it.asMediaItem }
-                                        ?.onEach { Database.insert(it) }
-                                        ?.mapIndexed { position, mediaItem ->
-                                            SongAlbumMap(
-                                                songId = mediaItem.mediaId,
-                                                albumId = browseId,
-                                                position = position
-                                            )
-                                        } ?: emptyList()
+                            newAlbumPage?.let { page ->
+                                albumPage = page
+                                viewModel.replaceAlbumFromPage(
+                                    browseId = browseId,
+                                    bookmarkedAt = album?.bookmarkedAt,
+                                    page = page
                                 )
                             }
                         }?.exceptionOrNull()?.printStackTrace()
@@ -148,16 +124,7 @@ fun AlbumScreen(browseId: String) {
                             icon = if (album?.bookmarkedAt == null) R.drawable.bookmark_outline
                             else R.drawable.bookmark,
                             color = colorPalette.accent,
-                            onClick = {
-                                val bookmarkedAt =
-                                    if (album?.bookmarkedAt == null) System.currentTimeMillis() else null
-
-                                query {
-                                    album
-                                        ?.copy(bookmarkedAt = bookmarkedAt)
-                                        ?.let(Database::update)
-                                }
-                            }
+                            onClick = { viewModel.toggleBookmark(album) }
                         )
 
                         HeaderIconButton(
