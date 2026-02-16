@@ -24,15 +24,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import app.vimusic.android.Database
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
 import app.vimusic.android.models.Playlist
 import app.vimusic.android.models.Song
-import app.vimusic.android.models.SongPlaylistMap
 import app.vimusic.android.preferences.DataPreferences
-import app.vimusic.android.query
-import app.vimusic.android.transaction
 import app.vimusic.android.ui.components.LocalMenuState
 import app.vimusic.android.ui.components.themed.CircularProgressIndicator
 import app.vimusic.android.ui.components.themed.ConfirmationDialog
@@ -48,9 +44,9 @@ import app.vimusic.android.ui.components.themed.SongListScaffold
 import app.vimusic.android.ui.components.themed.TextFieldDialog
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
+import app.vimusic.android.ui.viewmodels.LocalPlaylistViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.asMediaItem
-import app.vimusic.android.utils.completed
 import app.vimusic.android.utils.enqueue
 import app.vimusic.android.utils.launchYouTubeMusic
 import app.vimusic.android.utils.playSongAtIndex
@@ -63,17 +59,13 @@ import app.vimusic.compose.reordering.rememberReorderingState
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.isLandscape
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.BrowseBody
-import app.vimusic.providers.innertube.requests.playlistPage
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LocalPlaylistSongs(
+    viewModel: LocalPlaylistViewModel,
     playlist: Playlist,
     songs: ImmutableList<Song>,
     onDelete: () -> Unit,
@@ -97,7 +89,7 @@ fun LocalPlaylistSongs(
     LaunchedEffect(Unit) {
         if (DataPreferences.autoSyncPlaylists) playlist.browseId?.let { browseId ->
             loading = true
-            sync(playlist, browseId)
+            viewModel.sync(playlist, browseId)
             loading = false
         }
     }
@@ -106,9 +98,7 @@ fun LocalPlaylistSongs(
         lazyListState = lazyListState,
         key = songs,
         onDragEnd = { fromIndex, toIndex ->
-            transaction {
-                Database.move(playlist.id, fromIndex, toIndex)
-            }
+            viewModel.move(playlist.id, fromIndex, toIndex)
         },
         extraItemCount = 1
     )
@@ -120,9 +110,7 @@ fun LocalPlaylistSongs(
         initialTextInput = playlist.name,
         onDismiss = { isRenaming = false },
         onAccept = { text ->
-            query {
-                Database.update(playlist.copy(name = text))
-            }
+            viewModel.rename(playlist = playlist, name = text)
         }
     )
 
@@ -132,9 +120,7 @@ fun LocalPlaylistSongs(
         text = stringResource(R.string.confirm_delete_playlist),
         onDismiss = { isDeleting = false },
         onConfirm = {
-            query {
-                Database.delete(playlist)
-            }
+            viewModel.delete(playlist)
             onDelete()
         }
     )
@@ -177,7 +163,7 @@ fun LocalPlaylistSongs(
                                                             menuState.hide()
                                                             coroutineScope.launch {
                                                                 loading = true
-                                                                sync(playlist, browseId)
+                                                                viewModel.sync(playlist, browseId)
                                                                 loading = false
                                                             }
                                                         }
@@ -301,33 +287,4 @@ fun LocalPlaylistSongs(
             }
         }
     }
-}
-
-private suspend fun sync(
-    playlist: Playlist,
-    browseId: String
-) = runCatching {
-    Innertube.playlistPage(
-        BrowseBody(browseId = browseId)
-    )?.completed()?.getOrNull()?.let { remotePlaylist ->
-        transaction {
-            Database.clearPlaylist(playlist.id)
-
-            remotePlaylist.songsPage
-                ?.items
-                ?.map { it.asMediaItem }
-                ?.onEach { Database.insert(it) }
-                ?.mapIndexed { position, mediaItem ->
-                    SongPlaylistMap(
-                        songId = mediaItem.mediaId,
-                        playlistId = playlist.id,
-                        position = position
-                    )
-                }
-                ?.let(Database::insertSongPlaylistMaps)
-        }
-    }
-}.onFailure {
-    if (it is CancellationException) throw it
-    it.printStackTrace()
 }

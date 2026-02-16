@@ -30,11 +30,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.credentials.CredentialManager
-import app.vimusic.android.Database
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalCredentialManager
 import app.vimusic.android.R
-import app.vimusic.android.models.PipedSession
-import app.vimusic.android.transaction
 import app.vimusic.android.ui.components.themed.CircularProgressIndicator
 import app.vimusic.android.ui.components.themed.ConfirmationDialog
 import app.vimusic.android.ui.components.themed.ConfirmationDialogBody
@@ -43,13 +42,13 @@ import app.vimusic.android.ui.components.themed.DialogTextButton
 import app.vimusic.android.ui.components.themed.IconButton
 import app.vimusic.android.ui.components.themed.TextField
 import app.vimusic.android.ui.screens.Route
+import app.vimusic.android.ui.viewmodels.SyncSettingsViewModel
 import app.vimusic.android.utils.center
 import app.vimusic.android.utils.get
 import app.vimusic.android.utils.semiBold
 import app.vimusic.android.utils.upsert
 import app.vimusic.compose.persist.persistList
 import app.vimusic.core.ui.LocalAppearance
-import app.vimusic.providers.piped.Piped
 import app.vimusic.providers.piped.models.Instance
 import io.ktor.http.Url
 import kotlinx.collections.immutable.toImmutableList
@@ -60,13 +59,17 @@ import kotlinx.coroutines.launch
 fun SyncSettings(
     credentialManager: CredentialManager = LocalCredentialManager.current
 ) {
+    val viewModel: SyncSettingsViewModel = viewModel(
+        key = "sync_settings",
+        factory = SyncSettingsViewModel.factory(LocalAppContainer.current.syncSettingsRepository)
+    )
     val coroutineScope = rememberCoroutineScope()
 
     val (colorPalette, typography) = LocalAppearance.current
     val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
 
-    val pipedSessions by Database.pipedSessions().collectAsStateWithLifecycle(initialValue = listOf())
+    val pipedSessions by viewModel.observePipedSessions().collectAsStateWithLifecycle(initialValue = listOf())
 
     var linkingPiped by remember { mutableStateOf(false) }
     if (linkingPiped) DefaultDialog(
@@ -108,7 +111,7 @@ fun SyncSettings(
                     var customInstance: String? by rememberSaveable { mutableStateOf(null) }
 
                     LaunchedEffect(Unit) {
-                        Piped.getInstances()?.getOrNull()?.let {
+                        viewModel.fetchInstances()?.getOrNull()?.let {
                             selectedInstance = null
                             instances = it.toImmutableList()
                             canSelect = true
@@ -208,26 +211,18 @@ fun SyncSettings(
                             } ?: selectedInstance?.let { instances[it].apiBaseUrl })?.let { url ->
                                 coroutineScope.launch {
                                     isLoading = true
-                                    val session = Piped.login(
+                                    val session = viewModel.login(
                                         apiBaseUrl = url,
                                         username = username,
                                         password = password
-                                    )?.getOrNull()
+                                    )
                                     isLoading = false
                                     if (session == null) {
                                         hasError = true
                                         return@launch
                                     }
 
-                                    transaction {
-                                        Database.insert(
-                                            PipedSession(
-                                                apiBaseUrl = session.apiBaseUrl,
-                                                username = username,
-                                                token = session.token
-                                            )
-                                        )
-                                    }
+                                    viewModel.saveSession(session = session, username = username)
 
                                     successful = true
 
@@ -258,7 +253,7 @@ fun SyncSettings(
         },
         onConfirm = {
             deletingPipedSession?.let {
-                transaction { Database.delete(pipedSessions[it]) }
+                viewModel.deleteSession(pipedSessions[it])
             }
         }
     )

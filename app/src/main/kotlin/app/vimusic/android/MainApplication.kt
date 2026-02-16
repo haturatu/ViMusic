@@ -87,11 +87,17 @@ import app.vimusic.android.repositories.HomeQuickPicksRepository
 import app.vimusic.android.repositories.LibraryRepository
 import app.vimusic.android.repositories.HomePlaylistsRepository
 import app.vimusic.android.repositories.MoodRepository
+import app.vimusic.android.repositories.LocalPlaylistRepository
+import app.vimusic.android.repositories.DatabaseLocalPlaylistRepository
 import app.vimusic.android.repositories.OnlineSearchRepository
 import app.vimusic.android.repositories.PipedPlaylistRepository
 import app.vimusic.android.repositories.PlaylistRepository
+import app.vimusic.android.repositories.PlayerRepository
+import app.vimusic.android.repositories.DatabasePlayerRepository
 import app.vimusic.android.repositories.SearchResultRepository
 import app.vimusic.android.repositories.SongsRepository
+import app.vimusic.android.repositories.SyncSettingsRepository
+import app.vimusic.android.repositories.DatabaseSyncSettingsRepository
 import app.vimusic.android.service.PlayerService
 import app.vimusic.android.extractor.NewPipeExtractorClient
 import app.vimusic.android.service.ServiceNotifications
@@ -553,6 +559,9 @@ class AppContainer(
     val pipedPlaylistRepository: PipedPlaylistRepository by lazy { ApiPipedPlaylistRepository }
     val homeDiscoveryRepository: HomeDiscoveryRepository by lazy { InnertubeHomeDiscoveryRepository }
     val moodRepository: MoodRepository by lazy { InnertubeMoodRepository }
+    val localPlaylistRepository: LocalPlaylistRepository by lazy { DatabaseLocalPlaylistRepository }
+    val syncSettingsRepository: SyncSettingsRepository by lazy { DatabaseSyncSettingsRepository }
+    val playerRepository: PlayerRepository by lazy { DatabasePlayerRepository }
 
     fun initialize() {
         DatabaseInitializer(application.applicationContext)

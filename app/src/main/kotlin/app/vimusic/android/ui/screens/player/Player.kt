@@ -56,17 +56,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import app.vimusic.android.Database
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
 import app.vimusic.android.models.ui.toUiMedia
 import app.vimusic.android.preferences.PlayerPreferences
-import app.vimusic.android.query
 import app.vimusic.android.service.PlayerService
-import app.vimusic.android.transaction
 import app.vimusic.android.ui.components.BottomSheet
 import app.vimusic.android.ui.components.BottomSheetState
 import app.vimusic.android.ui.components.LocalMenuState
@@ -76,6 +75,7 @@ import app.vimusic.android.ui.components.themed.IconButton
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
 import app.vimusic.android.ui.components.themed.SliderDialog
 import app.vimusic.android.ui.components.themed.SliderDialogBody
+import app.vimusic.android.ui.viewmodels.PlayerViewModel
 import app.vimusic.android.ui.modifiers.PinchDirection
 import app.vimusic.android.ui.modifiers.onSwipe
 import app.vimusic.android.ui.modifiers.pinchToToggle
@@ -116,6 +116,10 @@ fun Player(
     ),
     windowInsets: WindowInsets = WindowInsets.systemBars
 ) = with(PlayerPreferences) {
+    val viewModel: PlayerViewModel = viewModel(
+        key = "player",
+        factory = PlayerViewModel.factory(LocalAppContainer.current.playerRepository)
+    )
     val menuState = LocalMenuState.current
     val (colorPalette, typography, thumbnailCornerSize) = LocalAppearance.current
     val binder = LocalPlayerServiceBinder.current
@@ -138,9 +142,7 @@ fun Player(
             policy = object : SnapshotMutationPolicy<Long?> {
                 override fun equivalent(a: Long?, b: Long?): Boolean {
                     mediaItem?.mediaId?.let {
-                        query {
-                            Database.like(it, b)
-                        }
+                        viewModel.setLikedAt(songId = it, likedAt = b)
                     }
                     return a == b
                 }
@@ -150,8 +152,8 @@ fun Player(
 
     LaunchedEffect(mediaItem) {
         mediaItem?.mediaId?.let { mediaId ->
-            Database
-                .likedAt(mediaId)
+            viewModel
+                .observeLikedAt(mediaId)
                 .distinctUntilChanged()
                 .collect { likedAt = it }
         }
@@ -501,9 +503,9 @@ fun Player(
         var boostDialogOpen by rememberSaveable { mutableStateOf(false) }
 
         if (boostDialogOpen) {
-            fun submit(state: Float) = transaction {
+            fun submit(state: Float) {
                 mediaItem?.mediaId?.let { mediaId ->
-                    Database.setLoudnessBoost(
+                    viewModel.setLoudnessBoost(
                         songId = mediaId,
                         loudnessBoost = state.takeUnless { it == 0f }
                     )
@@ -520,8 +522,8 @@ fun Player(
 
                         LaunchedEffect(mediaItem) {
                             mediaItem?.mediaId?.let { mediaId ->
-                                Database
-                                    .loudnessBoost(mediaId)
+                                viewModel
+                                    .observeLoudnessBoost(mediaId)
                                     .distinctUntilChanged()
                                     .collect { state.floatValue = it ?: 0f }
                             }

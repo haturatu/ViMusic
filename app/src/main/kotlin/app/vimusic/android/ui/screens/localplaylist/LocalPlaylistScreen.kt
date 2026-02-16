@@ -6,7 +6,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
-import app.vimusic.android.Database
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.R
 import app.vimusic.android.models.Playlist
 import app.vimusic.android.models.Song
@@ -14,17 +15,21 @@ import app.vimusic.android.ui.components.themed.Scaffold
 import app.vimusic.android.ui.components.themed.adaptiveThumbnailContent
 import app.vimusic.android.ui.screens.GlobalRoutes
 import app.vimusic.android.ui.screens.Route
+import app.vimusic.android.ui.viewmodels.LocalPlaylistViewModel
 import app.vimusic.compose.persist.PersistMapCleanup
 import app.vimusic.compose.persist.persist
 import app.vimusic.compose.persist.persistList
 import app.vimusic.compose.routing.RouteHandler
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 
 @Route
 @Composable
 fun LocalPlaylistScreen(playlistId: Long) {
+    val viewModel: LocalPlaylistViewModel = viewModel(
+        key = "local_playlist:$playlistId",
+        factory = LocalPlaylistViewModel.factory(LocalAppContainer.current.localPlaylistRepository)
+    )
     val saveableStateHolder = rememberSaveableStateHolder()
 
     PersistMapCleanup(prefix = "localPlaylist/$playlistId/")
@@ -37,15 +42,15 @@ fun LocalPlaylistScreen(playlistId: Long) {
             var songs by persistList<Song>("localPlaylist/$playlistId/songs")
 
             LaunchedEffect(Unit) {
-                Database
-                    .playlist(playlistId)
+                viewModel
+                    .observePlaylist(playlistId)
                     .filterNotNull()
                     .collect { playlist = it }
             }
 
             LaunchedEffect(Unit) {
-                Database
-                    .playlistSongs(playlistId)
+                viewModel
+                    .observePlaylistSongs(playlistId)
                     .collect { songs = it.toImmutableList() }
             }
 
@@ -72,6 +77,7 @@ fun LocalPlaylistScreen(playlistId: Long) {
                     playlist?.let {
                         when (currentTabIndex) {
                             0 -> LocalPlaylistSongs(
+                                viewModel = viewModel,
                                 playlist = it,
                                 songs = songs,
                                 thumbnailContent = thumbnailContent,

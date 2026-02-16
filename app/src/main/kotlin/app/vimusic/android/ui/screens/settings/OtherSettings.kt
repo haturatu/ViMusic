@@ -33,14 +33,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import app.vimusic.android.Database
 import app.vimusic.android.DatabaseInitializer
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.preferences.PlayerPreferences
-import app.vimusic.android.query
 import app.vimusic.android.service.PlayerMediaLibraryService
 import app.vimusic.android.service.PrecacheService
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
@@ -48,6 +48,7 @@ import app.vimusic.android.ui.components.themed.SliderDialog
 import app.vimusic.android.ui.components.themed.SliderDialogBody
 import app.vimusic.android.ui.screens.Route
 import app.vimusic.android.ui.screens.logsRoute
+import app.vimusic.android.ui.viewmodels.OnlineSearchViewModel
 import app.vimusic.android.utils.findActivity
 import app.vimusic.android.utils.intent
 import app.vimusic.android.utils.isIgnoringBatteryOptimizations
@@ -56,7 +57,6 @@ import app.vimusic.android.utils.toast
 import app.vimusic.core.ui.utils.isAtLeastAndroid12
 import app.vimusic.core.ui.utils.isAtLeastAndroid6
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import kotlin.system.exitProcess
@@ -65,6 +65,10 @@ import kotlin.system.exitProcess
 @Route
 @Composable
 fun OtherSettings() {
+    val onlineSearchViewModel: OnlineSearchViewModel = viewModel(
+        key = "other_settings_online_search",
+        factory = OnlineSearchViewModel.factory(LocalAppContainer.current.onlineSearchRepository)
+    )
     val context = LocalContext.current
     val binder = LocalPlayerServiceBinder.current
     val uriHandler = LocalUriHandler.current
@@ -101,9 +105,8 @@ fun OtherSettings() {
         onResult = { isIgnoringBatteryOptimizations = context.isIgnoringBatteryOptimizations }
     )
 
-    val queriesCount by remember {
-        Database.queriesCount().distinctUntilChanged()
-    }.collectAsStateWithLifecycle(initialValue = 0)
+    val queriesCount by onlineSearchViewModel.observeHistoryCount()
+        .collectAsStateWithLifecycle(initialValue = 0)
 
     SettingsCategoryScreen(
         title = stringResource(R.string.other),
@@ -137,7 +140,7 @@ fun OtherSettings() {
                         queriesCount
                     )
                     else stringResource(R.string.empty_history),
-                    onClick = { query(Database::clearQueries) },
+                    onClick = onlineSearchViewModel::clearHistory,
                     isEnabled = queriesCount > 0
                 )
             }
