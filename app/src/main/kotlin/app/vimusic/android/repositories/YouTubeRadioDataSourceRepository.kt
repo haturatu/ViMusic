@@ -1,5 +1,6 @@
 package app.vimusic.android.repositories
 
+import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.YouTubeRadioDataSource
 import app.vimusic.android.utils.YouTubeRadioPage
 import app.vimusic.providers.innertube.Innertube
