@@ -1,9 +1,12 @@
 package app.vimusic.android.ui.screens.home
 
 import android.Manifest
+import android.database.ContentObserver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -43,19 +46,16 @@ import app.vimusic.core.ui.utils.isCompositionLaunched
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.isActive
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 private val permission = if (isAtLeastAndroid13) Manifest.permission.READ_MEDIA_AUDIO
 else Manifest.permission.READ_EXTERNAL_STORAGE
@@ -126,36 +126,50 @@ fun HomeLocalSongs(onSearchClick: () -> Unit) = with(OrderPreferences) {
 private val mediaScope = CoroutineScope(Dispatchers.IO + CoroutineName("MediaStore worker"))
 fun Context.musicFilesAsFlow(
     songsRepository: SongsRepository
-): StateFlow<List<Song>> = flow {
-    var version: String? = null
-
-    while (currentCoroutineContext().isActive) {
-        val newVersion = MediaStore.getVersion(applicationContext)
-
-        if (version != newVersion) {
-            version = newVersion
-
-            AudioMediaCursor.query(contentResolver) {
-                buildList {
-                    while (next()) {
-                        if (!isMusic || duration == 0) continue
-                        add(
-                            Song(
-                                id = "$LOCAL_KEY_PREFIX$id",
-                                title = name,
-                                artistsText = artist,
-                                durationText = duration.milliseconds.toComponents { minutes, seconds, _ ->
-                                    "$minutes:${seconds.toString().padStart(2, '0')}"
-                                },
-                                thumbnailUrl = albumUri.toString()
-                            )
-                        )
-                    }
-                }
-            }?.let { emit(it) }
+): StateFlow<List<Song>> = callbackFlow {
+    val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+        override fun onChange(selfChange: Boolean) {
+            trySend(Unit)
         }
-        delay(5.seconds)
     }
+
+    contentResolver.registerContentObserver(
+        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+        true,
+        observer
+    )
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+        contentResolver.registerContentObserver(
+            MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL),
+            true,
+            observer
+        )
+    }
+
+    trySend(Unit)
+
+    awaitClose {
+        contentResolver.unregisterContentObserver(observer)
+    }
+}.map {
+    AudioMediaCursor.query(contentResolver) {
+        buildList {
+            while (next()) {
+                if (!isMusic || duration == 0) continue
+                add(
+                    Song(
+                        id = "$LOCAL_KEY_PREFIX$id",
+                        title = name,
+                        artistsText = artist,
+                        durationText = duration.milliseconds.toComponents { minutes, seconds, _ ->
+                            "$minutes:${seconds.toString().padStart(2, '0')}"
+                        },
+                        thumbnailUrl = albumUri.toString()
+                    )
+                )
+            }
+        }
+    } ?: emptyList()
 }.distinctUntilChanged()
     .onEach(songsRepository::upsertSongs)
     .stateIn(mediaScope, SharingStarted.Eagerly, listOf())
