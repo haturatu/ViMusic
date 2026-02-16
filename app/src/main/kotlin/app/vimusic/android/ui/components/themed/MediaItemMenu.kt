@@ -51,21 +51,20 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
-import app.vimusic.android.Database
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
 import app.vimusic.android.models.Info
 import app.vimusic.android.models.Playlist
 import app.vimusic.android.models.Song
-import app.vimusic.android.models.SongPlaylistMap
-import app.vimusic.android.query
 import app.vimusic.android.service.PrecacheService
 import app.vimusic.android.service.isLocal
-import app.vimusic.android.transaction
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.screens.albumRoute
 import app.vimusic.android.ui.screens.artistRoute
+import app.vimusic.android.ui.viewmodels.MediaItemMenuViewModel
 import app.vimusic.android.utils.addNext
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.enqueue
@@ -132,17 +131,25 @@ fun InPlaylistMediaItemMenu(
     positionInPlaylist: Int,
     song: Song,
     modifier: Modifier = Modifier
-) = NonQueuedMediaItemMenu(
-    mediaItem = song.asMediaItem,
-    onDismiss = onDismiss,
-    onRemoveFromPlaylist = {
-        transaction {
-            Database.move(playlistId, positionInPlaylist, Int.MAX_VALUE)
-            Database.delete(SongPlaylistMap(song.id, playlistId, Int.MAX_VALUE))
-        }
-    },
-    modifier = modifier
-)
+) {
+    val viewModel: MediaItemMenuViewModel = viewModel(
+        key = "media_item_menu",
+        factory = MediaItemMenuViewModel.factory(LocalAppContainer.current.mediaItemMenuRepository)
+    )
+
+    NonQueuedMediaItemMenu(
+        mediaItem = song.asMediaItem,
+        onDismiss = onDismiss,
+        onRemoveFromPlaylist = {
+            viewModel.removeFromPlaylist(
+                playlistId = playlistId,
+                positionInPlaylist = positionInPlaylist,
+                songId = song.id
+            )
+        },
+        modifier = modifier
+    )
+}
 
 @Composable
 fun NonQueuedMediaItemMenu(
@@ -212,6 +219,10 @@ fun BaseMediaItemMenu(
     onShowNormalizationDialog: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
+    val viewModel: MediaItemMenuViewModel = viewModel(
+        key = "media_item_menu",
+        factory = MediaItemMenuViewModel.factory(LocalAppContainer.current.mediaItemMenuRepository)
+    )
 
     MediaItemMenu(
         mediaItem = mediaItem,
@@ -222,16 +233,7 @@ fun BaseMediaItemMenu(
         onPlayNext = onPlayNext,
         onEnqueue = onEnqueue,
         onAddToPlaylist = { playlist, position ->
-            transaction {
-                Database.insert(mediaItem)
-                Database.insert(
-                    SongPlaylistMap(
-                        songId = mediaItem.mediaId,
-                        playlistId = Database.insert(playlist).takeIf { it != -1L } ?: playlist.id,
-                        position = position
-                    )
-                )
-            }
+            viewModel.addToPlaylist(mediaItem = mediaItem, playlist = playlist, position = position)
         },
         onHideFromDatabase = onHideFromDatabase,
         onRemoveFromPlaylist = onRemoveFromPlaylist,
@@ -278,6 +280,10 @@ fun MediaItemMenu(
     onShowSpeedDialog: (() -> Unit)? = null,
     onShowNormalizationDialog: (() -> Unit)? = null
 ) {
+    val viewModel: MediaItemMenuViewModel = viewModel(
+        key = "media_item_menu",
+        factory = MediaItemMenuViewModel.factory(LocalAppContainer.current.mediaItemMenuRepository)
+    )
     val (colorPalette, typography) = LocalAppearance.current
     val density = LocalDensity.current
     val uriHandler = LocalUriHandler.current
@@ -313,17 +319,17 @@ fun MediaItemMenu(
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
-            if (albumInfo == null) albumInfo = Database.songAlbumInfo(mediaItem.mediaId).firstOrNull()
-            if (artistsInfo == null) artistsInfo = Database.songArtistInfo(mediaItem.mediaId)
+            if (albumInfo == null) albumInfo = viewModel.getSongAlbumInfo(mediaItem.mediaId)
+            if (artistsInfo == null) artistsInfo = viewModel.getSongArtistInfo(mediaItem.mediaId)
 
             launch {
-                Database
-                    .likedAt(mediaItem.mediaId)
+                viewModel
+                    .observeLikedAt(mediaItem.mediaId)
                     .collect { likedAt = it }
             }
             launch {
-                Database
-                    .blacklisted(mediaItem.mediaId)
+                viewModel
+                    .observeBlacklisted(mediaItem.mediaId)
                     .collect { isBlacklisted = it }
             }
         }
@@ -339,10 +345,10 @@ fun MediaItemMenu(
                     slideOutOfContainer(slideDirection, animationSpec)
         },
         label = ""
-    ) { currentIsViewingPlaylists ->
+        ) { currentIsViewingPlaylists ->
         if (currentIsViewingPlaylists) {
             val playlistPreviews by remember {
-                Database.playlistPreviews(
+                viewModel.observePlaylistPreviews(
                     sortBy = PlaylistSortBy.DateAdded,
                     sortOrder = SortOrder.Descending
                 )
@@ -424,16 +430,7 @@ fun MediaItemMenu(
                         icon = if (likedAt == null) R.drawable.heart_outline else R.drawable.heart,
                         color = colorPalette.favoritesIcon,
                         onClick = {
-                            query {
-                                if (
-                                    Database.like(
-                                        songId = mediaItem.mediaId,
-                                        likedAt = if (likedAt == null) System.currentTimeMillis() else null
-                                    ) != 0
-                                ) return@query
-
-                                Database.insert(mediaItem, Song::toggleLike)
-                            }
+                            viewModel.toggleLike(mediaItem = mediaItem, likedAt = likedAt)
                         },
                         modifier = Modifier
                             .padding(all = 4.dp)
@@ -767,10 +764,7 @@ fun MediaItemMenu(
                     text = if (blacklisted) stringResource(R.string.remove_from_blacklist)
                     else stringResource(R.string.add_to_blacklist),
                     onClick = {
-                        transaction {
-                            Database.insert(mediaItem)
-                            Database.toggleBlacklist(mediaItem.mediaId)
-                        }
+                        viewModel.toggleBlacklist(mediaItem)
                     }
                 )
             }

@@ -80,6 +80,7 @@ import app.vimusic.android.repositories.DatabaseOnlineSearchRepository
 import app.vimusic.android.repositories.DatabasePlaylistRepository
 import app.vimusic.android.repositories.DatabaseSongsRepository
 import app.vimusic.android.repositories.DatabaseSettingsRepository
+import app.vimusic.android.repositories.DatabaseMediaItemMenuRepository
 import app.vimusic.android.repositories.HomeDiscoveryRepository
 import app.vimusic.android.repositories.InnertubeSearchResultRepository
 import app.vimusic.android.repositories.InnertubeHomeDiscoveryRepository
@@ -90,6 +91,7 @@ import app.vimusic.android.repositories.HomePlaylistsRepository
 import app.vimusic.android.repositories.MoodRepository
 import app.vimusic.android.repositories.LocalPlaylistRepository
 import app.vimusic.android.repositories.DatabaseLocalPlaylistRepository
+import app.vimusic.android.repositories.MediaItemMenuRepository
 import app.vimusic.android.repositories.OnlineSearchRepository
 import app.vimusic.android.repositories.PipedPlaylistRepository
 import app.vimusic.android.repositories.PlaylistRepository
@@ -571,6 +573,7 @@ class AppContainer(
     val queueRepository: QueueRepository by lazy { DatabaseQueueRepository }
     val databaseSettingsRepository: DatabaseSettingsRepository by lazy { DefaultDatabaseSettingsRepository }
     val playerLyricsRepository: PlayerLyricsRepository by lazy { DefaultPlayerLyricsRepository }
+    val mediaItemMenuRepository: MediaItemMenuRepository by lazy { DatabaseMediaItemMenuRepository }
 
     fun initialize() {
         DatabaseInitializer(application.applicationContext)

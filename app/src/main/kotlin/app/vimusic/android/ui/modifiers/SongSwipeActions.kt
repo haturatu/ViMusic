@@ -3,12 +3,11 @@ package app.vimusic.android.ui.modifiers
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.media3.common.MediaItem
-import app.vimusic.android.Database
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.models.Song
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.service.isLocal
-import app.vimusic.android.transaction
 import app.vimusic.android.utils.addNext
 
 @Composable
@@ -18,9 +17,10 @@ fun Modifier.songSwipeActions(
     songToHide: Song? = null,
     requireUnconsumed: Boolean = true,
     onSwipeLeftRequested: ((Song) -> Unit)? = null,
-    onHideSong: (Song) -> Unit = { song -> transaction { Database.delete(song) } }
+    onHideSong: ((Song) -> Unit)? = null
 ): Modifier {
     val binder = LocalPlayerServiceBinder.current
+    val defaultOnHideSong = onHideSong ?: LocalAppContainer.current.songsRepository::deleteSong
     val canSwipeLeft = AppearancePreferences.swipeToHideSong &&
         songToHide != null &&
         onSwipeLeftRequested != null
@@ -41,7 +41,7 @@ fun Modifier.songSwipeActions(
                     requireNotNull(onSwipeLeftRequested).invoke(song)
                 } else {
                     if (!song.isLocal) binder?.cache?.removeResource(song.id)
-                    onHideSong(song)
+                    defaultOnHideSong(song)
                 }
             }
             animationJob.join()

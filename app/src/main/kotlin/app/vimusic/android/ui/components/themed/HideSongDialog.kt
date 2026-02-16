@@ -5,11 +5,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.media3.common.util.UnstableApi
-import app.vimusic.android.Database
+import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
 import app.vimusic.android.models.Song
-import app.vimusic.android.query
 import app.vimusic.android.service.isLocal
 
 @OptIn(UnstableApi::class)
@@ -18,12 +17,11 @@ fun HideSongDialog(
     song: Song,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
-    onHideSong: (Song) -> Unit = {
-        query { runCatching { Database.delete(it) } }
-    },
+    onHideSong: ((Song) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val binder = LocalPlayerServiceBinder.current
+    val defaultOnHideSong = onHideSong ?: LocalAppContainer.current.songsRepository::deleteSong
 
     ConfirmationDialog(
         text = stringResource(R.string.confirm_hide_song),
@@ -32,7 +30,7 @@ fun HideSongDialog(
             onConfirm()
             runCatching {
                 if (!song.isLocal) binder?.cache?.removeResource(song.id)
-                onHideSong(song)
+                defaultOnHideSong(song)
             }
         },
         modifier = modifier
