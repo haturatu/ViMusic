@@ -13,8 +13,8 @@ class DatabaseSettingsViewModel(
     fun observeBlacklistLength() = repository.observeBlacklistLength()
     fun clearEvents() = repository.clearEvents()
     fun resetBlacklist() = repository.resetBlacklist()
-    fun backupTo(output: OutputStream) = repository.backupTo(output)
-    fun restoreFrom(input: InputStream) = repository.restoreFrom(input)
+    suspend fun backupTo(output: OutputStream) = repository.backupTo(output)
+    suspend fun restoreFrom(input: InputStream) = repository.restoreFrom(input)
 
     companion object {
         fun factory(repository: DatabaseSettingsRepository): ViewModelProvider.Factory =
