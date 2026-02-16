@@ -1,5 +1,6 @@
 package app.vimusic.android.repositories
 
+import android.database.sqlite.SQLiteConstraintException
 import app.vimusic.android.Database
 import app.vimusic.android.models.Event
 import app.vimusic.android.models.Format
@@ -42,7 +43,12 @@ object DatabasePlayerRepository : PlayerRepository {
     }
 
     override fun insertEvent(event: Event) {
-        query { Database.insert(event) }
+        query {
+            runCatching { Database.insert(event) }
+                .onFailure { throwable ->
+                    if (throwable !is SQLiteConstraintException) throw throwable
+                }
+        }
     }
 
     override fun saveQueue(queue: List<QueuedMediaItem>) {
