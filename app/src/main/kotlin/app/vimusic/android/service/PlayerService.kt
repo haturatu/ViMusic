@@ -1070,7 +1070,8 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 endpoint?.videoId,
                 endpoint?.playlistId,
                 endpoint?.playlistSetVideoId,
-                endpoint?.params
+                endpoint?.params,
+                dataSource = applicationContext.appContainer.youTubeRadioDataSource
             ).let { radioData ->
                 isLoadingRadio = true
                 radioJob = coroutineScope.launch {
@@ -1272,7 +1273,10 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             findMediaItem: suspend (videoId: String) -> MediaItem? = { null },
             uriCache: UriCache<String, Long?> = UriCache(),
             dbWriteScope: CoroutineScope? = null
-        ): DataSource.Factory = ResolvingDataSource.Factory(
+        ): DataSource.Factory {
+            val playerRepository = context.appContainer.playerRepository
+
+            return ResolvingDataSource.Factory(
             ConditionalCacheDataSourceFactory(
                 cacheDataSourceFactory = cache.readOnlyWhen { PlayerPreferences.pauseCache }.asDataSource,
                 upstreamDataSourceFactory = context.defaultDataSource,
@@ -1281,7 +1285,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     if (!DataPreferences.cacheFavoritesOnly) return@ConditionalCacheDataSourceFactory true
 
                     val mediaId = dataSpec.key?.let(::extractYouTubeVideoId) ?: return@ConditionalCacheDataSourceFactory false
-                    context.appContainer.playerRepository.isFavoriteNow(mediaId)
+                    playerRepository.isFavoriteNow(mediaId)
                 }
             )
         ) resolver@{ dataSpec ->
@@ -1349,7 +1353,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                             .removePrefix("0")
                             .let { durationText ->
                                 extras?.durationText = durationText
-                                context.appContainer.playerRepository.updateDurationText(mediaId, durationText)
+                                playerRepository.updateDurationText(mediaId, durationText)
                             }
                     }
                 }
@@ -1357,9 +1361,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 val writeTask = {
                     runCatching {
                         mediaItem?.let { item ->
-                            context.appContainer.playerRepository.insertSong(item)
+                            playerRepository.insertSong(item)
                         }
-                        context.appContainer.playerRepository.insertFormat(
+                        playerRepository.insertFormat(
                             Format(
                                 songId = mediaId,
                                 itag = audioStream.itag.takeIf { it > 0 },
@@ -1399,5 +1403,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 uriCache.clear()
             }
             .handleRangeErrors()
+        }
     }
 }

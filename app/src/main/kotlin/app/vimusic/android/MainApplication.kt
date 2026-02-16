@@ -112,6 +112,7 @@ import app.vimusic.android.repositories.DatabaseSyncSettingsRepository
 import app.vimusic.android.repositories.DefaultDatabaseSettingsRepository
 import app.vimusic.android.repositories.PlayerLyricsRepository
 import app.vimusic.android.repositories.DefaultPlayerLyricsRepository
+import app.vimusic.android.repositories.InnertubeYouTubeRadioDataSource
 import app.vimusic.android.service.PlayerService
 import app.vimusic.android.extractor.NewPipeExtractorClient
 import app.vimusic.android.service.ServiceNotifications
@@ -142,6 +143,7 @@ import app.vimusic.android.utils.rememberPlaybackActions
 import app.vimusic.android.utils.setDefaultPalette
 import app.vimusic.android.utils.shouldBePlaying
 import app.vimusic.android.utils.toast
+import app.vimusic.android.utils.YouTubeRadioDataSource
 import app.vimusic.compose.persist.LocalPersistMap
 import app.vimusic.compose.persist.PersistMap
 import app.vimusic.compose.preferences.PreferencesHolder
@@ -573,6 +575,7 @@ class AppContainer(
     val deepLinkRepository: DeepLinkRepository by lazy { InnertubeDeepLinkRepository }
     val precacheRepository: PrecacheRepository by lazy { DatabasePrecacheRepository }
     val mediaLibraryRepository: MediaLibraryRepository by lazy { DatabaseMediaLibraryRepository }
+    val youTubeRadioDataSource: YouTubeRadioDataSource by lazy { InnertubeYouTubeRadioDataSource }
 
     fun initialize() {
         DatabaseInitializer(application.applicationContext)
