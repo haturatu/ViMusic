@@ -81,7 +81,9 @@ import app.vimusic.android.repositories.DatabasePlaylistRepository
 import app.vimusic.android.repositories.DatabaseSongsRepository
 import app.vimusic.android.repositories.DatabaseSettingsRepository
 import app.vimusic.android.repositories.DatabaseMediaItemMenuRepository
+import app.vimusic.android.repositories.DeepLinkRepository
 import app.vimusic.android.repositories.HomeDiscoveryRepository
+import app.vimusic.android.repositories.InnertubeDeepLinkRepository
 import app.vimusic.android.repositories.InnertubeSearchResultRepository
 import app.vimusic.android.repositories.InnertubeHomeDiscoveryRepository
 import app.vimusic.android.repositories.InnertubeMoodRepository
@@ -92,6 +94,7 @@ import app.vimusic.android.repositories.MoodRepository
 import app.vimusic.android.repositories.LocalPlaylistRepository
 import app.vimusic.android.repositories.DatabaseLocalPlaylistRepository
 import app.vimusic.android.repositories.MediaItemMenuRepository
+import app.vimusic.android.repositories.MediaLibraryRepository
 import app.vimusic.android.repositories.OnlineSearchRepository
 import app.vimusic.android.repositories.PipedPlaylistRepository
 import app.vimusic.android.repositories.PlaylistRepository
@@ -99,6 +102,9 @@ import app.vimusic.android.repositories.PlayerRepository
 import app.vimusic.android.repositories.QueueRepository
 import app.vimusic.android.repositories.DatabasePlayerRepository
 import app.vimusic.android.repositories.DatabaseQueueRepository
+import app.vimusic.android.repositories.PrecacheRepository
+import app.vimusic.android.repositories.DatabasePrecacheRepository
+import app.vimusic.android.repositories.DatabaseMediaLibraryRepository
 import app.vimusic.android.repositories.SearchResultRepository
 import app.vimusic.android.repositories.SongsRepository
 import app.vimusic.android.repositories.SyncSettingsRepository
@@ -125,7 +131,6 @@ import app.vimusic.android.utils.DisposableListener
 import app.vimusic.android.utils.KeyedCrossfade
 import app.vimusic.android.utils.LocalMonetCompat
 import app.vimusic.android.utils.LocalPlaybackActions
-import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.collectProvidedBitmapAsState
 import app.vimusic.android.utils.forcePlay
 import app.vimusic.android.utils.intent
@@ -151,10 +156,6 @@ import app.vimusic.core.ui.shimmerTheme
 import app.vimusic.core.ui.utils.activityIntentBundle
 import app.vimusic.core.ui.utils.isAtLeastAndroid12
 import app.vimusic.core.ui.utils.songBundle
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.BrowseBody
-import app.vimusic.providers.innertube.requests.playlistPage
-import app.vimusic.providers.innertube.requests.song
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -498,14 +499,9 @@ fun handleUrl(
             "playlist" -> uri.getQueryParameter("list")?.let { playlistId ->
                 val browseId = "VL$playlistId"
 
-                if (playlistId.startsWith("OLAK5uy_")) Innertube.playlistPage(
-                    body = BrowseBody(browseId = browseId)
-                )
-                    ?.getOrNull()
-                    ?.let { page ->
-                        page.songsPage?.items?.firstOrNull()?.album?.endpoint?.browseId
-                            ?.let { albumRoute.ensureGlobal(it) }
-                    } ?: withContext(Dispatchers.Main) {
+                if (playlistId.startsWith("OLAK5uy_")) context.appContainer.deepLinkRepository
+                    .resolveAlbumBrowseIdFromPlaylist(browseId)
+                    ?.let { albumRoute.ensureGlobal(it) } ?: withContext(Dispatchers.Main) {
                     context.toast(context.getString(R.string.error_url, uri))
                 }
                 else playlistRoute.ensureGlobal(
@@ -530,9 +526,9 @@ fun handleUrl(
                     null
                 }
             }?.let { videoId ->
-                Innertube.song(videoId)?.getOrNull()?.let { song ->
+                context.appContainer.deepLinkRepository.resolveSongMediaItem(videoId)?.let { mediaItem ->
                     withContext(Dispatchers.Main) {
-                        binder?.player?.forcePlay(song.asMediaItem)
+                        binder?.player?.forcePlay(mediaItem)
                     }
                 }
             }
@@ -574,6 +570,9 @@ class AppContainer(
     val databaseSettingsRepository: DatabaseSettingsRepository by lazy { DefaultDatabaseSettingsRepository }
     val playerLyricsRepository: PlayerLyricsRepository by lazy { DefaultPlayerLyricsRepository }
     val mediaItemMenuRepository: MediaItemMenuRepository by lazy { DatabaseMediaItemMenuRepository }
+    val deepLinkRepository: DeepLinkRepository by lazy { InnertubeDeepLinkRepository }
+    val precacheRepository: PrecacheRepository by lazy { DatabasePrecacheRepository }
+    val mediaLibraryRepository: MediaLibraryRepository by lazy { DatabaseMediaLibraryRepository }
 
     fun initialize() {
         DatabaseInitializer(application.applicationContext)

@@ -14,6 +14,8 @@ class PlayerViewModel(
 
     fun setLikedAt(songId: String, likedAt: Long?) = repository.setLikedAt(songId = songId, likedAt = likedAt)
 
+    fun observeLoudnessDb(songId: String) = repository.observeLoudnessDb(songId)
+
     fun observeFormat(songId: String) = repository.observeFormat(songId)
 
     suspend fun refreshFormat(songId: String, mediaItem: MediaItem?) =

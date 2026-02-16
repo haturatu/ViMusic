@@ -14,6 +14,7 @@ interface PlayerRepository {
     fun insertSong(mediaItem: MediaItem)
     fun observeLikedAt(songId: String): Flow<Long?>
     fun setLikedAt(songId: String, likedAt: Long?)
+    fun observeLoudnessDb(songId: String): Flow<Float?>
     fun observeFormat(songId: String): Flow<Format?>
     suspend fun refreshFormat(songId: String, mediaItem: MediaItem?)
     fun observeLoudnessBoost(songId: String): Flow<Float?>
@@ -30,6 +31,8 @@ object DatabasePlayerRepository : PlayerRepository {
     override fun setLikedAt(songId: String, likedAt: Long?) {
         query { Database.like(songId, likedAt) }
     }
+
+    override fun observeLoudnessDb(songId: String): Flow<Float?> = Database.loudnessDb(songId)
 
     override fun observeFormat(songId: String): Flow<Format?> = Database.format(songId)
 

@@ -16,13 +16,12 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
-import app.vimusic.android.Database
 import app.vimusic.android.MainActivity
 import app.vimusic.android.R
+import app.vimusic.android.appContainer
 import app.vimusic.android.models.Album
 import app.vimusic.android.models.PlaylistPreview
 import app.vimusic.android.models.Song
-import app.vimusic.android.models.SongWithContentLength
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.preferences.OrderPreferences
 import app.vimusic.android.utils.asMediaItem
@@ -34,16 +33,13 @@ import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.cancellable
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 @OptIn(UnstableApi::class)
 class PlayerMediaLibraryService : MediaLibraryService(), ServiceConnection {
+    private val mediaLibraryRepository by lazy { applicationContext.appContainer.mediaLibraryRepository }
     private var lastSongs = emptyList<Song>()
 
     private var bound = false
@@ -263,9 +259,8 @@ class PlayerMediaLibraryService : MediaLibraryService(), ServiceConnection {
                     )
 
                     MediaId.SONGS ->
-                        Database
-                            .songsByPlayTimeDesc(limit = 30)
-                            .first()
+                        mediaLibraryRepository
+                            .getRecentSongs(limit = 30)
                             .also { lastSongs = it }
                             .map { it.asBrowsableMediaItem }
                             .toMutableList()
@@ -274,9 +269,8 @@ class PlayerMediaLibraryService : MediaLibraryService(), ServiceConnection {
                             }
 
                     MediaId.PLAYLISTS ->
-                        Database
-                            .playlistPreviewsByDateAddedDesc()
-                            .first()
+                        mediaLibraryRepository
+                            .getPlaylistPreviewsByDateAddedDesc()
                             .map { it.asBrowsableMediaItem }
                             .toMutableList()
                             .apply {
@@ -287,9 +281,8 @@ class PlayerMediaLibraryService : MediaLibraryService(), ServiceConnection {
                             }
 
                     MediaId.ALBUMS ->
-                        Database
-                            .albumsByRowIdDesc()
-                            .first()
+                        mediaLibraryRepository
+                            .getAlbumsByRowIdDesc()
                             .map { it.asBrowsableMediaItem }
                             .toMutableList()
 
@@ -379,58 +372,41 @@ class PlayerMediaLibraryService : MediaLibraryService(), ServiceConnection {
                     }
 
                     MediaId.FAVORITES ->
-                        Database
-                            .favorites()
-                            .first()
-                            .shuffled()
+                        mediaLibraryRepository.getFavoritesShuffled()
 
                     MediaId.OFFLINE ->
-                        Database
-                            .songsWithContentLength()
-                            .first()
-                            .filter { binder.isCached(it) }
-                            .map(SongWithContentLength::song)
-                            .shuffled()
+                        mediaLibraryRepository.getOfflineCachedShuffled { binder.isCached(it) }
 
                     MediaId.TOP -> {
                         val duration = DataPreferences.topListPeriod.duration
                         val length = DataPreferences.topListLength
 
-                        val flow = if (duration != null) Database.trending(
-                            limit = length,
-                            period = duration.inWholeMilliseconds
-                        ) else Database
-                            .songsByPlayTimeDesc(limit = length)
-                            .distinctUntilChanged()
-                            .cancellable()
-
-                        flow.first()
+                        mediaLibraryRepository.getTopSongs(
+                            durationMillis = duration?.inWholeMilliseconds,
+                            length = length
+                        )
                     }
 
                     MediaId.LOCAL ->
-                        Database
-                            .songs(
-                                sortBy = OrderPreferences.localSongSortBy,
-                                sortOrder = OrderPreferences.localSongSortOrder,
-                                isLocal = true
-                            )
-                            .map { songs -> songs.filter { it.durationText != "0:00" } }
-                            .first()
+                        mediaLibraryRepository.getLocalSongs(
+                            sortBy = OrderPreferences.localSongSortBy,
+                            sortOrder = OrderPreferences.localSongSortOrder
+                        )
 
                     MediaId.PLAYLISTS ->
                         data
                             .getOrNull(1)
                             ?.toLongOrNull()
-                            ?.let(Database::playlistWithSongs)
-                            ?.first()
-                            ?.songs
-                            ?.shuffled()
+                            ?.let { playlistId ->
+                                mediaLibraryRepository.getPlaylistSongsShuffled(playlistId)
+                            }
 
                     MediaId.ALBUMS ->
                         data
                             .getOrNull(1)
-                            ?.let(Database::albumSongs)
-                            ?.first()
+                            ?.let { albumId ->
+                                mediaLibraryRepository.getAlbumSongs(albumId)
+                            }
 
                     else -> emptyList()
                 }

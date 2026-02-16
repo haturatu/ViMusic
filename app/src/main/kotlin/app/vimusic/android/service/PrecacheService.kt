@@ -20,10 +20,9 @@ import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.scheduler.Requirements
 import androidx.media3.exoplayer.workmanager.WorkManagerScheduler
-import app.vimusic.android.Database
 import app.vimusic.android.R
+import app.vimusic.android.appContainer
 import app.vimusic.android.preferences.DataPreferences
-import app.vimusic.android.transaction
 import app.vimusic.android.utils.ActionReceiver
 import app.vimusic.android.utils.download
 import app.vimusic.android.utils.intent
@@ -246,8 +245,9 @@ class PrecacheService : DownloadService(
     companion object {
         fun scheduleCache(context: Context, mediaItem: MediaItem) {
             if (mediaItem.isLocal) return
+            val repository = context.appContainer.precacheRepository
             if (DataPreferences.cacheFavoritesOnly) {
-                val isFavorite = runCatching { Database.likedAtNow(mediaItem.mediaId) != null }.getOrDefault(false)
+                val isFavorite = repository.isFavorite(mediaItem.mediaId)
                 if (!isFavorite) return
             }
 
@@ -261,18 +261,14 @@ class PrecacheService : DownloadService(
                 .setData(mediaItem.mediaId.encodeToByteArray())
                 .build()
 
-            transaction {
-                runCatching {
-                    Database.insert(mediaItem)
-                }.also { if (it.isFailure) return@transaction }
+            repository.insertMediaItem(mediaItem).onFailure { return }
 
-                coroutineScope.launch {
-                    context.download<PrecacheService>(downloadRequest).exceptionOrNull()?.let {
-                        if (it is CancellationException) throw it
+            coroutineScope.launch {
+                context.download<PrecacheService>(downloadRequest).exceptionOrNull()?.let {
+                    if (it is CancellationException) throw it
 
-                        it.printStackTrace()
-                        context.toast(context.getString(R.string.error_pre_cache))
-                    }
+                    it.printStackTrace()
+                    context.toast(context.getString(R.string.error_pre_cache))
                 }
             }
         }

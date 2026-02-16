@@ -61,6 +61,7 @@ import androidx.media3.session.MediaStyleNotificationHelper
 import app.vimusic.android.Database
 import app.vimusic.android.MainActivity
 import app.vimusic.android.R
+import app.vimusic.android.appContainer
 import app.vimusic.android.extractor.NewPipeExtractorClient
 import app.vimusic.android.models.Event
 import app.vimusic.android.models.Format
@@ -111,11 +112,7 @@ import app.vimusic.core.ui.utils.isAtLeastAndroid8
 import app.vimusic.core.ui.utils.isAtLeastAndroid9
 import app.vimusic.core.ui.utils.songBundle
 import app.vimusic.core.ui.utils.streamVolumeFlow
-import app.vimusic.providers.innertube.Innertube
 import app.vimusic.providers.innertube.models.NavigationEndpoint
-import app.vimusic.providers.innertube.models.bodies.SearchBody
-import app.vimusic.providers.innertube.requests.searchPage
-import app.vimusic.providers.innertube.utils.from
 import app.vimusic.providers.sponsorblock.SponsorBlock
 import app.vimusic.providers.sponsorblock.models.Action
 import app.vimusic.providers.sponsorblock.models.Category
@@ -176,6 +173,8 @@ val Song.isLocal get() = id.startsWith(LOCAL_KEY_PREFIX)
 @Suppress("LargeClass", "TooManyFunctions") // intended in this class: it is a service
 @OptIn(UnstableApi::class)
 class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListener.Callback {
+    private val playerRepository by lazy { applicationContext.appContainer.playerRepository }
+    private val searchResultRepository by lazy { applicationContext.appContainer.searchResultRepository }
     private lateinit var mediaSession: MediaSession
     private lateinit var cache: SimpleCache
     private lateinit var player: ExoPlayer
@@ -213,8 +212,8 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private val isLikedState = mediaItemState
         .flatMapMerge { item ->
             item?.mediaId?.let {
-                Database
-                    .likedAt(it)
+                playerRepository
+                    .observeLikedAt(it)
                     .distinctUntilChanged()
                     .cancellable()
             } ?: flowOf(null)
@@ -622,7 +621,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             runCatching {
                 fun Float?.toMb() = ((this ?: 0f) * 100).toInt()
 
-                Database.loudnessDb(songId).cancellable().collectLatest { loudness ->
+                playerRepository.observeLoudnessDb(songId).cancellable().collectLatest { loudness ->
                     val loudnessMb = loudness.toMb().let {
                         if (it !in -2000..2000) {
                             withContext(Dispatchers.Main) {
@@ -638,7 +637,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                         } else it
                     }
 
-                    Database.loudnessBoost(songId).cancellable().collectLatest { boost ->
+                    playerRepository.observeLoudnessBoost(songId).cancellable().collectLatest { boost ->
                         withContext(Dispatchers.Main) {
                             loudnessEnhancer?.setTargetGain(
                                 PlayerPreferences.volumeNormalizationBaseGain.toMb() + boost.toMb() - loudnessMb
@@ -1126,13 +1125,8 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
         fun playFromSearch(query: String) {
             coroutineScope.launch {
-                Innertube.searchPage(
-                    body = SearchBody(
-                        query = query,
-                        params = Innertube.SearchFilter.Song.value
-                    ),
-                    fromMusicShelfRendererContent = Innertube.SongItem.Companion::from
-                )
+                searchResultRepository
+                    .searchSongs(query = query, continuation = null)
                     ?.getOrNull()
                     ?.items
                     ?.firstOrNull()
@@ -1144,13 +1138,11 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     }
 
     private fun likeAction() = mediaItemState.value?.let { mediaItem ->
-        query {
-            runCatching {
-                Database.like(
-                    songId = mediaItem.mediaId,
-                    likedAt = if (isLikedState.value) null else System.currentTimeMillis()
-                )
-            }
+        runCatching {
+            playerRepository.setLikedAt(
+                songId = mediaItem.mediaId,
+                likedAt = if (isLikedState.value) null else System.currentTimeMillis()
+            )
         }
     }.let { }
 
