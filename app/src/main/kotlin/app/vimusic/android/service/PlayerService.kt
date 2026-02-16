@@ -410,6 +410,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         if (totalPlayTimeMs < 5000) return
 
         val mediaItem = eventTime.timeline[eventTime.windowIndex].mediaItem
+        runCatching { playerRepository.insertSong(mediaItem) }
 
         if (!DataPreferences.pausePlaytime) {
             runCatching {
