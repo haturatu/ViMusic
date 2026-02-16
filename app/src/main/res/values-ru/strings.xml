@@ -375,8 +375,10 @@
 
     <string name="pre_cache">Предварительное кэширование</string>
 
-    <string name="swipe_to_hide_song">Проведите, чтобы скрыть песню</string>
+    <string name="swipe_to_hide_song">Проведите влево, чтобы скрыть песню</string>
     <string name="swipe_to_hide_song_description">Когда вы проводите по песне влево, она удаляется из базы данных и кэша</string>
+    <string name="swipe_right_to_play_next">Проведите вправо, чтобы воспроизвести следующую</string>
+    <string name="swipe_right_to_play_next_description">Когда вы проводите по песне вправо, она добавляется в очередь как следующая</string>
     <string name="swipe_to_hide_song_confirm">Подтвердить скрытие песни</string>
     <string name="swipe_to_hide_song_confirm_description">Когда вы проводите для скрытия, вам сначала нужно подтвердить</string>
     <string name="hide_explicit">Скрыть откровенные песни</string>

@@ -378,8 +378,10 @@
 
     <string name="pre_cache">预缓存</string>
 
-    <string name="swipe_to_hide_song">滑动隐藏歌曲</string>
+    <string name="swipe_to_hide_song">向左滑动删除歌曲</string>
     <string name="swipe_to_hide_song_description">当你向左滑动一首歌曲时，它将从数据库和缓存中移除</string>
+    <string name="swipe_right_to_play_next">右滑下一首播放</string>
+    <string name="swipe_right_to_play_next_description">当你向右滑动一首歌曲时，它会作为下一首加入队列</string>
     <string name="swipe_to_hide_song_confirm">确认滑动隐藏歌曲</string>
     <string name="swipe_to_hide_song_confirm_description">在执行隐藏操作前，需要先确认</string>
     <string name="hide_explicit">隐藏带有脏话的歌曲</string>

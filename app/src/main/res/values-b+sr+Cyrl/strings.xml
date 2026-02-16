@@ -371,8 +371,10 @@
 
     <string name="pre_cache">Претходно кеширање</string>
 
-    <string name="swipe_to_hide_song">Превуци да сакријеш песму</string>
+    <string name="swipe_to_hide_song">Превуци улево да сакријеш песму</string>
     <string name="swipe_to_hide_song_description">Када превучете песму улево, биће уклоњена из базе и кеша</string>
+    <string name="swipe_right_to_play_next">Превуци удесно за репродукцију следеће песме</string>
+    <string name="swipe_right_to_play_next_description">Када превучете песму удесно, додаје се у ред као следећа песма</string>
     <string name="swipe_to_hide_song_confirm">Потврди превлачење за скривање песме</string>
     <string name="swipe_to_hide_song_confirm_description">Када превучете за скривање, прво морате потврдити</string>
     <string name="hide_explicit">Сакриј експлицитне песме</string>

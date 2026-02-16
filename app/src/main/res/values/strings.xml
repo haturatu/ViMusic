@@ -386,7 +386,7 @@
 
     <string name="pre_cache">Pre cache</string>
 
-    <string name="swipe_to_hide_song">Swipe to hide song</string>
+    <string name="swipe_to_hide_song">Swipe left to hide song</string>
     <string name="swipe_to_hide_song_description">When you swipe a song to the left, it gets removed from the database and cache</string>
     <string name="swipe_right_to_play_next">Swipe right to play next</string>
     <string name="swipe_right_to_play_next_description">When you swipe a song to the right, it is added as the next song in queue</string>
