@@ -110,11 +110,9 @@ import app.vimusic.core.ui.utils.isAtLeastAndroid9
 import app.vimusic.core.ui.utils.songBundle
 import app.vimusic.core.ui.utils.streamVolumeFlow
 import app.vimusic.providers.innertube.models.NavigationEndpoint
-import app.vimusic.providers.sponsorblock.SponsorBlock
 import app.vimusic.providers.sponsorblock.models.Action
 import app.vimusic.providers.sponsorblock.models.Category
 import app.vimusic.providers.sponsorblock.models.Segment
-import app.vimusic.providers.sponsorblock.requests.segments
 import org.schabi.newpipe.extractor.exceptions.ContentNotAvailableException
 import org.schabi.newpipe.extractor.exceptions.ContentNotSupportedException
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
@@ -172,6 +170,7 @@ val Song.isLocal get() = id.startsWith(LOCAL_KEY_PREFIX)
 class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListener.Callback {
     private val playerRepository by lazy { applicationContext.appContainer.playerRepository }
     private val searchResultRepository by lazy { applicationContext.appContainer.searchResultRepository }
+    private val sponsorBlockRepository by lazy { applicationContext.appContainer.sponsorBlockRepository }
     private lateinit var mediaSession: MediaSession
     private lateinit var cache: SimpleCache
     private lateinit var player: ExoPlayer
@@ -662,8 +661,8 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 poiTimestamp = null
                 val videoId = extractYoutubeVideoId(mediaItem) ?: return@collectLatest
 
-                SponsorBlock
-                    .segments(videoId)
+                sponsorBlockRepository
+                    .fetchSegments(videoId)
                     ?.onSuccess { segments ->
                         updatePoiTimestamp(segments)
                         val skipSegments = segments
