@@ -29,6 +29,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @JvmInline
 value class PlayerScope internal constructor(val player: Player)
@@ -56,11 +57,17 @@ fun Player?.DisposableListener(
 
 @Composable
 fun Player?.positionAndDurationState(
-    delay: Duration = 500.milliseconds
+    normalDelay: Duration = 1.seconds,
+    fastDelay: Duration = 250.milliseconds,
+    preferFastUpdates: Boolean = false
 ): Pair<Long, Long> {
     var state by remember {
         mutableStateOf(this?.let { currentPosition to duration } ?: (0L to 1L))
     }
+    var shouldTick by remember {
+        mutableStateOf(this?.isPlaying == true)
+    }
+    var fastTickUntilMs by remember { mutableStateOf(0L) }
 
     DisposableListener {
         object : Player.Listener {
@@ -75,13 +82,34 @@ fun Player?.positionAndDurationState(
             ) {
                 if (reason != Player.DISCONTINUITY_REASON_SEEK) return
                 state = player.currentPosition to player.duration
+                fastTickUntilMs = android.os.SystemClock.elapsedRealtime() + 3_000L
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                shouldTick = player.isPlaying
+                state = player.currentPosition to player.duration
+            }
+
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                shouldTick = player.isPlaying
+                state = player.currentPosition to player.duration
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                shouldTick = isPlaying
+                if (!isPlaying) state = player.currentPosition to player.duration
             }
         }
     }
 
-    LaunchedEffect(this) {
-        while (isActive) {
-            delay(delay)
+    LaunchedEffect(this, shouldTick, normalDelay, fastDelay, preferFastUpdates, fastTickUntilMs) {
+        if (!shouldTick) return@LaunchedEffect
+
+        while (isActive && shouldTick) {
+            val now = android.os.SystemClock.elapsedRealtime()
+            val tickDelay =
+                if (preferFastUpdates || now < fastTickUntilMs) fastDelay else normalDelay
+            delay(tickDelay)
             this@positionAndDurationState?.run {
                 state = currentPosition to duration
             }

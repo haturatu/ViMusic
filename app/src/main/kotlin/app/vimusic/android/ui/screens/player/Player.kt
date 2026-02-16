@@ -175,7 +175,9 @@ fun Player(
         }
     }
 
-    val (position, duration) = binder?.player.positionAndDurationState()
+    val (position, duration) = binder?.player.positionAndDurationState(
+        preferFastUpdates = layoutState.expanded
+    )
     val metadata = remember(mediaItem) { mediaItem?.mediaMetadata }
     val extras = remember(metadata) { metadata?.extras?.songBundle }
 
