@@ -297,7 +297,7 @@
     <string name="ignoring_battery_optimizations">Restriction already lifted</string>
     <string name="ignore_battery_optimizations_action">Disable background restrictions</string>
     <string name="invincible_service">Invincible service</string>
-    <string name="invincible_service_description">Should keep the playback going 99.99% of the time, in case turning off the battery optimizations is not enough</string>
+    <string name="invincible_service_description">Should keep the playback going 99.99%% of the time, in case turning off the battery optimizations is not enough</string>
 
     <string name="need_help">Need help?</string>
     <string name="need_help_description">Most of the time, it is not the developer\'s fault (even after turning on invincible service) that the app stops working properly in the background.\nCheck if your device manufacturer kills your apps (click to redirect)</string>
@@ -309,6 +309,7 @@
     <string name="show_logs">View debug logs</string>
     <string name="logs">Logs</string>
     <string name="show_troubleshoot_section">Show troubleshoot section</string>
+    <string name="asset_statements" translatable="false">[]</string>
 
     <string name="persistent_queue">Persistent queue</string>
     <string name="persistent_queue_description">Save and restore playing songs</string>

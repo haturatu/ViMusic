@@ -272,7 +272,7 @@
     <string name="ignoring_battery_optimizations">Pembatasan sudah dihapus</string>
     <string name="ignore_battery_optimizations_action">Nonaktifkan pembatasan latar belakang</string>
     <string name="invincible_service">Layanan tak terkalahkan</string>
-    <string name="invincible_service_description">Harus menjaga pemutaran berjalan 99,99% waktu, jika mematikan optimisasi baterai tidak cukup</string>
+    <string name="invincible_service_description">Harus menjaga pemutaran berjalan 99,99%% waktu, jika mematikan optimisasi baterai tidak cukup</string>
 
     <string name="need_help">Butuh bantuan?</string>
     <string name="need_help_description">Sebagian besar, bukan kesalahan pengembang (bahkan setelah mengaktifkan layanan tak terkalahkan) bahwa aplikasi berhenti berfungsi dengan baik di latar belakang.\nPeriksa apakah produsen perangkat Anda menonaktifkan aplikasi Anda (klik untuk diarahkan)</string>
