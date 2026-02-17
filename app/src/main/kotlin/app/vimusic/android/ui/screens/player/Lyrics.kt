@@ -140,6 +140,7 @@ fun Lyrics(
 
     val (colorPalette, typography) = LocalAppearance.current
     val context = LocalContext.current
+    val noBrowserInstalled = stringResource(R.string.no_browser_installed)
     val menuState = LocalMenuState.current
     val binder = LocalPlayerServiceBinder.current
     val density = LocalDensity.current
@@ -579,7 +580,7 @@ fun Lyrics(
                                                     }
                                                 )
                                             } catch (e: ActivityNotFoundException) {
-                                                context.toast(context.getString(R.string.no_browser_installed))
+                                                context.toast(noBrowserInstalled)
                                             }
                                         }
                                     )

@@ -78,6 +78,7 @@ fun LocalPlaylistSongs(
     val menuState = LocalMenuState.current
     val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
+    val youtubeMusicNotInstalled = stringResource(R.string.youtube_music_not_installed)
 
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
@@ -198,7 +199,7 @@ fun LocalPlaylistSongs(
                                                                         }"
                                                                     )
                                                                 ) context.toast(
-                                                                    context.getString(R.string.youtube_music_not_installed)
+                                                                    youtubeMusicNotInstalled
                                                                 )
                                                             }
                                                         )
