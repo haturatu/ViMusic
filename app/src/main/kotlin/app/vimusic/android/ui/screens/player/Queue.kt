@@ -157,10 +157,13 @@ fun Queue(
 
     val visibleSuggestions by remember {
         derivedStateOf {
+            val queuedMediaIds = windows.asSequence()
+                .map { it.mediaItem.mediaId }
+                .toHashSet()
             suggestions
                 ?.getOrNull()
                 .orEmpty()
-                .filter { windows.none { window -> window.mediaItem.mediaId == it.mediaId } }
+                .filter { it.mediaId !in queuedMediaIds }
         }
     }
 
