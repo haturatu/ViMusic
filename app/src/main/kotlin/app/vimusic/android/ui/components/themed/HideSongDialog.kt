@@ -17,8 +17,8 @@ fun HideSongDialog(
     song: Song,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
-    onHideSong: ((Song) -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onHideSong: ((Song) -> Unit)? = null
 ) {
     val binder = LocalPlayerServiceBinder.current
     val defaultOnHideSong = onHideSong ?: LocalAppContainer.current.songsRepository::deleteSong

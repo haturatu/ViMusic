@@ -40,6 +40,7 @@ import app.vimusic.core.ui.utils.isAtLeastAndroid12
 import app.vimusic.core.ui.utils.isAtLeastAndroid7
 import app.vimusic.core.ui.utils.isAtLeastAndroid8
 import kotlin.ConsistentCopyVisibility
+import java.util.function.Consumer
 
 private fun logError(throwable: Throwable) = Log.e("PipHandler", "An error occurred", throwable)
 
@@ -128,7 +129,7 @@ fun isInPip(
     DisposableEffect(activity, currentOnChange) {
         if (activity !is OnPictureInPictureModeChangedProvider) return@DisposableEffect onDispose { }
 
-        val listener: (PictureInPictureModeChangedInfo) -> Unit = {
+        val listener = Consumer<PictureInPictureModeChangedInfo> {
             pip = it.isInPictureInPictureMode
             currentOnChange(pip)
         }
