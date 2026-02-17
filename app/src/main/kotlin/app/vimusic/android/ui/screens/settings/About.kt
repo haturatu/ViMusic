@@ -3,7 +3,6 @@ package app.vimusic.android.ui.screens.settings
 import android.Manifest
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,6 +25,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationCompat
+import androidx.core.net.toUri
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -120,7 +120,7 @@ class VersionCheckWorker(
                         pendingIntent(
                             Intent(
                                 /* action = */ Intent.ACTION_VIEW,
-                                /* uri = */ Uri.parse(release.frontendUrl.toString())
+                                /* uri = */ release.frontendUrl.toString().toUri()
                             )
                         )
                     )
