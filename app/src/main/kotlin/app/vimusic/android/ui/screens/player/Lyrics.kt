@@ -154,26 +154,49 @@ fun Lyrics(
 
     var editing by remember(mediaId, shouldShowSynchronizedLyrics) { mutableStateOf(false) }
     var picking by remember(mediaId, shouldShowSynchronizedLyrics) { mutableStateOf(false) }
-    var error by remember(mediaId, shouldShowSynchronizedLyrics) { mutableStateOf(false) }
     var isFetchingFixed by remember(mediaId) { mutableStateOf(false) }
+    var hasFixedFetchFinished by remember(mediaId) { mutableStateOf(false) }
     var isFetchingSynced by remember(mediaId) { mutableStateOf(false) }
     var hasSyncedFetchFinished by remember(mediaId) { mutableStateOf(false) }
 
-    val text = remember(lyrics, showSynchronizedLyrics) {
-        if (showSynchronizedLyrics) lyrics?.synced else lyrics?.fixed
+    val displaySyncedLyrics = remember(lyrics, showSynchronizedLyrics) {
+        showSynchronizedLyrics && !lyrics?.synced.isNullOrBlank()
+    }
+    val text = remember(lyrics, displaySyncedLyrics) {
+        if (displaySyncedLyrics) lyrics?.synced else lyrics?.fixed
     }
     val showLoading = remember(
+        shouldUpdateLyrics,
         showSynchronizedLyrics,
+        displaySyncedLyrics,
+        hasFixedFetchFinished,
         isFetchingFixed,
         isFetchingSynced,
         hasSyncedFetchFinished,
         lyrics
     ) {
         if (showSynchronizedLyrics) {
-            isFetchingSynced || (!hasSyncedFetchFinished && lyrics?.synced.isNullOrBlank())
+            !displaySyncedLyrics && shouldUpdateLyrics &&
+                    (isFetchingSynced || !hasSyncedFetchFinished)
         } else {
-            isFetchingFixed && lyrics?.fixed.isNullOrBlank()
+            lyrics?.fixed.isNullOrBlank() && shouldUpdateLyrics &&
+                    (isFetchingFixed || !hasFixedFetchFinished)
         }
+    }
+    val showError = remember(showSynchronizedLyrics, showLoading, lyrics) {
+        if (showSynchronizedLyrics) !showLoading && lyrics?.synced.isNullOrBlank()
+        else !showLoading && lyrics?.fixed.isNullOrBlank()
+    }
+    val showLoadingOverlay = remember(showLoading, text) {
+        showLoading && text.isNullOrBlank()
+    }
+    val showSyncedInlineLoading = remember(
+        showSynchronizedLyrics,
+        displaySyncedLyrics,
+        isFetchingSynced,
+        showLoadingOverlay
+    ) {
+        showSynchronizedLyrics && !displaySyncedLyrics && isFetchingSynced && !showLoadingOverlay
     }
     var invalidLrc by remember(text) { mutableStateOf(false) }
 
@@ -194,7 +217,15 @@ fun Lyrics(
                     .cancellable()
                     .collect { currentLyrics ->
                         lyrics = currentLyrics
-                        if (shouldUpdateLyrics && currentLyrics?.fixed.isNullOrBlank() && !isFetchingFixed) {
+                        if (!currentLyrics?.fixed.isNullOrBlank()) hasFixedFetchFinished = true
+                        if (!currentLyrics?.synced.isNullOrBlank()) hasSyncedFetchFinished = true
+
+                        if (
+                            shouldUpdateLyrics &&
+                            currentLyrics?.fixed.isNullOrBlank() &&
+                            !isFetchingFixed &&
+                            !hasFixedFetchFinished
+                        ) {
                             val mediaMetadata = currentMediaMetadataProvider()
                             var duration =
                                 withContext(Dispatchers.Main) { currentDurationProvider() }
@@ -214,7 +245,6 @@ fun Lyrics(
                                 else it
                             }
 
-                            error = false
                             val normalizedTitle = title.split("(")[0].trim()
 
                             isFetchingFixed = true
@@ -261,17 +291,9 @@ fun Lyrics(
                                 }
                             } finally {
                                 isFetchingFixed = false
+                                hasFixedFetchFinished = true
                             }
                         }
-
-                        error =
-                            (shouldShowSynchronizedLyrics &&
-                                    hasSyncedFetchFinished &&
-                                    !isFetchingSynced &&
-                                    lyrics?.synced?.isBlank() == true) ||
-                                    (!shouldShowSynchronizedLyrics &&
-                                            !isFetchingFixed &&
-                                            lyrics?.fixed?.isBlank() == true)
                     }
             }
         }.exceptionOrNull()?.let {
@@ -284,7 +306,11 @@ fun Lyrics(
         if (!shouldShowSynchronizedLyrics) {
             hasSyncedFetchFinished = false
         }
-        if (!shouldUpdateLyrics || !shouldShowSynchronizedLyrics) return@LaunchedEffect
+        if (!shouldUpdateLyrics) {
+            hasSyncedFetchFinished = true
+            return@LaunchedEffect
+        }
+        if (!shouldShowSynchronizedLyrics) return@LaunchedEffect
         if (!lyrics?.synced.isNullOrBlank() || isFetchingSynced) return@LaunchedEffect
 
         isFetchingSynced = true
@@ -437,7 +463,7 @@ fun Lyrics(
         )
 
         AnimatedVisibility(
-            visible = error,
+            visible = showError,
             enter = slideInVertically { -it },
             exit = slideOutVertically { -it },
             modifier = Modifier.align(Alignment.TopCenter)
@@ -458,7 +484,7 @@ fun Lyrics(
         }
 
         AnimatedVisibility(
-            visible = !text.isNullOrBlank() && !error && invalidLrc && shouldShowSynchronizedLyrics,
+            visible = !text.isNullOrBlank() && !showError && invalidLrc && displaySyncedLyrics,
             enter = slideInVertically { -it },
             exit = slideOutVertically { -it },
             modifier = Modifier.align(Alignment.TopCenter)
@@ -472,6 +498,20 @@ fun Lyrics(
                     .fillMaxWidth(),
                 maxLines = if (pip) 1 else Int.MAX_VALUE,
                 overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        AnimatedVisibility(
+            visible = showSyncedInlineLoading && !showError,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.align(Alignment.TopCenter)
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .background(Color.Black.copy(0.4f))
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .size(20.dp)
             )
         }
 
@@ -499,7 +539,7 @@ fun Lyrics(
         }
 
         AnimatedContent(
-            targetState = showSynchronizedLyrics,
+            targetState = displaySyncedLyrics,
             transitionSpec = { fadeIn() togetherWith fadeOut() },
             label = ""
         ) { synchronized ->
@@ -573,7 +613,7 @@ fun Lyrics(
             )
         }
 
-        if (showLoading && !error) Column(
+        if (showLoadingOverlay && !showError) Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.shimmer()
         ) {
