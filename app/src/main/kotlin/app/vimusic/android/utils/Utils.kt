@@ -3,7 +3,6 @@
 package app.vimusic.android.utils
 
 import android.content.ContentUris
-import android.net.Uri
 import android.provider.MediaStore
 import android.text.format.DateUtils
 import androidx.annotation.OptIn
@@ -93,7 +92,7 @@ val Playlist.Video.asMediaItem: MediaItem?
                 MediaMetadata.Builder()
                     .setTitle(title)
                     .setArtist(uploaderName)
-                    .setArtworkUri(Uri.parse(thumbnailUrl.toString()))
+                    .setArtworkUri(thumbnailUrl.toString().toUri())
                     .setExtras(
                         SongBundleAccessor.bundle {
                             durationText = duration.toComponents { minutes, seconds, _ ->

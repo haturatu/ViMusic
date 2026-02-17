@@ -3,11 +3,11 @@ package app.vimusic.android.service
 import android.content.ComponentName
 import android.content.Context
 import android.content.ServiceConnection
-import android.net.Uri
 import android.os.IBinder
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
+import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.cache.Cache
@@ -255,7 +255,7 @@ class PrecacheService : DownloadService(
                 .Builder(
                     /* id      = */ mediaItem.mediaId,
                     /* uri     = */ mediaItem.requestMetadata.mediaUri
-                        ?: Uri.parse("https://youtube.com/watch?v=${mediaItem.mediaId}")
+                        ?: "https://youtube.com/watch?v=${mediaItem.mediaId}".toUri()
                 )
                 .setCustomCacheKey(mediaItem.mediaId)
                 .setData(mediaItem.mediaId.encodeToByteArray())

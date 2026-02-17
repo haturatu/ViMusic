@@ -9,6 +9,7 @@ import android.database.DataSetObserver
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import androidx.core.net.toUri
 import android.provider.MediaStore.Audio.Media.ALBUM_ID
 import android.provider.MediaStore.Audio.Media.ARTIST
 import android.provider.MediaStore.Audio.Media.DISPLAY_NAME
@@ -160,7 +161,7 @@ object NoOpCursor : Cursor {
 
 class AudioMediaCursor(cursor: Cursor) : CursorDao(cursor) {
     companion object : CursorDaoCompanion<AudioMediaCursor>() {
-        val ALBUM_URI_BASE: Uri = Uri.parse("content://media/external/audio/albumart")
+        val ALBUM_URI_BASE: Uri = "content://media/external/audio/albumart".toUri()
 
         override fun order(order: SortOrder) = "$DISPLAY_NAME ${order.sql}"
         override fun new(cursor: Cursor) = AudioMediaCursor(cursor)
