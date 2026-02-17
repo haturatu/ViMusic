@@ -219,7 +219,6 @@ fun BaseMediaItemMenu(
     onShowNormalizationDialog: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
-    val youtubeMusicNotInstalled = stringResource(R.string.youtube_music_not_installed)
     val viewModel: MediaItemMenuViewModel = viewModel(
         key = "media_item_menu",
         factory = MediaItemMenuViewModel.factory(LocalAppContainer.current.mediaItemMenuRepository)
@@ -290,6 +289,7 @@ fun MediaItemMenu(
     val uriHandler = LocalUriHandler.current
     val binder = LocalPlayerServiceBinder.current
     val context = LocalContext.current
+    val youtubeMusicNotInstalled = stringResource(R.string.youtube_music_not_installed)
 
     val isLocal by remember { derivedStateOf { mediaItem.isLocal } }
 
