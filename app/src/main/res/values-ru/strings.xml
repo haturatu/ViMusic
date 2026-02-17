@@ -279,7 +279,7 @@
     <string name="auto_sync_playlists">Автосинхронизация плейлистов</string>
     <string name="auto_sync_playlists_description">Автоматически синхронизирует сохраненные плейлисты с YouTube при их открытии</string>
     <string name="top_list_length">Длина топ-листа</string>
-    <string name="top_list_length_description">Ограничивает длину плейлиста "Мой топ %1$s"</string>
+    <string name="top_list_length_description">Ограничивает длину плейлиста "Мой топ x"</string>
 
     <string name="service_lifetime">Время работы сервиса</string>
     <string name="service_lifetime_warning">Если применены оптимизации батареи, уведомление о воспроизведении может внезапно исчезнуть, когда музыка на паузе.</string>
