@@ -2,6 +2,7 @@ package app.vimusic.android.repositories
 
 import app.vimusic.android.Database
 import app.vimusic.android.models.Artist
+import app.vimusic.android.query
 import app.vimusic.providers.innertube.Innertube
 import app.vimusic.providers.innertube.models.bodies.BrowseBody
 import app.vimusic.providers.innertube.models.bodies.ContinuationBody
@@ -41,11 +42,11 @@ object DatabaseArtistRepository : ArtistRepository {
         Innertube.artistPage(BrowseBody(browseId = browseId))
 
     override fun upsertArtist(artist: Artist) {
-        Database.upsert(artist)
+        query { Database.upsert(artist) }
     }
 
     override fun updateArtist(artist: Artist) {
-        Database.update(artist)
+        query { Database.update(artist) }
     }
 
     override suspend fun artistSongsPage(
