@@ -150,18 +150,30 @@ fun Lyrics(
 
     var lyrics by remember { mutableStateOf<Lyrics?>(null) }
 
-    val showSynchronizedLyrics = remember(shouldShowSynchronizedLyrics, lyrics) {
-        shouldShowSynchronizedLyrics && lyrics?.synced?.isBlank() != true
-    }
+    val showSynchronizedLyrics = shouldShowSynchronizedLyrics
 
     var editing by remember(mediaId, shouldShowSynchronizedLyrics) { mutableStateOf(false) }
     var picking by remember(mediaId, shouldShowSynchronizedLyrics) { mutableStateOf(false) }
     var error by remember(mediaId, shouldShowSynchronizedLyrics) { mutableStateOf(false) }
     var isFetchingFixed by remember(mediaId) { mutableStateOf(false) }
     var isFetchingSynced by remember(mediaId) { mutableStateOf(false) }
+    var hasSyncedFetchFinished by remember(mediaId) { mutableStateOf(false) }
 
     val text = remember(lyrics, showSynchronizedLyrics) {
         if (showSynchronizedLyrics) lyrics?.synced else lyrics?.fixed
+    }
+    val showLoading = remember(
+        showSynchronizedLyrics,
+        isFetchingFixed,
+        isFetchingSynced,
+        hasSyncedFetchFinished,
+        lyrics
+    ) {
+        if (showSynchronizedLyrics) {
+            isFetchingSynced || (!hasSyncedFetchFinished && lyrics?.synced.isNullOrBlank())
+        } else {
+            isFetchingFixed && lyrics?.fixed.isNullOrBlank()
+        }
     }
     var invalidLrc by remember(text) { mutableStateOf(false) }
 
@@ -256,6 +268,7 @@ fun Lyrics(
 
                         error =
                             (shouldShowSynchronizedLyrics &&
+                                    hasSyncedFetchFinished &&
                                     !isFetchingSynced &&
                                     lyrics?.synced?.isBlank() == true) ||
                                     (!shouldShowSynchronizedLyrics &&
@@ -270,10 +283,14 @@ fun Lyrics(
     }
 
     LaunchedEffect(mediaId, shouldShowSynchronizedLyrics, lyrics?.synced, shouldUpdateLyrics) {
+        if (!shouldShowSynchronizedLyrics) {
+            hasSyncedFetchFinished = false
+        }
         if (!shouldUpdateLyrics || !shouldShowSynchronizedLyrics) return@LaunchedEffect
         if (!lyrics?.synced.isNullOrBlank() || isFetchingSynced) return@LaunchedEffect
 
         isFetchingSynced = true
+        hasSyncedFetchFinished = false
         try {
             runCatching {
                 withContext(Dispatchers.IO) {
@@ -348,6 +365,7 @@ fun Lyrics(
             }
         } finally {
             isFetchingSynced = false
+            hasSyncedFetchFinished = true
         }
     }
 
@@ -557,7 +575,7 @@ fun Lyrics(
             )
         }
 
-        if (text == null && !error) Column(
+        if (showLoading && !error) Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.shimmer()
         ) {
