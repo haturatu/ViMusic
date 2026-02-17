@@ -1,4 +1,4 @@
-.PHONY: build release clean
+.PHONY: build release lint clean
 
 NEWPIPEEXTRACTOR_REPO := https://github.com/TeamNewPipe/NewPipeExtractor
 NEWPIPEEXTRACTOR_REF := v0.25.2
@@ -11,6 +11,9 @@ build: $(NEWPIPEEXTRACTOR_DIR)
 
 release: $(NEWPIPEEXTRACTOR_DIR)
 	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew assembleRelease
+
+lint: $(NEWPIPEEXTRACTOR_DIR)
+	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew lint
 
 $(NEWPIPEEXTRACTOR_DIR):
 	mkdir -p build
