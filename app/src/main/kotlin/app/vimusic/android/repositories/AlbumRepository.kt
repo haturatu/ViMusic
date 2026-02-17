@@ -3,6 +3,7 @@ package app.vimusic.android.repositories
 import app.vimusic.android.Database
 import app.vimusic.android.models.Album
 import app.vimusic.android.models.Song
+import app.vimusic.android.query
 import app.vimusic.android.models.SongAlbumMap
 import app.vimusic.android.transaction
 import app.vimusic.android.utils.asMediaItem
@@ -72,6 +73,6 @@ object DatabaseAlbumRepository : AlbumRepository {
     }
 
     override fun updateAlbum(album: Album) {
-        Database.update(album)
+        query { Database.update(album) }
     }
 }
