@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.OnPictureInPictureModeChangedProvider
 import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.graphics.toRect
+import androidx.core.util.Consumer
 import app.vimusic.android.R
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.compose.persist.findActivityNullable
@@ -40,7 +41,6 @@ import app.vimusic.core.ui.utils.isAtLeastAndroid12
 import app.vimusic.core.ui.utils.isAtLeastAndroid7
 import app.vimusic.core.ui.utils.isAtLeastAndroid8
 import kotlin.ConsistentCopyVisibility
-import java.util.function.Consumer
 
 private fun logError(throwable: Throwable) = Log.e("PipHandler", "An error occurred", throwable)
 
