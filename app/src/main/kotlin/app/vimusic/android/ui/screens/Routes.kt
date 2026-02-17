@@ -2,7 +2,7 @@ package app.vimusic.android.ui.screens
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.LocalResources
+import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
@@ -51,8 +51,8 @@ val settingsRoute = Route0("settingsRoute")
 @Composable
 fun RouteHandlerScope.GlobalRoutes() {
     val context = LocalContext.current
-    val resources = LocalResources.current
-    val errorMessage = resources.getString(R.string.error_message)
+    val errorMessage = stringResource(R.string.error_message)
+    val errorUrlPattern = stringResource(R.string.error_url, "%s")
     val binder = LocalPlayerServiceBinder.current
     val onlineSearchRepository = LocalAppContainer.current.onlineSearchRepository
 
@@ -71,7 +71,7 @@ fun RouteHandlerScope.GlobalRoutes() {
     pipedPlaylistRoute { apiBaseUrl, sessionToken, playlistId ->
         val safeApiBaseUrl = runCatching { Url(apiBaseUrl) }.getOrNull()
         if (safeApiBaseUrl == null) {
-            context.toast(resources.getString(R.string.error_url, apiBaseUrl))
+            context.toast(errorUrlPattern.format(apiBaseUrl))
             return@pipedPlaylistRoute
         }
         val safePlaylistId = runCatching { UUID.fromString(playlistId) }.getOrNull()
