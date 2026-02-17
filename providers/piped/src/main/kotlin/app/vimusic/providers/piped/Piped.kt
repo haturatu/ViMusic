@@ -58,8 +58,14 @@ object Piped {
             install(HttpRequestRetry) {
                 retryOnExceptionIf { _, cause -> cause is IOException }
                 retryOnServerErrors()
-                exponentialDelay()
+                constantDelay()
                 maxRetries = 3
+                modifyRequest {
+                    it.headers.remove("Connection")
+                    it.headers.remove("Cache-Control")
+                    it.headers.append("Connection", "close")
+                    it.headers.append("Cache-Control", "no-cache")
+                }
             }
 
             install(HttpTimeout) {
@@ -78,6 +84,8 @@ object Piped {
             defaultRequest {
                 accept(ContentType.Application.Json)
                 contentType(ContentType.Application.Json)
+                header("Connection", "close")
+                header("Cache-Control", "no-cache")
             }
         }
     }

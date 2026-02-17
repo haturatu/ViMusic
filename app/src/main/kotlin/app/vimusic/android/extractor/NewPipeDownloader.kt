@@ -16,6 +16,8 @@ class NewPipeDownloader(
             .url(request.url())
             .method(request.httpMethod(), body)
             .addHeader("User-Agent", USER_AGENT)
+            .addHeader("Connection", "close")
+            .addHeader("Cache-Control", "no-cache")
             .apply {
                 request.headers().forEach { (name, values) ->
                     removeHeader(name)

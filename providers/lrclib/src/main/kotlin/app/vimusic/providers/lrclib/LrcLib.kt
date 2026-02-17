@@ -42,6 +42,8 @@ object LrcLib {
             defaultRequest {
                 url("https://lrclib.net")
                 header("Lrclib-Client", AGENT)
+                header("Connection", "close")
+                header("Cache-Control", "no-cache")
             }
 
             install(UserAgent) {
@@ -51,8 +53,14 @@ object LrcLib {
             install(HttpRequestRetry) {
                 retryOnExceptionIf { _, cause -> cause is IOException }
                 retryOnServerErrors()
-                exponentialDelay()
-                maxRetries = 0
+                constantDelay()
+                maxRetries = 3
+                modifyRequest {
+                    it.headers.remove("Connection")
+                    it.headers.remove("Cache-Control")
+                    it.headers.append("Connection", "close")
+                    it.headers.append("Cache-Control", "no-cache")
+                }
             }
 
             install(HttpTimeout) {

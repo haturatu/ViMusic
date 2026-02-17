@@ -57,8 +57,14 @@ object Innertube {
         install(HttpRequestRetry) {
             retryOnExceptionIf { _, cause -> cause is IOException }
             retryOnServerErrors()
-            exponentialDelay()
+            constantDelay()
             maxRetries = 3
+            modifyRequest {
+                it.headers.remove("Connection")
+                it.headers.remove("Cache-Control")
+                it.headers.append("Connection", "close")
+                it.headers.append("Cache-Control", "no-cache")
+            }
         }
 
         install(HttpTimeout) {
@@ -69,6 +75,8 @@ object Innertube {
 
         defaultRequest {
             header("User-Agent", UserAgents.DESKTOP)
+            header("Connection", "close")
+            header("Cache-Control", "no-cache")
         }
     }
 
@@ -114,8 +122,14 @@ object Innertube {
         install(HttpRequestRetry) {
             retryOnExceptionIf { _, cause -> cause is IOException }
             retryOnServerErrors()
-            exponentialDelay()
+            constantDelay()
             maxRetries = 3
+            modifyRequest {
+                it.headers.remove("Connection")
+                it.headers.remove("Cache-Control")
+                it.headers.append("Connection", "close")
+                it.headers.append("Cache-Control", "no-cache")
+            }
         }
 
         install(HttpTimeout) {
@@ -133,6 +147,8 @@ object Innertube {
                 contentType(ContentType.Application.Json)
                 headers {
                     append("X-Goog-Api-Key", API_KEY)
+                    append("Connection", "close")
+                    append("Cache-Control", "no-cache")
                 }
                 parameters {
                     append("prettyPrint", "false")

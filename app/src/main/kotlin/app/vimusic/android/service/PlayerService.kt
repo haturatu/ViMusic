@@ -91,7 +91,7 @@ import app.vimusic.android.utils.handleRangeErrors
 import app.vimusic.android.utils.handleUnknownErrors
 import app.vimusic.android.utils.intent
 import app.vimusic.android.utils.mediaItems
-import app.vimusic.android.utils.PlaybackRetryController
+import app.vimusic.android.utils.PlaybackRetryManager
 import app.vimusic.android.utils.progress
 import app.vimusic.android.utils.readOnlyWhen
 import app.vimusic.android.utils.safeUnregisterReceiver
@@ -100,6 +100,7 @@ import app.vimusic.android.utils.shouldBePlaying
 import app.vimusic.android.utils.thumbnail
 import app.vimusic.android.utils.timer
 import app.vimusic.android.utils.toast
+import app.vimusic.android.utils.withFreshConnectionHeaders
 import app.vimusic.compose.preferences.SharedPreferencesProperty
 import app.vimusic.core.data.enums.ExoPlayerDiskCacheSize
 import app.vimusic.core.data.utils.UriCache
@@ -179,8 +180,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
     private var timerJob: TimerJob? by mutableStateOf(null)
     private var radio: YouTubeRadio? = null
-    private val forceFreshResolveRetryIds = HashSet<String>()
-    private val playbackRetryController = PlaybackRetryController(longArrayOf(500L, 1500L, 3000L))
+    private val playbackRetryManager = PlaybackRetryManager(longArrayOf(500L, 1500L, 3000L))
 
     private lateinit var bitmapProvider: BitmapProvider
 
@@ -441,10 +441,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         }
 
         mediaItem?.mediaId?.let {
-            playbackRetryController.reset(it)
-            synchronized(forceFreshResolveRetryIds) {
-                forceFreshResolveRetryIds.remove(it)
-            }
+            playbackRetryManager.reset(it)
         }
 
         mediaItemState.update { mediaItem }
@@ -481,21 +478,18 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         }
 
         player.currentMediaItem?.mediaId?.let { mediaId ->
-            val retryPlan = playbackRetryController.nextPlanOrNull(mediaId, error)
-            if (retryPlan != null) {
+            val retryDelayMs = playbackRetryManager.nextRetryDelayOrNull(mediaId, error)
+            if (retryDelayMs != null) {
                 handler.postDelayed(
                     {
                         if (player.currentMediaItem?.mediaId != mediaId) return@postDelayed
 
-                        synchronized(forceFreshResolveRetryIds) {
-                            forceFreshResolveRetryIds.add(mediaId)
-                        }
-                        uriCache.clear()
+                        playbackRetryManager.prepareRetry(mediaId) { uriCache.clear() }
 
                         player.prepare()
                         player.play()
                     },
-                    retryPlan.delayMs
+                    retryDelayMs
                 )
                 return
             }
@@ -947,7 +941,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             cache = cache,
             uriCache = uriCache,
             dbWriteScope = coroutineScope,
-            forceFreshResolveIds = forceFreshResolveRetryIds
+            playbackRetryManager = playbackRetryManager
         ),
         /* extractorsFactory = */ DefaultExtractorsFactory()
     ).setLoadErrorHandlingPolicy(
@@ -1273,7 +1267,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             findMediaItem: suspend (videoId: String) -> MediaItem? = { null },
             uriCache: UriCache<String, Long?> = UriCache(),
             dbWriteScope: CoroutineScope? = null,
-            forceFreshResolveIds: MutableSet<String>? = null
+            playbackRetryManager: PlaybackRetryManager? = null
         ): DataSource.Factory {
             val playerRepository = context.appContainer.playerRepository
 
@@ -1297,9 +1291,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     return@resolver dataSpec
                 }
 
-            val forceFreshResolve = forceFreshResolveIds?.let { ids ->
-                synchronized(ids) { ids.remove(mediaId) }
-            } ?: false
+            val forceFreshResolve = playbackRetryManager?.consumeForceFreshResolve(mediaId) == true
 
             fun DataSpec.ranged(contentLength: Long?) = contentLength?.let {
                 if (chunkLength == null) return@let null
@@ -1311,13 +1303,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 this.subrange(start, length)
                     .withAdditionalHeaders(mapOf("Range" to "bytes=$rangeText"))
             } ?: this
-
-            fun DataSpec.freshConnectionHeaders() = withAdditionalHeaders(
-                mapOf(
-                    "Connection" to "close",
-                    "Cache-Control" to "no-cache"
-                )
-            )
 
             val resolvedDataSpec: DataSpec = if (dataSpec.isLocal) {
                 dataSpec
@@ -1420,7 +1405,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 }
             }
 
-            if (forceFreshResolve) resolvedDataSpec.freshConnectionHeaders() else resolvedDataSpec
+            if (forceFreshResolve) resolvedDataSpec.withFreshConnectionHeaders() else resolvedDataSpec
         }
             .handleUnknownErrors {
                 uriCache.clear()
