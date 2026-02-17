@@ -220,12 +220,12 @@ fun Lyrics(
                             isFetchingFixed = true
                             try {
                                 var fixed = currentLyrics?.fixed
-                                var attempt = 0
-                                while (attempt < 3) {
-                                    if (fixed.isNullOrBlank()) {
-                                        fixed = viewModel.fetchInnertubeLyrics(mediaId)
-                                    }
+                                if (fixed.isNullOrBlank()) {
+                                    fixed = viewModel.fetchInnertubeLyrics(mediaId)
+                                }
 
+                                var attempt = 0
+                                while (attempt < 3 && fixed.isNullOrBlank()) {
                                     if (fixed.isNullOrBlank()) {
                                         fixed = viewModel.fetchBestLrcLibLyrics(
                                             artist = artist,
@@ -245,8 +245,6 @@ fun Lyrics(
                                             synced = false
                                         )
                                     }
-
-                                    if (!fixed.isNullOrBlank()) break
                                     attempt++
                                 }
 
