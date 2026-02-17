@@ -276,7 +276,7 @@
     <string name="ignoring_battery_optimizations">Kısıtlama zaten kaldırıldı</string>
     <string name="ignore_battery_optimizations_action">Arka plan kısıtlamalarını devre dışı bırak</string>
     <string name="invincible_service">Yenilmez hizmet</string>
-    <string name="invincible_service_description">Pil optimizasyonlarını kapatmanın yeterli olmaması durumunda oynatmayı % 99,99 oranında devam ettirmelidir</string>
+    <string name="invincible_service_description">Pil optimizasyonlarını kapatmanın yeterli olmaması durumunda oynatmayı %% 99,99 oranında devam ettirmelidir</string>
 
     <string name="need_help">Yardıma mı ihtiyacınız var?</string>
     <string name="need_help_description">Çoğu zaman, uygulamanın arka planda düzgün çalışmaması geliştiricinin hatası değildir (yenilmez hizmeti açtıktan sonra bile).\nCihaz üreticinizin uygulamalarınızı öldürüp öldürmediğini kontrol edin (yönlendirmek için tıklayın)</string>

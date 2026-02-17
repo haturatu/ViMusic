@@ -286,7 +286,7 @@
     <string name="ignoring_battery_optimizations">Ограничење је већ уклоњено</string>
     <string name="ignore_battery_optimizations_action">Онемогући ограничења у позадини</string>
     <string name="invincible_service">Неуништиви сервис</string>
-    <string name="invincible_service_description">Треба да настави репродукцију 99.99% времена, у случају да искључивање оптимизација батерије није довољно</string>
+    <string name="invincible_service_description">Треба да настави репродукцију 99.99%% времена, у случају да искључивање оптимизација батерије није довољно</string>
 
     <string name="need_help">Треба вам помоћ?</string>
     <string name="need_help_description">Већину времена, није кривица програмера (чак ни када укључите неуништиви сервис) што апликација престане да ради исправно у позадини. Проверите да ли произвођач вашег уређаја убија ваше апликације (кликните за преусмерење)</string>
@@ -410,16 +410,19 @@
 
     <plurals name="format_reset_blacklist_description">
         <item quantity="one">Уклони %1$s песму са црне листе</item>
+        <item quantity="few">Уклони %1$s песме са црне листе</item>
         <item quantity="other">Уклони све %1$s песме са црне листе</item>
     </plurals>
 
     <plurals name="format_reset_quick_picks_amount">
         <item quantity="one">Обриши %1$s репродукцију</item>
+        <item quantity="few">Обриши %1$s репродукције</item>
         <item quantity="other">Обриши %1$s репродукција</item>
     </plurals>
 
     <plurals name="song_count_plural">
         <item quantity="one">%1$d песма</item>
+        <item quantity="few">%1$d песме</item>
         <item quantity="other">%1$d песама</item>
     </plurals>
     <string name="cache_cleared">Кеш обрисан</string>

@@ -290,7 +290,7 @@
     <string name="ignoring_battery_optimizations">Restrictie opgeheven</string>
     <string name="ignore_battery_optimizations_action">Zet achtergrondrestricties uit</string>
     <string name="invincible_service">Onaantastbare service</string>
-    <string name="invincible_service_description">Dit zou het afspelen 99.99% van de tijd in stand moeten houden, voor wanneer het uitzetten van batterijoptimalisatie niet genoeg is</string>
+    <string name="invincible_service_description">Dit zou het afspelen 99.99%% van de tijd in stand moeten houden, voor wanneer het uitzetten van batterijoptimalisatie niet genoeg is</string>
 
     <string name="need_help">Hulp nodig?</string>
     <string name="need_help_description">Vaak is het niet de fout van de ontwikkelaar (zelfs na het aanzetten van de onaantastbare service) dat de app soms stopt goed te werken in de achtergrond. Controleer of jouw fabrikant jouw apps ongevraagd beëindigt (klik om door te sturen)</string>

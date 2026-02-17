@@ -289,7 +289,7 @@
     <string name="ignoring_battery_optimizations">限制已解除</string>
     <string name="ignore_battery_optimizations_action">禁用后台限制</string>
     <string name="invincible_service">不可杀服务</string>
-    <string name="invincible_service_description">在禁用电池优化仍不够的情况下，应保证 99.99% 的时间内播放不中断</string>
+    <string name="invincible_service_description">在禁用电池优化仍不够的情况下，应保证 99.99%% 的时间内播放不中断</string>
 
     <string name="need_help">需要帮助？</string>
     <string name="need_help_description">大多数情况下，即使启用了不可杀服务，应用在后台停止工作也不是开发者的错。\n检查你的设备制造商是否杀死了你的应用（点击跳转）</string>
