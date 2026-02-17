@@ -245,6 +245,41 @@ fun Modifier.swipeToClose(
         )
 }
 
+private fun calculateSwipeBounds(
+    currentWidthDp: Dp,
+    enableSwipeLeft: Boolean,
+    enableSwipeRight: Boolean
+): ClosedRange<Dp> = when {
+    enableSwipeLeft && enableSwipeRight -> -currentWidthDp..currentWidthDp
+    enableSwipeLeft -> -currentWidthDp..0.dp
+    enableSwipeRight -> 0.dp..currentWidthDp
+    else -> 0.dp..0.dp
+}
+
+private fun calculateSwipeAlpha(
+    currentWidth: Int,
+    currentOffsetPx: Float,
+    enableSwipeLeft: Boolean,
+    enableSwipeRight: Boolean
+): Float {
+    if (currentWidth == 0) return 1f
+
+    val widthPx = currentWidth.toFloat()
+    val offsetAbs = kotlin.math.abs(currentOffsetPx)
+    return when {
+        enableSwipeLeft && enableSwipeRight ->
+            ((widthPx - offsetAbs) / widthPx).coerceIn(0f, 1f)
+
+        enableSwipeLeft ->
+            ((widthPx + currentOffsetPx) / widthPx).coerceIn(0f, 1f)
+
+        enableSwipeRight ->
+            ((widthPx - currentOffsetPx) / widthPx).coerceIn(0f, 1f)
+
+        else -> 1f
+    }
+}
+
 fun Modifier.swipeToAction(
     key: Any = Unit,
     state: SwipeState? = null,
@@ -264,35 +299,23 @@ fun Modifier.swipeToAction(
     val currentWidthDp by remember { derivedStateOf { currentWidth.px.dp(density) } }
     val bounds by remember(currentWidthDp, enableSwipeLeft, enableSwipeRight) {
         derivedStateOf {
-            when {
-                enableSwipeLeft && enableSwipeRight -> -currentWidthDp..currentWidthDp
-                enableSwipeLeft -> -currentWidthDp..0.dp
-                enableSwipeRight -> 0.dp..currentWidthDp
-                else -> 0.dp..0.dp
-            }
+            calculateSwipeBounds(
+                currentWidthDp = currentWidthDp,
+                enableSwipeLeft = enableSwipeLeft,
+                enableSwipeRight = enableSwipeRight
+            )
         }
     }
 
     val currentOffsetPx by remember { derivedStateOf { swipeState.offset.value } }
     val alpha by remember(currentWidth, currentOffsetPx, enableSwipeLeft, enableSwipeRight) {
         derivedStateOf {
-            if (currentWidth == 0) 1f
-            else {
-                val widthPx = currentWidth.toFloat()
-                val offsetAbs = kotlin.math.abs(currentOffsetPx)
-                when {
-                    enableSwipeLeft && enableSwipeRight ->
-                        ((widthPx - offsetAbs) / widthPx).coerceIn(0f, 1f)
-
-                    enableSwipeLeft ->
-                        ((widthPx + currentOffsetPx) / widthPx).coerceIn(0f, 1f)
-
-                    enableSwipeRight ->
-                        ((widthPx - currentOffsetPx) / widthPx).coerceIn(0f, 1f)
-
-                    else -> 1f
-                }
-            }
+            calculateSwipeAlpha(
+                currentWidth = currentWidth,
+                currentOffsetPx = currentOffsetPx,
+                enableSwipeLeft = enableSwipeLeft,
+                enableSwipeRight = enableSwipeRight
+            )
         }
     }
 
