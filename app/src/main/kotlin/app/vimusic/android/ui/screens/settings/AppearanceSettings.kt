@@ -33,6 +33,7 @@ import app.vimusic.core.ui.utils.isAtLeastAndroid13
 fun AppearanceSettings() = with(AppearancePreferences) {
     val (colorPalette) = LocalAppearance.current
     val context = LocalContext.current
+    val errorMessage = stringResource(R.string.error_message)
     val isDark = isSystemInDarkTheme()
 
     SettingsCategoryScreen(title = stringResource(R.string.appearance)) {
@@ -88,7 +89,7 @@ fun AppearanceSettings() = with(AppearancePreferences) {
                     ?: stringResource(R.string.color_source_default),
                 onClick = {
                     context.findActivity()?.startLanguagePicker()
-                        ?: context.toast(context.getString(R.string.error_message))
+                        ?: context.toast(errorMessage)
                 }
             )
 

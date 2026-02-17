@@ -70,6 +70,8 @@ fun OtherSettings() {
         factory = OnlineSearchViewModel.factory(LocalAppContainer.current.onlineSearchRepository)
     )
     val context = LocalContext.current
+    val noBatteryOptimizationSettingsFound =
+        stringResource(R.string.no_battery_optimization_settings_found)
     val binder = LocalPlayerServiceBinder.current
     val uriHandler = LocalUriHandler.current
 
@@ -232,7 +234,7 @@ fun OtherSettings() {
                         try {
                             activityResultLauncher.launch(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
                         } catch (e: ActivityNotFoundException) {
-                            context.toast(context.getString(R.string.no_battery_optimization_settings_found))
+                            context.toast(noBatteryOptimizationSettingsFound)
                         }
                     }
                 },

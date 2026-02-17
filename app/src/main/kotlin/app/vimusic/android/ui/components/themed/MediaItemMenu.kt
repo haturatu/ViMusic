@@ -219,6 +219,7 @@ fun BaseMediaItemMenu(
     onShowNormalizationDialog: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
+    val youtubeMusicNotInstalled = stringResource(R.string.youtube_music_not_installed)
     val viewModel: MediaItemMenuViewModel = viewModel(
         key = "media_item_menu",
         factory = MediaItemMenuViewModel.factory(LocalAppContainer.current.mediaItemMenuRepository)
@@ -736,7 +737,7 @@ fun MediaItemMenu(
                     onDismiss()
                     binder?.player?.pause()
                     if (!launchYouTubeMusic(context, "watch?v=${mediaItem.mediaId}"))
-                        context.toast(context.getString(R.string.youtube_music_not_installed))
+                        context.toast(youtubeMusicNotInstalled)
                 }
             )
 

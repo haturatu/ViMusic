@@ -36,6 +36,8 @@ fun DatabaseSettings() = with(DataPreferences) {
         factory = DatabaseSettingsViewModel.factory(LocalAppContainer.current.databaseSettingsRepository)
     )
     val context = LocalContext.current
+    val errorMessage = stringResource(R.string.error_message)
+    val noFileChooserInstalled = stringResource(R.string.no_file_chooser_installed)
     val coroutineScope = rememberCoroutineScope()
 
     val eventsCount by viewModel.observeEventsCount().collectAsStateWithLifecycle(initialValue = 0)
@@ -56,7 +58,7 @@ fun DatabaseSettings() = with(DataPreferences) {
                         .use { output -> viewModel.backupTo(output) }
                 }
             }.onFailure {
-                context.toast(context.getString(R.string.error_message))
+                context.toast(errorMessage)
             }
         }
     }
@@ -77,7 +79,7 @@ fun DatabaseSettings() = with(DataPreferences) {
                 context.stopService(context.intent<PlayerService>())
                 exitProcess(0)
             }.onFailure {
-                context.toast(context.getString(R.string.error_message))
+                context.toast(errorMessage)
             }
         }
     }
@@ -146,7 +148,7 @@ fun DatabaseSettings() = with(DataPreferences) {
                     try {
                         backupLauncher.launch("ViMusic_backup_${dateFormat.format(Date())}.db")
                     } catch (e: ActivityNotFoundException) {
-                        context.toast(context.getString(R.string.no_file_chooser_installed))
+                        context.toast(noFileChooserInstalled)
                     }
                 }
             )
@@ -169,7 +171,7 @@ fun DatabaseSettings() = with(DataPreferences) {
                             )
                         )
                     } catch (e: ActivityNotFoundException) {
-                        context.toast(context.getString(R.string.no_file_chooser_installed))
+                        context.toast(noFileChooserInstalled)
                     }
                 }
             )
