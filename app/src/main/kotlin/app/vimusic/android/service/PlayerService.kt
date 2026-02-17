@@ -91,6 +91,7 @@ import app.vimusic.android.utils.handleRangeErrors
 import app.vimusic.android.utils.handleUnknownErrors
 import app.vimusic.android.utils.intent
 import app.vimusic.android.utils.mediaItems
+import app.vimusic.android.utils.PlaybackRetryController
 import app.vimusic.android.utils.progress
 import app.vimusic.android.utils.readOnlyWhen
 import app.vimusic.android.utils.safeUnregisterReceiver
@@ -178,9 +179,8 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
     private var timerJob: TimerJob? by mutableStateOf(null)
     private var radio: YouTubeRadio? = null
-    private val unknownErrorRetryCounts = HashMap<String, Int>()
-
-    private val unknownErrorRetryDelaysMs = longArrayOf(500L, 1500L, 3000L)
+    private val forceFreshResolveRetryIds = HashSet<String>()
+    private val playbackRetryController = PlaybackRetryController(longArrayOf(500L, 1500L, 3000L))
 
     private lateinit var bitmapProvider: BitmapProvider
 
@@ -441,7 +441,10 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         }
 
         mediaItem?.mediaId?.let {
-            unknownErrorRetryCounts[it] = 0
+            playbackRetryController.reset(it)
+            synchronized(forceFreshResolveRetryIds) {
+                forceFreshResolveRetryIds.remove(it)
+            }
         }
 
         mediaItemState.update { mediaItem }
@@ -478,21 +481,23 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         }
 
         player.currentMediaItem?.mediaId?.let { mediaId ->
-            if (isUnknownPlaybackError(error)) {
-                val retryIndex = unknownErrorRetryCounts[mediaId] ?: 0
-                if (retryIndex < unknownErrorRetryDelaysMs.size) {
-                    unknownErrorRetryCounts[mediaId] = retryIndex + 1
-                    val delayMs = unknownErrorRetryDelaysMs[retryIndex]
-                    handler.postDelayed(
-                        {
-                            if (player.currentMediaItem?.mediaId != mediaId) return@postDelayed
-                            player.prepare()
-                            player.play()
-                        },
-                        delayMs
-                    )
-                    return
-                }
+            val retryPlan = playbackRetryController.nextPlanOrNull(mediaId, error)
+            if (retryPlan != null) {
+                handler.postDelayed(
+                    {
+                        if (player.currentMediaItem?.mediaId != mediaId) return@postDelayed
+
+                        synchronized(forceFreshResolveRetryIds) {
+                            forceFreshResolveRetryIds.add(mediaId)
+                        }
+                        uriCache.clear()
+
+                        player.prepare()
+                        player.play()
+                    },
+                    retryPlan.delayMs
+                )
+                return
             }
         }
 
@@ -514,12 +519,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 )
                 .setContentTitle(getString(R.string.skip_on_error))
         }
-    }
-
-    private fun isUnknownPlaybackError(error: PlaybackException): Boolean {
-        if (error.errorCode != PlaybackException.ERROR_CODE_UNSPECIFIED) return false
-        val message = error.message ?: return false
-        return message.contains("Unknown playback error", ignoreCase = true)
     }
 
     private fun maybeRecoverPlaybackError() {
@@ -947,7 +946,8 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             context = applicationContext,
             cache = cache,
             uriCache = uriCache,
-            dbWriteScope = coroutineScope
+            dbWriteScope = coroutineScope,
+            forceFreshResolveIds = forceFreshResolveRetryIds
         ),
         /* extractorsFactory = */ DefaultExtractorsFactory()
     ).setLoadErrorHandlingPolicy(
@@ -1272,7 +1272,8 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             chunkLength: Long? = DEFAULT_CHUNK_LENGTH,
             findMediaItem: suspend (videoId: String) -> MediaItem? = { null },
             uriCache: UriCache<String, Long?> = UriCache(),
-            dbWriteScope: CoroutineScope? = null
+            dbWriteScope: CoroutineScope? = null,
+            forceFreshResolveIds: MutableSet<String>? = null
         ): DataSource.Factory {
             val playerRepository = context.appContainer.playerRepository
 
@@ -1296,6 +1297,10 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     return@resolver dataSpec
                 }
 
+            val forceFreshResolve = forceFreshResolveIds?.let { ids ->
+                synchronized(ids) { ids.remove(mediaId) }
+            } ?: false
+
             fun DataSpec.ranged(contentLength: Long?) = contentLength?.let {
                 if (chunkLength == null) return@let null
 
@@ -1307,97 +1312,115 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     .withAdditionalHeaders(mapOf("Range" to "bytes=$rangeText"))
             } ?: this
 
-            if (dataSpec.isLocal) dataSpec
-            else uriCache[mediaId]?.let { cachedUri ->
-                dataSpec
-                    .withUri(cachedUri.uri)
-                    .ranged(cachedUri.meta)
-            } ?: run {
-                val result = try {
-                    runBlocking(Dispatchers.IO) {
-                        NewPipeExtractorClient.resolveAudioStream(mediaId)
-                    }
-                } catch (error: ContentNotSupportedException) {
-                    throw PlayableFormatNotFoundException(error)
-                } catch (error: StreamInfo.StreamExtractException) {
-                    throw PlayableFormatNotFoundException(error)
-                } catch (error: ContentNotAvailableException) {
-                    throw UnplayableException(error)
-                } catch (error: ReCaptchaException) {
-                    throw LoginRequiredException(error)
-                } catch (error: ParsingException) {
-                    throw UnplayableException(error)
-                } catch (error: ExtractionException) {
-                    throw UnplayableException(error)
-                }
-
-                val streamInfo = result.streamInfo
-                if (streamInfo.id != mediaId) {
-                    throw VideoIdMismatchException()
-                }
-
-                val audioStream = result.audioStream
-                if (!audioStream.isUrl) {
-                    throw PlayableFormatNotFoundException()
-                }
-
-                val mediaItem = runCatching {
-                    runBlocking(Dispatchers.IO) { findMediaItem(mediaId) }
-                }.getOrNull()
-                val extras = mediaItem?.mediaMetadata?.extras?.songBundle
-
-                if (extras?.durationText == null) {
-                    val durationSeconds = streamInfo.duration
-                    if (durationSeconds > 0) {
-                        DateUtils.formatElapsedTime(durationSeconds)
-                            .removePrefix("0")
-                            .let { durationText ->
-                                extras?.durationText = durationText
-                                playerRepository.updateDurationText(mediaId, durationText)
-                            }
-                    }
-                }
-
-                val writeTask = {
-                    runCatching {
-                        mediaItem?.let { item ->
-                            playerRepository.insertSong(item)
-                        }
-                        playerRepository.insertFormat(
-                            Format(
-                                songId = mediaId,
-                                itag = audioStream.itag.takeIf { it > 0 },
-                                mimeType = audioStream.format?.mimeType,
-                                bitrate = audioStream.averageBitrate
-                                    .takeIf { it > 0 }
-                                    ?.toLong(),
-                                loudnessDb = null,
-                                contentLength = null,
-                                lastModified = null
-                            )
-                        )
-                    }
-                }
-
-                if (dbWriteScope != null) {
-                    dbWriteScope.launch(Dispatchers.IO) { writeTask() }
-                } else {
-                    writeTask()
-                }
-
-                val uri = audioStream.content.toUri()
-
-                uriCache.push(
-                    key = mediaId,
-                    meta = null,
-                    uri = uri,
-                    validUntil = null
+            fun DataSpec.freshConnectionHeaders() = withAdditionalHeaders(
+                mapOf(
+                    "Connection" to "close",
+                    "Cache-Control" to "no-cache"
                 )
+            )
 
+            val resolvedDataSpec: DataSpec = if (dataSpec.isLocal) {
                 dataSpec
-                    .withUri(uri)
-                    .ranged(null)
+            } else {
+                val cachedDataSpec = if (!forceFreshResolve) {
+                    uriCache[mediaId]?.let { cachedUri ->
+                        dataSpec
+                            .withUri(cachedUri.uri)
+                            .ranged(cachedUri.meta)
+                    }
+                } else {
+                    null
+                }
+
+                cachedDataSpec ?: run {
+                    val result = try {
+                        runBlocking(Dispatchers.IO) {
+                            NewPipeExtractorClient.resolveAudioStream(mediaId)
+                        }
+                    } catch (error: ContentNotSupportedException) {
+                        throw PlayableFormatNotFoundException(error)
+                    } catch (error: StreamInfo.StreamExtractException) {
+                        throw PlayableFormatNotFoundException(error)
+                    } catch (error: ContentNotAvailableException) {
+                        throw UnplayableException(error)
+                    } catch (error: ReCaptchaException) {
+                        throw LoginRequiredException(error)
+                    } catch (error: ParsingException) {
+                        throw UnplayableException(error)
+                    } catch (error: ExtractionException) {
+                        throw UnplayableException(error)
+                    }
+
+                    val streamInfo = result.streamInfo
+                    if (streamInfo.id != mediaId) {
+                        throw VideoIdMismatchException()
+                    }
+
+                    val audioStream = result.audioStream
+                    if (!audioStream.isUrl) {
+                        throw PlayableFormatNotFoundException()
+                    }
+
+                    val mediaItem = runCatching {
+                        runBlocking(Dispatchers.IO) { findMediaItem(mediaId) }
+                    }.getOrNull()
+                    val extras = mediaItem?.mediaMetadata?.extras?.songBundle
+
+                    if (extras?.durationText == null) {
+                        val durationSeconds = streamInfo.duration
+                        if (durationSeconds > 0) {
+                            DateUtils.formatElapsedTime(durationSeconds)
+                                .removePrefix("0")
+                                .let { durationText ->
+                                    extras?.durationText = durationText
+                                    playerRepository.updateDurationText(mediaId, durationText)
+                                }
+                        }
+                    }
+
+                    val writeTask = {
+                        runCatching {
+                            mediaItem?.let { item ->
+                                playerRepository.insertSong(item)
+                            }
+                            playerRepository.insertFormat(
+                                Format(
+                                    songId = mediaId,
+                                    itag = audioStream.itag.takeIf { it > 0 },
+                                    mimeType = audioStream.format?.mimeType,
+                                    bitrate = audioStream.averageBitrate
+                                        .takeIf { it > 0 }
+                                        ?.toLong(),
+                                    loudnessDb = null,
+                                    contentLength = null,
+                                    lastModified = null
+                                )
+                            )
+                        }
+                    }
+
+                    if (dbWriteScope != null) {
+                        dbWriteScope.launch(Dispatchers.IO) { writeTask() }
+                    } else {
+                        writeTask()
+                    }
+
+                    val uri = audioStream.content.toUri()
+
+                    uriCache.push(
+                        key = mediaId,
+                        meta = null,
+                        uri = uri,
+                        validUntil = null
+                    )
+
+                    dataSpec
+                        .withUri(uri)
+                        .ranged(null)
+                }
             }
+
+            if (forceFreshResolve) resolvedDataSpec.freshConnectionHeaders() else resolvedDataSpec
         }
             .handleUnknownErrors {
                 uriCache.clear()
