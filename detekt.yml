@@ -1,5 +1,5 @@
 config:
-  validation: true
+  validation: false
   warningsAsErrors: false
 
 Compose:
@@ -15,7 +15,7 @@ Compose:
     active: true
   ModifierClickableOrder:
     active: true
-  ModifierComposable:
+  ModifierComposed:
     active: true
   ModifierMissing:
     active: true

@@ -1,4 +1,4 @@
-.PHONY: build adbinstall release lint clean
+.PHONY: build adbinstall release lint detekt clean
 
 NEWPIPEEXTRACTOR_REPO := https://github.com/TeamNewPipe/NewPipeExtractor
 NEWPIPEEXTRACTOR_REF := v0.25.2
@@ -17,6 +17,9 @@ release: $(NEWPIPEEXTRACTOR_DIR)
 
 lint: $(NEWPIPEEXTRACTOR_DIR)
 	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew lint
+
+detekt: $(NEWPIPEEXTRACTOR_DIR)
+	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew detekt
 
 $(NEWPIPEEXTRACTOR_DIR):
 	mkdir -p build
