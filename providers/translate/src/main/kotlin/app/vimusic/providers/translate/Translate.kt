@@ -10,6 +10,7 @@ import io.ktor.client.plugins.compression.brotli
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.accept
+import io.ktor.client.request.header
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
@@ -31,8 +32,14 @@ object Translate {
             install(HttpRequestRetry) {
                 retryOnExceptionIf { _, cause -> cause is IOException }
                 retryOnServerErrors()
-                exponentialDelay()
+                constantDelay()
                 maxRetries = 3
+                modifyRequest {
+                    it.headers.remove("Connection")
+                    it.headers.remove("Cache-Control")
+                    it.headers.append("Connection", "close")
+                    it.headers.append("Cache-Control", "no-cache")
+                }
             }
 
             install(HttpTimeout) {
@@ -45,6 +52,8 @@ object Translate {
             defaultRequest {
                 accept(ContentType.Application.Json)
                 contentType(ContentType.Application.Json)
+                header("Connection", "close")
+                header("Cache-Control", "no-cache")
             }
 
             install(ContentEncoding) {

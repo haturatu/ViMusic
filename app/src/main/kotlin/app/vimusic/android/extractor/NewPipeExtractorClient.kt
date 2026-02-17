@@ -18,7 +18,11 @@ object NewPipeExtractorClient {
     fun ensureInitialized() {
         if (initialized) return
         NewPipe.init(
-            NewPipeDownloader(OkHttpClient.Builder().build()),
+            NewPipeDownloader(
+                OkHttpClient.Builder()
+                    .retryOnConnectionFailure(true)
+                    .build()
+            ),
             Localization.DEFAULT,
             ContentCountry.DEFAULT
         )

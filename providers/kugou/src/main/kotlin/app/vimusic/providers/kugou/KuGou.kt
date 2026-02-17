@@ -15,6 +15,7 @@ import io.ktor.client.plugins.compression.brotli
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.http.ContentType
 import io.ktor.http.encodeURLParameter
@@ -61,8 +62,14 @@ object KuGou {
             install(HttpRequestRetry) {
                 retryOnExceptionIf { _, cause -> cause is IOException }
                 retryOnServerErrors()
-                exponentialDelay()
-                maxRetries = 0
+                constantDelay()
+                maxRetries = 3
+                modifyRequest {
+                    it.headers.remove("Connection")
+                    it.headers.remove("Cache-Control")
+                    it.headers.append("Connection", "close")
+                    it.headers.append("Cache-Control", "no-cache")
+                }
             }
 
             install(HttpTimeout) {
@@ -71,6 +78,8 @@ object KuGou {
 
             defaultRequest {
                 url("https://krcs.kugou.com")
+                header("Connection", "close")
+                header("Cache-Control", "no-cache")
             }
         }
     }
