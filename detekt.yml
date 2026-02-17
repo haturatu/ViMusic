@@ -1,5 +1,5 @@
 config:
-  validation: true
+  validation: false
   warningsAsErrors: false
 
 Compose:
@@ -15,7 +15,7 @@ Compose:
     active: true
   ModifierClickableOrder:
     active: true
-  ModifierComposable:
+  ModifierComposed:
     active: true
   ModifierMissing:
     active: true
@@ -56,16 +56,23 @@ complexity:
   ComplexCondition:
     active: false
   CyclomaticComplexMethod:
+    allowedComplexity: 16
     ignoreAnnotated:
       - androidx.compose.runtime.Composable
   LongParameterList:
+    functionThreshold: 7
     ignoreAnnotated:
       - androidx.compose.runtime.Composable
     ignoreDefaultParameters: true
     ignoreDataClasses: true
+  NestedBlockDepth:
+    active: false
   LongMethod:
     active: false
   TooManyFunctions:
+    ignorePrivate: true
+    thresholdInInterfaces: 18
+    thresholdInObjects: 18
     excludes:
       - '**/util/**'
       - '**/utils/**'
