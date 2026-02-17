@@ -12,6 +12,7 @@ import androidx.compose.runtime.SnapshotMutationPolicy
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -68,7 +69,7 @@ fun Player?.positionAndDurationState(
     var shouldTick by remember {
         mutableStateOf(this?.isPlaying == true)
     }
-    var fastTickUntilMs by remember { mutableStateOf(0L) }
+    var fastTickUntilMs by remember { mutableLongStateOf(0L) }
 
     DisposableListener {
         object : Player.Listener {
