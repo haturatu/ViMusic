@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag
+import kotlin.random.Random
 
 plugins {
     id("com.android.application")
@@ -9,6 +10,11 @@ plugins {
 }
 
 android {
+    val debugNameSuffix = buildString {
+        val alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
+        repeat(6) { append(alphabet[Random.nextInt(alphabet.length)]) }
+    }
+
     val appId = "app.vimusic.android"
 
     namespace = appId
@@ -52,7 +58,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-DEBUG"
-            manifestPlaceholders["appName"] = "ViMusic Debug"
+            manifestPlaceholders["appName"] = "ViMusic $debugNameSuffix Debug"
         }
 
         release {
