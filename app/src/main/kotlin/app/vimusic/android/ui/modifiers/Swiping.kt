@@ -35,8 +35,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.vimusic.core.ui.utils.px
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -47,29 +45,16 @@ import kotlin.time.Duration
 @Stable
 @JvmInline
 value class SwipeState @PublishedApi internal constructor(
-    private val offsetLazy: Lazy<Animatable<Float, AnimationVector1D>> = lazy { acquire() }
+    private val offsetLazy: Lazy<Animatable<Float, AnimationVector1D>> = lazy { Animatable(0f) }
 ) {
     internal val offset get() = offsetLazy.value
-
-    private companion object {
-        private val animatables = mutableListOf<Animatable<Float, AnimationVector1D>>()
-        private val coroutineScope = CoroutineScope(Dispatchers.IO)
-
-        fun acquire() = animatables.removeFirstOrNull() ?: Animatable(0f)
-        fun recycle(animatable: Animatable<Float, AnimationVector1D>) {
-            coroutineScope.launch {
-                animatable.snapTo(0f)
-                animatables += animatable
-            }
-        }
-    }
 
     @Composable
     fun calculateOffset(bounds: ClosedRange<Dp>? = null) =
         offset.value.px.dp.let { if (bounds == null) it else it.coerceIn(bounds) }
 
     @PublishedApi
-    internal fun recycle() = recycle(offset)
+    internal fun recycle() = Unit
 }
 
 @Suppress("NOTHING_TO_INLINE")
