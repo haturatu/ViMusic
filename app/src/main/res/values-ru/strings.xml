@@ -123,7 +123,6 @@
     <string name="error_unknown_playback">Произошла неизвестная ошибка воспроизведения</string>
     <string name="error_piped_link">Произошла ошибка при привязке вашей учетной записи Piped. Попробуйте еще раз.</string>
     <string name="error_piped_instances_unavailable">Список экземпляров Piped в данный момент недоступен</string>
-    <string name="error_bassboost_init">Произошла ошибка инициализации Bass Boost. Возможно, ваше устройство не поддерживает его. Попробуйте изменить уровень усиления басов или повторите попытку.</string>
     <string name="error_pre_cache">Произошла ошибка при предварительном кэшировании. Попробуйте еще раз.</string>
     <string name="error_url">Не удается открыть URL %1$s</string>
 
@@ -318,10 +317,6 @@
     <string name="loudness_base_gain">Базовое усиление громкости</string>
     <string name="loudness_base_gain_description">Целевое усиление для нормализации громкости</string>
     <string name="loudness_normalization_extreme">Обнаружено экстремальное значение громкости (%s), нормализация для этой песни отключена</string>
-    <string name="bass_boost">Усиление басов</string>
-    <string name="bass_boost_description">Усиление низких частот для улучшения прослушивания</string>
-    <string name="bass_boost_level">Уровень усиления басов</string>
-    <string name="bass_boost_level_description">Уровень (0–1000) усиления низких частот; используйте на свой страх и риск!</string>
     <string name="sponsor_block">Sponsorblock</string>
     <string name="sponsor_block_description">Пропускает рекламный контент или контент не в тему используя Sponsorblock API</string>
     <string name="reverb">Реверберация</string>

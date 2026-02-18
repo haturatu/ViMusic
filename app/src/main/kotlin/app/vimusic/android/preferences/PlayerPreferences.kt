@@ -19,10 +19,6 @@ object PlayerPreferences : GlobalPreferencesHolder() {
     var volumeNormalization by volumeNormalizationProperty
     val volumeNormalizationBaseGainProperty = float(5.00f)
     var volumeNormalizationBaseGain by volumeNormalizationBaseGainProperty
-    val bassBoostProperty = boolean(false)
-    var bassBoost by bassBoostProperty
-    val bassBoostLevelProperty = int(5)
-    var bassBoostLevel by bassBoostLevelProperty
     val reverbProperty = enum(Reverb.None)
     var reverb by reverbProperty
     val resumePlaybackWhenDeviceConnectedProperty = boolean(false)
