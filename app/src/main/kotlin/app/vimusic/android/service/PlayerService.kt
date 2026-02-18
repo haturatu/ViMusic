@@ -122,6 +122,8 @@ import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.exceptions.ParsingException
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
 import org.schabi.newpipe.extractor.stream.StreamInfo
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -189,6 +191,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private var preferenceUpdaterJob: Job? = null
     private var volumeNormalizationJob: Job? = null
     private var sponsorBlockJob: Job? = null
+    private var proactiveRefreshJob: Job? = null
 
     override var isInvincibilityEnabled by mutableStateOf(false)
 
@@ -228,6 +231,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private val glyphInterface by lazy { GlyphInterface(applicationContext) }
 
     private var poiTimestamp: Long? by mutableStateOf(null)
+    private var proactiveRefreshInFlight = false
+    private var lastProactiveRefreshMediaId: String? = null
+    private var lastProactiveRefreshAtMs: Long = 0L
 
     override fun onBind(intent: Intent?): AndroidBinder {
         super.onBind(intent)
@@ -301,6 +307,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
         notificationActionReceiver.register()
         maybeResumePlaybackWhenDeviceConnected()
+        startProactiveRefreshLoop()
 
         preferenceUpdaterJob = coroutineScope.launch {
             fun <T : Any> subscribe(
@@ -384,6 +391,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
             loudnessEnhancer?.release()
             preferenceUpdaterJob?.cancel()
+            proactiveRefreshJob?.cancel()
 
             coroutineScope.cancel()
             glyphInterface.close()
@@ -472,7 +480,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         player.currentMediaItem?.mediaId?.let { mediaId ->
             if (error.findCause<InvalidPlaybackResponseException>() != null) {
                 playbackRetryManager.prepareRetry(mediaId) { uriCache.clear() }
-                player.pause()
                 player.prepare()
                 player.play()
                 return
@@ -482,7 +489,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         if (
             error.findCause<InvalidResponseCodeException>()?.responseCode == 416
         ) {
-            player.pause()
             player.prepare()
             player.play()
             return
@@ -529,6 +535,86 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private fun maybeRecoverPlaybackError() {
         if (player.playerError != null) player.prepare()
     }
+
+    private fun startProactiveRefreshLoop() {
+        proactiveRefreshJob?.cancel()
+        proactiveRefreshJob = coroutineScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                delay(PROACTIVE_REFRESH_POLL_INTERVAL_MS)
+                maybeProactivelyRefreshCurrentStream()
+            }
+        }
+    }
+
+    private suspend fun maybeProactivelyRefreshCurrentStream() {
+        if (proactiveRefreshInFlight) return
+
+        val mediaId = withContext(Dispatchers.Main) {
+            if (!player.isPlaying) return@withContext null
+            val mediaItem = player.currentMediaItem ?: return@withContext null
+            if (mediaItem.isLocal) return@withContext null
+
+            val bufferedAheadMs = (player.bufferedPosition - player.currentPosition).coerceAtLeast(0L)
+            if (bufferedAheadMs > PROACTIVE_REFRESH_THRESHOLD_MS) return@withContext null
+
+            extractYouTubeVideoId(mediaItem.mediaId)
+        } ?: return
+
+        val now = System.currentTimeMillis()
+        if (
+            lastProactiveRefreshMediaId == mediaId &&
+            (now - lastProactiveRefreshAtMs) < PROACTIVE_REFRESH_MIN_INTERVAL_MS
+        ) return
+
+        proactiveRefreshInFlight = true
+        lastProactiveRefreshMediaId = mediaId
+        lastProactiveRefreshAtMs = now
+
+        runCatching {
+            val result = NewPipeExtractorClient.resolveAudioStream(mediaId)
+            val streamInfo = result.streamInfo
+            if (streamInfo.id != mediaId) return@runCatching
+
+            val audioStream = result.audioStream
+            if (!audioStream.isUrl) return@runCatching
+
+            val url = audioStream.content
+            if (!preflightAudioStream(url)) return@runCatching
+
+            uriCache.push(
+                key = mediaId,
+                meta = null,
+                uri = url.toUri(),
+                validUntil = null
+            )
+            playbackRetryManager.markForceFreshResolve(mediaId)
+        }.onFailure {
+            Log.w(TAG, "Proactive refresh failed for $mediaId", it)
+        }
+
+        proactiveRefreshInFlight = false
+    }
+
+    private fun preflightAudioStream(url: String): Boolean = runCatching {
+        val request = Request.Builder()
+            .url(url)
+            .get()
+            .header("Range", "bytes=0-1")
+            .header("User-Agent", PREVIEW_USER_AGENT)
+            .build()
+
+        preflightHttpClient.newCall(request).execute().use { response ->
+            val code = response.code
+            val contentRange = response.header("Content-Range")
+            val contentLength = response.header("Content-Length")?.toLongOrNull()
+
+            when (code) {
+                206 -> !contentRange.isNullOrBlank()
+                200 -> contentLength == null || contentLength > 0L
+                else -> false
+            }
+        }
+    }.getOrDefault(false)
 
     private fun maybeProcessRadio() {
         if (player.mediaItemCount - player.currentMediaItemIndex > 3) return
@@ -1214,6 +1300,18 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         private const val DEFAULT_CACHE_DIRECTORY = "exoplayer"
         private const val DEFAULT_CHUNK_LENGTH = 2 * 1024 * 1024L
         private const val PREFETCH_MAX = 6
+        private const val PROACTIVE_REFRESH_THRESHOLD_MS = 12_000L
+        private const val PROACTIVE_REFRESH_POLL_INTERVAL_MS = 2_000L
+        private const val PROACTIVE_REFRESH_MIN_INTERVAL_MS = 6_000L
+        private const val PREVIEW_USER_AGENT =
+            "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
+        private val preflightHttpClient by lazy {
+            OkHttpClient.Builder()
+                .retryOnConnectionFailure(true)
+                .connectTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
+                .build()
+        }
         private val youtubeIdRegex = Regex("^[A-Za-z0-9_-]{11}$")
 
         private fun extractYouTubeVideoId(raw: String): String {
