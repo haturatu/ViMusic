@@ -107,6 +107,16 @@ The debug APK will be generated at:
 
 `app/build/outputs/apk/debug/app-debug.apk`
 
+### Debug logging (debug build)
+To capture only ViMusic debug process logs:
+
+```bash
+adb shell pidof app.vimusic.android.debug
+adb logcat --pid=21211
+```
+
+Replace `21211` with the PID returned by `pidof`.
+
 ## Acknowledgments
 - [**YouTube-Internal-Clients**](https://github.com/zerodytrash/YouTube-Internal-Clients): A python script that discovers hidden YouTube API clients. Just a research project.
 - [**NewPipeExtractor**](https://github.com/TeamNewPipe/NewPipeExtractor): Extractor library used for stream and metadata resolution.
