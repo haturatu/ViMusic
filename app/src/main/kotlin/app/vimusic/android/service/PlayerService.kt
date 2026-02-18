@@ -89,6 +89,7 @@ import app.vimusic.android.utils.forceSeekToPrevious
 import app.vimusic.android.utils.get
 import app.vimusic.android.utils.handleRangeErrors
 import app.vimusic.android.utils.handleUnknownErrors
+import app.vimusic.android.utils.InvalidPlaybackResponseException
 import app.vimusic.android.utils.intent
 import app.vimusic.android.utils.mediaItems
 import app.vimusic.android.utils.PlaybackRetryManager
@@ -467,6 +468,16 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
     override fun onPlayerError(error: PlaybackException) {
         super.onPlayerError(error)
+
+        player.currentMediaItem?.mediaId?.let { mediaId ->
+            if (error.findCause<InvalidPlaybackResponseException>() != null) {
+                playbackRetryManager.prepareRetry(mediaId) { uriCache.clear() }
+                player.pause()
+                player.prepare()
+                player.play()
+                return
+            }
+        }
 
         if (
             error.findCause<InvalidResponseCodeException>()?.responseCode == 416
