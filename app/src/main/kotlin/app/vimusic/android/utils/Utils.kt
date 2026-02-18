@@ -170,6 +170,7 @@ suspend fun Result<Innertube.PlaylistOrAlbumPage>.completed(
 
     var continuation = page.songsPage?.continuation
     var depth = 0
+    val knownSongs = if (shouldDedup) songs.toHashSet() else null
 
     val context = currentCoroutineContext()
 
@@ -181,9 +182,13 @@ suspend fun Result<Innertube.PlaylistOrAlbumPage>.completed(
             ?.getOrNull()
             ?.takeUnless { it.items.isNullOrEmpty() } ?: break
 
-        if (shouldDedup && newSongs.items?.any { it in songs } != false) break
+        val incomingSongs = newSongs.items.orEmpty()
+        if (shouldDedup && knownSongs != null && incomingSongs.any { it in knownSongs }) break
 
-        newSongs.items?.let { songs += it }
+        if (incomingSongs.isNotEmpty()) {
+            songs += incomingSongs
+            knownSongs?.addAll(incomingSongs)
+        }
         continuation = newSongs.continuation
     }
 

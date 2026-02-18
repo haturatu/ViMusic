@@ -140,6 +140,14 @@ fun HomeSongs(
             } ?: items
         }
     }
+    val mediaItems by remember { derivedStateOf { items.map(Song::asMediaItem) } }
+    val itemIndexById by remember {
+        derivedStateOf {
+            HashMap<String, Int>(items.size).apply {
+                items.forEachIndexed { index, song -> this[song.id] = index }
+            }
+        }
+    }
     var hidingSong: String? by rememberSaveable { mutableStateOf(null) }
 
     LaunchedEffect(sortBy, sortOrder, songProvider) {
@@ -257,9 +265,10 @@ fun HomeSongs(
                             onClick = {
                                 keyboardController?.hide()
                                 binder?.stopRadio()
+                                val targetIndex = itemIndexById[song.id] ?: return@combinedClickable
                                 binder?.player?.forcePlayAtIndex(
-                                    items.map(Song::asMediaItem),
-                                    items.indexOf(song)
+                                    mediaItems,
+                                    targetIndex
                                 )
                             }
                         )
