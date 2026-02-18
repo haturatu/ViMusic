@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE
 import android.os.Parcel
 import androidx.annotation.OptIn
 import androidx.core.database.getFloatOrNull
+import androidx.core.database.getLongOrNull
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.room.AutoMigration
@@ -980,7 +981,7 @@ abstract class DatabaseInitializer protected constructor() : RoomDatabase() {
                     while (cursor.moveToNext()) {
                         formatValues.put("songId", cursor.getString(0))
                         formatValues.put("loudnessDb", cursor.getFloatOrNull(1))
-                        formatValues.put("contentLength", cursor.getFloatOrNull(2))
+                        formatValues.put("contentLength", cursor.getLongOrNull(2))
                         db.insert("Format", CONFLICT_IGNORE, formatValues)
                     }
                 }
