@@ -3,6 +3,7 @@
 package app.vimusic.android.utils
 
 import android.content.Context
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.C
 import androidx.media3.common.PlaybackException
@@ -11,10 +12,38 @@ import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheDataSource
+import app.vimusic.android.BuildConfig
 import java.io.EOFException
+
+private class LoggingHttpDataSourceFactory(
+    private val parent: HttpDataSource.Factory
+) : HttpDataSource.Factory by parent {
+    override fun createDataSource(): HttpDataSource = Source(parent.createDataSource())
+
+    private class Source(private val parent: HttpDataSource) : HttpDataSource by parent {
+        override fun open(dataSpec: DataSpec): Long {
+            val openedLength = parent.open(dataSpec)
+            if (BuildConfig.DEBUG) {
+                val headers = parent.responseHeaders
+                Log.d(
+                    "PlaybackHttp",
+                    "response uri=${parent.uri} openedLength=$openedLength " +
+                            "contentType=${headers["Content-Type"]?.firstOrNull().orEmpty()} " +
+                            "contentRange=${headers["Content-Range"]?.firstOrNull().orEmpty()} " +
+                            "contentLength=${headers["Content-Length"]?.firstOrNull().orEmpty()} " +
+                            "etag=${headers["ETag"]?.firstOrNull().orEmpty()} " +
+                            "acceptRanges=${headers["Accept-Ranges"]?.firstOrNull().orEmpty()} " +
+                            "headers=$headers"
+                )
+            }
+            return openedLength
+        }
+    }
+}
 
 class RangeHandlerDataSourceFactory(private val parent: DataSource.Factory) : DataSource.Factory {
     class Source(private val parent: DataSource) : DataSource by parent {
@@ -80,7 +109,9 @@ val Cache.asDataSource
 val Context.defaultDataSource
     get() = DefaultDataSource.Factory(
         this,
-        DefaultHttpDataSource.Factory().setConnectTimeoutMs(16000)
-            .setReadTimeoutMs(8000)
-            .setUserAgent("Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0")
+        LoggingHttpDataSourceFactory(
+            DefaultHttpDataSource.Factory().setConnectTimeoutMs(16000)
+                .setReadTimeoutMs(8000)
+                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0")
+        )
     )
