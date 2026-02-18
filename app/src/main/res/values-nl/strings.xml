@@ -124,7 +124,6 @@
     <string name="error_unknown_playback">Een onbekende afspeelfout heeft zich voorgedaan</string>
     <string name="error_piped_link">Het linken met je Piped account is mislukt. Probeer het opnieuw.</string>
     <string name="error_piped_instances_unavailable">De lijst van Piped instanties is niet beschikbaar</string>
-    <string name="error_bassboost_init">Er was een error bij het initialiseren van bass boost. Waarschijnlijk ondersteunt je apparaat het niet. Probeer het niveau aan te passen of probeer opnieuw.</string>
     <string name="error_pre_cache">Een onbekende error heeft zich voorgedaan bij het pre-cachen. Probeer het opnieuw.</string>
     <string name="error_url">Kon url %1$s niet openen</string>
 
@@ -322,10 +321,6 @@
     <string name="loudness_base_gain">Basisversterking</string>
     <string name="loudness_base_gain_description">De doelwaarde voor de normalisering</string>
     <string name="loudness_normalization_extreme">Extreme versterking gedetecteerd (%s), normalisatie wordt uitgeschakeld voor dit nummer</string>
-    <string name="bass_boost">Bass boost</string>
-    <string name="bass_boost_description">Versterk lage frequenties om luisterervaring te verbeteren</string>
-    <string name="bass_boost_level">Bass boost niveau</string>
-    <string name="bass_boost_level_description">Niveau (0–1000) van het versterken van lage frequenties; gebruik op eigen risico!</string>
     <string name="sponsor_block">Sponsorblock</string>
     <string name="sponsor_block_description">Blokkeert gesponsorde/offtopic content d.m.v. de Sponsorblock API</string>
     <string name="reverb">Reverb</string>

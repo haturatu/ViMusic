@@ -124,7 +124,6 @@
     <string name="error_unknown_playback">发生未知播放错误</string>
     <string name="error_piped_link">链接您的 Piped 帐户时发生未知错误。请再试一次。</string>
     <string name="error_piped_instances_unavailable">当前不可用 Piped 实例列表</string>
-    <string name="error_bassboost_init">初始化低音增强时发生错误。可能您的设备不支持。尝试更改低音增强级别或再试一次。</string>
     <string name="error_pre_cache">预缓存时发生未知错误。请再试一次。</string>
     <string name="error_url">无法打开网址 %1$s</string>
 
@@ -321,10 +320,6 @@
     <string name="loudness_base_gain">响度基础增益</string>
     <string name="loudness_base_gain_description">响度标准化的目标增益</string>
     <string name="loudness_normalization_extreme">检测到极端响度值 (%s)，将关闭此歌曲的响度标准化</string>
-    <string name="bass_boost">低音增强</string>
-    <string name="bass_boost_description">增强低频以提升听觉体验</string>
-    <string name="bass_boost_level">低音增强级别</string>
-    <string name="bass_boost_level_description">增强低频的级别 (0–1000)，使用需谨慎！</string>
     <string name="sponsor_block">屏蔽赞助商</string>
     <string name="sponsor_block_description">使用 Sponsorblock API 的数据来屏蔽赞助/无关内容</string>
     <string name="reverb">混响</string>

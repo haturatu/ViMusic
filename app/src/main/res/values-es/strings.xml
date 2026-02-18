@@ -124,7 +124,6 @@
     <string name="error_unknown_playback">Ha ocurrido un error de reproducción desconocido</string>
     <string name="error_piped_link">Hubo un error desconocido al vincular tu cuenta de Piped. Por favor, inténtalo de nuevo.</string>
     <string name="error_piped_instances_unavailable">La lista de instancias de Piped no está disponible actualmente</string>
-    <string name="error_bassboost_init">Hubo un error al inicializar el Bass Boost. Probablemente tu dispositivo no lo admite. Intenta cambiar el nivel de Bass Boost o inténtalo de nuevo.</string>
     <string name="error_pre_cache">Ocurrió un error desconocido durante el pre-caché. Por favor, inténtalo de nuevo.</string>
     <string name="error_url">No se puede abrir la URL %1$s</string>
 
@@ -315,10 +314,6 @@
     <string name="loudness_base_gain">Ganancia base de volumen</string>
     <string name="loudness_base_gain_description">La ganancia \'objetivo\' para la normalización de volumen</string>
     <string name="loudness_normalization_extreme">Valor de volumen extremo detectado (%s), desactivando la normalización para esta canción</string>
-    <string name="bass_boost">Refuerzo de graves</string>
-    <string name="bass_boost_description">Reforzar frecuencias bajas para mejorar la experiencia de escucha</string>
-    <string name="bass_boost_level">Nivel de refuerzo de graves</string>
-    <string name="bass_boost_level_description">Nivel (0–1000) de refuerzo de frecuencias bajas; ¡usar bajo tu propio riesgo!</string>
     <string name="audio_focus">Enfoque de audio</string>
     <string name="audio_focus_description">Si el reproductor debe solicitar el enfoque de audio (multimedia) en todo el sistema</string>
     <string name="equalizer_description">Interactuar con el ecualizador del sistema</string>

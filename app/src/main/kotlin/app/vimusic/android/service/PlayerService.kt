@@ -12,7 +12,6 @@ import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.media.audiofx.AudioEffect
-import android.media.audiofx.BassBoost
 import android.media.audiofx.LoudnessEnhancer
 import android.media.audiofx.PresetReverb
 import android.text.format.DateUtils
@@ -199,7 +198,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private var audioDeviceCallback: AudioDeviceCallback? = null
 
     private var loudnessEnhancer: LoudnessEnhancer? = null
-    private var bassBoost: BassBoost? = null
     private var reverb: PresetReverb? = null
 
     private val binder = Binder()
@@ -319,8 +317,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 maybeShowSongCoverInLockScreen()
             }
 
-            subscribe(PlayerPreferences.bassBoostLevelProperty) { maybeBassBoost() }
-            subscribe(PlayerPreferences.bassBoostProperty) { maybeBassBoost() }
             subscribe(PlayerPreferences.reverbProperty) { maybeReverb() }
             subscribe(PlayerPreferences.isInvincibilityEnabledProperty) {
                 this@PlayerService.isInvincibilityEnabled = it
@@ -812,26 +808,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
             seek(nextSegment.end.inWholeMilliseconds)
         } while (ctx.isActive)
-    }
-
-    private fun maybeBassBoost() {
-        if (!PlayerPreferences.bassBoost) {
-            runCatching {
-                bassBoost?.enabled = false
-                bassBoost?.release()
-            }
-            bassBoost = null
-            maybeNormalizeVolume()
-            return
-        }
-
-        runCatching {
-            if (bassBoost == null) bassBoost = BassBoost(0, player.audioSessionId)
-            bassBoost?.setStrength(PlayerPreferences.bassBoostLevel.toShort())
-            bassBoost?.enabled = true
-        }.onFailure {
-            toast(getString(R.string.error_bassboost_init))
-        }
     }
 
     private fun maybeReverb() {

@@ -121,7 +121,6 @@
     <string name="error_unknown_playback">Bilinmeyen bir oynatma hatası oluştu</string>
     <string name="error_piped_link">Piped hesabınız bağlanırken bilinmeyen bir hata oluştu. Lütfen tekrar deneyin.</string>
     <string name="error_piped_instances_unavailable">Piped örnek listesi şu anda kullanılamıyor</string>
-    <string name="error_bassboost_init">Bass Boost başlatılırken bir hata oluştu. Muhtemelen cihazınız desteklemiyordur. Bas yükseltme seviyesini değiştirmeyi deneyin veya tekrar deneyin.</string>
     <string name="error_pre_cache">Önbelleğe alma sırasında bilinmeyen bir hata oluştu. Lütfen tekrar deneyin.</string>
     <string name="error_url">%1$s bağlantısı açılamıyor</string>
 
@@ -306,10 +305,6 @@
     <string name="loudness_base_gain">Gürültü taban kazancı</string>
     <string name="loudness_base_gain_description">Yükseklik normalizasyonu için \'hedef\' kazancı</string>
     <string name="loudness_normalization_extreme">Aşırı ses yüksekliği değeri algılandı (%s), bu şarkı için normalleştirme kapatılıyor</string>
-    <string name="bass_boost">Bas artışı</string>
-    <string name="bass_boost_description">Dinleme deneyimini iyileştirmek için düşük frekansları artırın</string>
-    <string name="bass_boost_level">Bas artışı seviyesi</string>
-    <string name="bass_boost_level_description">Düşük frekansları artırma seviyesi (0 -1000); kendi riski altında kullanın!</string>
     <string name="equalizer_description">Sistem ekolayzırı ile etkileşim</string>
 
     <string name="filter_placeholder">Filtrele…</string>

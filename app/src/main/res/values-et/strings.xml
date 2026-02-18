@@ -123,7 +123,6 @@
     <string name="error_unknown_playback">Tekkis tundmatu esitamise viga</string>
     <string name="error_piped_link">Tekkis tundmatu viga sinu Piped\'i konto sidumisel. Proovi uuesti.</string>
     <string name="error_piped_instances_unavailable">Piped\'i instantside loend ei ole hetkel saadaval</string>
-    <string name="error_bassboost_init">Tekkis viga Bass Boost\'i initsialiseerimisel. Tõenäoliselt ei toeta sinu seade seda. Proovi bassi tuge muuta või proovi uuesti.</string>
     <string name="error_pre_cache">Tekkis viga eelvahemälu loomisel. Proovi uuesti.</string>
     <string name="error_url">Ei saa avada URL\'i %1$s</string>
 
@@ -318,10 +317,6 @@
     <string name="loudness_base_gain">Heli põhivõimendus</string>
     <string name="loudness_base_gain_description">Sihtvõimendus heli normaliseerimise jaoks</string>
     <string name="loudness_normalization_extreme">Avastatud äärmuslik heli väärtus (%s), normaliseerimine selle laulu jaoks keelatud</string>
-    <string name="bass_boost">Bassivoimendus</string>
-    <string name="bass_boost_description">Tugevdab madalaid frekantsse, et parandada kuulamiskogemust</string>
-    <string name="bass_boost_level">Bassivoimenduse tase</string>
-    <string name="bass_boost_level_description">Tase (0–1000) madalate frekantside võimendamiseks; kasuta oma riskil!</string>
     <string name="sponsor_block">Sponsorblock</string>
     <string name="sponsor_block_description">Blokeerib sponsoreeritud/välisteemalise sisu, kasutades Sponsorblock API</string>
     <string name="reverb">Kaja</string>

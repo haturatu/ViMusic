@@ -124,7 +124,6 @@
     <string name="error_unknown_playback">Došlo je do nepoznate greške prilikom reprodukcije</string>
     <string name="error_piped_link">Došlo je do nepoznate greške prilikom povezivanja sa vašim Piped nalogom. Pokušajte ponovo.</string>
     <string name="error_piped_instances_unavailable">Lista Piped instanci trenutno nije dostupna</string>
-    <string name="error_bassboost_init">Došlo je do greške prilikom inicijalizacije Bass Boost-a. Verovatno ga vaš uređaj to ne podržava. Pokušajte da promenite nivo pojačanja basa ili pokušajte ponovo.</string>
     <string name="error_pre_cache">Došlo je do nepoznate greške prilikom pred-keširanja. Pokušajte ponovo.</string>
     <string name="error_url">Nije moguće otvoriti url URL %1$s</string>
     <string name="media_permission_declined">Dozvola odbijena, molimo da omogućite medijske dozvole u podešavanjima uređaja.</string>
@@ -316,10 +315,6 @@
     <string name="loudness_base_gain">Osnovno pojačanje zvuka</string>
     <string name="loudness_base_gain_description">Ciljno pojačanje za normalizaciju jačine zvuka</string>
     <string name="loudness_normalization_extreme">Detektovana ekstremna vrednost jačine (%s), isključuje normalizaciju za ovu pesmu</string>
-    <string name="bass_boost">Pojačanje basa</string>
-    <string name="bass_boost_description">Pojačava niske frekvencije za poboljšano iskustvo slušanja</string>
-    <string name="bass_boost_level">Nivo pojačanja basa</string>
-    <string name="bass_boost_level_description">Nivo (0–1000) pojačanja niskih frekvencija; koristite na sopstveni rizik!</string>
     <string name="reverb">Reverb</string>
     <string name="audio_focus">Fokus na zvuk</string>
     <string name="audio_focus_description">Da li plejer treba da zahteva sistemski fokus na zvuk (medije)</string>

@@ -123,7 +123,6 @@
     <string name="error_unknown_playback">不明な再生エラーが発生しました</string>
     <string name="error_piped_link">Piped アカウントのリンク中に不明なエラーが発生しました\nもう一度試してください</string>
     <string name="error_piped_instances_unavailable">Piped インスタンスのリストは現在利用できません</string>
-    <string name="error_bassboost_init">バスブーストの初期化中にエラーが発生しました\n低音ブーストレベルを変更するか、もう一度試してください</string>
     <string name="error_pre_cache">事前キャッシュ中に不明なエラーが発生しました\nもう一度試してください</string>
     <string name="error_url">%1$sを開けません</string>
 
@@ -317,10 +316,6 @@
     <string name="loudness_base_gain">ラウドネスの基本音量</string>
     <string name="loudness_base_gain_description">ラウドネスノーマライズのターゲットゲイン</string>
     <string name="loudness_normalization_extreme">極端なラウドネスの値が検出されました (%s).\この曲のノーマライズをオフにします</string>
-    <string name="bass_boost">バスブースト</string>
-    <string name="bass_boost_description">低音域を強化します</string>
-    <string name="bass_boost_level">バスブーストレベル</string>
-    <string name="bass_boost_level_description">自己責任でブーストレベルを0から1000の間で指定してください</string>
     <string name="equalizer_description">システムイコライザーを開く</string>
 
     <string name="filter_placeholder">フィルター</string>

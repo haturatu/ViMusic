@@ -123,7 +123,6 @@
     <string name="error_unknown_playback">Ein unbekannter Wiedergabefehler ist aufgetreten</string>
     <string name="error_piped_link">Bei der Verknüpfung Ihres Piped-Kontos ist ein unbekannter Fehler aufgetreten. Bitte versuchen Sie es erneut.</string>
     <string name="error_piped_instances_unavailable">Liste der Piped-Instanzen ist derzeit nicht verfügbar.</string>
-    <string name="error_bassboost_init">Es ist ein Fehler bei der Initialisierung von Bass Boost aufgetreten. Wahrscheinlich unterstützt Ihr Gerät diese Funktion nicht. Ändern Sie den Bassverstärkungspegel oder versuchen Sie es erneut.</string>
     <string name="error_pre_cache">Beim Caching ist ein unbekannter Fehler aufgetreten. Bitte versuchen Sie es erneut.</string>
     <string name="error_url">Kann die URL %1$s nicht öffnen</string>
     
@@ -310,10 +309,6 @@
     <string name="loudness_base_gain">Lautstärke Basisverstärkung</string>
     <string name="loudness_base_gain_description">Die "Ziel"-Verstärkung für die Lautstärke-Normalisierung</string>
     <string name="loudness_normalization_extreme">Extreme Lautstärke erkannt (%s), Normalisierung für dieses Lied deaktiviert</string>
-    <string name="bass_boost">Bass boost</string>
-    <string name="bass_boost_description">Verstärkung der tiefen Frequenzen für ein besseres Hörerlebnis</string>
-    <string name="bass_boost_level">Pegel der Bassverstärkung</string>
-    <string name="bass_boost_level_description">Pegel (0–1000) der Anhebung der tiefen Frequenzen; Verwendung auf eigene Gefahr!</string>
     <string name="equalizer_description">Mit dem System-Equalizer interagieren</string>
 
     <string name="filter_placeholder">Suchen…</string>

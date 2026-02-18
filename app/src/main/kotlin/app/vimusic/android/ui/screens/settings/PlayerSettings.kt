@@ -128,27 +128,6 @@ fun PlayerSettings() = with(PlayerPreferences) {
             }
 
             SwitchSettingsEntry(
-                title = stringResource(R.string.bass_boost),
-                text = stringResource(R.string.bass_boost_description),
-                isChecked = bassBoost,
-                onCheckedChange = { bassBoost = it }
-            )
-
-            AnimatedVisibility(visible = bassBoost) {
-                var newValue by remember(bassBoostLevel) { mutableFloatStateOf(bassBoostLevel.toFloat()) }
-
-                SliderSettingsEntry(
-                    title = stringResource(R.string.bass_boost_level),
-                    text = stringResource(R.string.bass_boost_level_description),
-                    state = newValue,
-                    onSlide = { newValue = it },
-                    onSlideComplete = { bassBoostLevel = newValue.toInt() },
-                    toDisplay = { (it * 1000f).toInt().toString() },
-                    range = 0f..1f
-                )
-            }
-
-            SwitchSettingsEntry(
                 title = stringResource(R.string.sponsor_block),
                 text = stringResource(R.string.sponsor_block_description),
                 isChecked = sponsorBlockEnabled,

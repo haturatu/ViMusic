@@ -124,7 +124,6 @@
     <string name="error_unknown_playback">An unknown playback error has occurred</string>
     <string name="error_piped_link">There was an unknown error linking your Piped account. Please try again.</string>
     <string name="error_piped_instances_unavailable">Piped instance list currently unavailable</string>
-    <string name="error_bassboost_init">There was an error initializing Bass Boost. Probably your device doesn\'t support it. Try changing the bass boost level or try again.</string>
     <string name="error_pre_cache">An unknown error occurred during pre-caching. Please try again.</string>
     <string name="error_url">Can\'t open url %1$s</string>
 
@@ -330,10 +329,6 @@
     <string name="loudness_base_gain">Loudness base gain</string>
     <string name="loudness_base_gain_description">The \'target\' gain for the loudness normalization</string>
     <string name="loudness_normalization_extreme">Extreme loudness value detected (%s), turning off normalization for this song</string>
-    <string name="bass_boost">Bass boost</string>
-    <string name="bass_boost_description">Boost low frequencies to improve listening experience</string>
-    <string name="bass_boost_level">Bass boost level</string>
-    <string name="bass_boost_level_description">Level (0–1000) of boosting low frequencies; use at own risk!</string>
     <string name="sponsor_block">Sponsorblock</string>
     <string name="sponsor_block_description">Blocks sponsored/offtopic content using data from the Sponsorblock API</string>
     <string name="reverb">Reverb</string>

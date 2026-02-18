@@ -124,7 +124,6 @@
     <string name="error_unknown_playback">Дошло је до непознате грешке приликом репродукције</string>
     <string name="error_piped_link">Дошло је до непознате грешке приликом повезивања са вашим Piped налогом. Покушајте поново.</string>
     <string name="error_piped_instances_unavailable">Листа Piped инстанци тренутно није доступна</string>
-    <string name="error_bassboost_init">Дошло је до грешке приликом иницијализације Bass Boost-а. Вероватно га ваш уређај не подржава. Покушајте да промените ниво појачања баса или покушајте поново.</string>
     <string name="error_pre_cache">Дошло је до непознате грешке приликом пред-кеширања. Покушајте поново.</string>
     <string name="error_url">Није могуће отворити URL %1$s</string>
     <string name="media_permission_declined">Дозвола одбијена, молимо да омогућите медијске дозволе у подешавањима уређаја.</string>
@@ -316,10 +315,6 @@
     <string name="loudness_base_gain">Основно појачање звука</string>
     <string name="loudness_base_gain_description">Циљно појачање за нормализацију јачине звука</string>
     <string name="loudness_normalization_extreme">Детектована екстремна вредност јачине (%s), искључује нормализацију за ову песму</string>
-    <string name="bass_boost">Појачање баса</string>
-    <string name="bass_boost_description">Појачава ниске фреквенције за побољшано искуство слушања</string>
-    <string name="bass_boost_level">Ниво појачања баса</string>
-    <string name="bass_boost_level_description">Ниво (0–1000) појачања ниских фреквенција; користите на сопствени ризик!</string>
     <string name="reverb">Реверб</string>
     <string name="audio_focus">Фокус на звук</string>
     <string name="audio_focus_description">Да ли плејер треба да захтева системски фокус на звук (медије)</string>
