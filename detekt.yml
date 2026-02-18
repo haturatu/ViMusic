@@ -94,8 +94,14 @@ formatting:
     active: false # Handled by Android Lint
   Indentation:
     active: false # Idea/Android Studio handles indentation differently
+  ImportOrdering:
+    active: true
   MultiLineIfElse:
     active: false
+  NoUnusedImports:
+    active: true
+  SpacingAroundColon:
+    active: true
   TrailingCommaOnCallSite:
     active: true
     useTrailingCommaOnCallSite: false
