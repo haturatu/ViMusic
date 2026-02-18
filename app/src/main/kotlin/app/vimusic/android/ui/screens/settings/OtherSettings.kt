@@ -5,7 +5,6 @@ import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -33,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import app.vimusic.android.DatabaseInitializer
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.vimusic.android.LocalAppContainer
@@ -70,6 +70,8 @@ fun OtherSettings() {
         factory = OnlineSearchViewModel.factory(LocalAppContainer.current.onlineSearchRepository)
     )
     val context = LocalContext.current
+    val noBatteryOptimizationSettingsFound =
+        stringResource(R.string.no_battery_optimization_settings_found)
     val binder = LocalPlayerServiceBinder.current
     val uriHandler = LocalUriHandler.current
 
@@ -225,14 +227,14 @@ fun OtherSettings() {
                     try {
                         activityResultLauncher.launch(
                             Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                                data = Uri.parse("package:${context.packageName}")
+                                data = "package:${context.packageName}".toUri()
                             }
                         )
                     } catch (e: ActivityNotFoundException) {
                         try {
                             activityResultLauncher.launch(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
                         } catch (e: ActivityNotFoundException) {
-                            context.toast(context.getString(R.string.no_battery_optimization_settings_found))
+                            context.toast(noBatteryOptimizationSettingsFound)
                         }
                     }
                 },

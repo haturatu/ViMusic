@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.core.graphics.applyCanvas
+import androidx.core.graphics.createBitmap
 import app.vimusic.android.utils.thumbnail
 import coil3.imageLoader
 import coil3.request.Disposable
@@ -46,7 +47,7 @@ class BitmapProvider(
         lastIsSystemInDarkMode = isSystemInDarkMode
 
         val size = getBitmapSize()
-        defaultBitmap = Bitmap.createBitmap(
+        defaultBitmap = createBitmap(
             /* width = */ size,
             /* height = */ size,
             /* config = */ Bitmap.Config.ARGB_8888

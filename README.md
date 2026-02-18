@@ -16,10 +16,8 @@
   <img src="./fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpg" width="30%" />
 </p>
 
-## About translation
-- It's the best app, so I Japanese translated it for me and my friends.
-- There are intentionally some parts that are not in Japanese.
-- The license has been modified from the one originally created by vfsfitvnm. Please use it under the GPL-3.0 license.
+## About
+- Currently maintained as a hobby project.
 
 ## Features
 - Play (almost) any song or video from YouTube Music
@@ -41,17 +39,11 @@
 - ...
 
 ## Installation
-- Currently, the Japanese version is distributed only on GitHub. In the case of IzzyOnDroid and F-Droid, it will redirect to the original link by vfsfitvnm.
+- Currently, this version is distributed only on GitHub.
 
 [<img src="https://github.com/machiav3lli/oandbackupx/blob/034b226cea5c1b30eb4f6a6f313e4dadcbb0ece4/badge_github.png"
     alt="Get it on GitHub"
     height="80">](https://github.com/haturatu/ViMusic/releases/latest)
-[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png"
-     alt="Get it on IzzyOnDroid"
-     height="80">](https://apt.izzysoft.de/fdroid/index/apk/it.vfsfitvnm.vimusic)
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-     alt="Get it on F-Droid"
-     height="80">](https://f-droid.org/packages/it.vfsfitvnm.vimusic/)
 
 ## Build
 ### Requirements
@@ -117,6 +109,7 @@ The debug APK will be generated at:
 
 ## Acknowledgments
 - [**YouTube-Internal-Clients**](https://github.com/zerodytrash/YouTube-Internal-Clients): A python script that discovers hidden YouTube API clients. Just a research project.
+- [**NewPipeExtractor**](https://github.com/TeamNewPipe/NewPipeExtractor): Extractor library used for stream and metadata resolution.
 - [**ionicons**](https://github.com/ionic-team/ionicons): Premium hand-crafted icons built by Ionic, for Ionic apps and web apps everywhere.
 
 <a href="https://www.flaticon.com/authors/ilham-fitrotul-hayat" title="music icons">App icon based on icon created by Ilham Fitrotul Hayat - Flaticon</a>

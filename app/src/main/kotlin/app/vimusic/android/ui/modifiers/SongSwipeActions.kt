@@ -2,6 +2,7 @@ package app.vimusic.android.ui.modifiers
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.MediaItem
 import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
@@ -10,6 +11,7 @@ import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.service.isLocal
 import app.vimusic.android.utils.addNext
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun Modifier.songSwipeActions(
     key: Any,

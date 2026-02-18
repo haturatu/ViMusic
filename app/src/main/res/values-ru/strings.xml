@@ -279,7 +279,7 @@
     <string name="auto_sync_playlists">Автосинхронизация плейлистов</string>
     <string name="auto_sync_playlists_description">Автоматически синхронизирует сохраненные плейлисты с YouTube при их открытии</string>
     <string name="top_list_length">Длина топ-листа</string>
-    <string name="top_list_length_description">Ограничивает длину плейлиста "Мой топ %1$s"</string>
+    <string name="top_list_length_description">Ограничивает длину плейлиста "Мой топ x"</string>
 
     <string name="service_lifetime">Время работы сервиса</string>
     <string name="service_lifetime_warning">Если применены оптимизации батареи, уведомление о воспроизведении может внезапно исчезнуть, когда музыка на паузе.</string>
@@ -288,7 +288,7 @@
     <string name="ignoring_battery_optimizations">Ограничение уже снято</string>
     <string name="ignore_battery_optimizations_action">Отключить фоновое ограничение</string>
     <string name="invincible_service">Невозможность остановить сервис</string>
-    <string name="invincible_service_description">Должен поддерживать воспроизведение 99.99% времени, если отключение оптимизаций батареи недостаточно</string>
+    <string name="invincible_service_description">Должен поддерживать воспроизведение 99.99%% времени, если отключение оптимизаций батареи недостаточно</string>
 
     <string name="need_help">Нужна помощь?</string>
     <string name="need_help_description">В большинстве случаев проблема не связана с разработчиком (даже если включен "Невозможно остановить"), что приложение перестает нормально работать в фоне.\nПроверьте, не убивает ли производитель вашего устройства приложения (клик для перехода)</string>

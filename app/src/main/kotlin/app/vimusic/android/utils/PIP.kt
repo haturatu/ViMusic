@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.OnPictureInPictureModeChangedProvider
 import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.graphics.toRect
+import androidx.core.util.Consumer
 import app.vimusic.android.R
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.compose.persist.findActivityNullable
@@ -128,7 +129,7 @@ fun isInPip(
     DisposableEffect(activity, currentOnChange) {
         if (activity !is OnPictureInPictureModeChangedProvider) return@DisposableEffect onDispose { }
 
-        val listener: (PictureInPictureModeChangedInfo) -> Unit = {
+        val listener = Consumer<PictureInPictureModeChangedInfo> {
             pip = it.isInPictureInPictureMode
             currentOnChange(pip)
         }

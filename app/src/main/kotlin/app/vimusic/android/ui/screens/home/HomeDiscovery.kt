@@ -148,7 +148,7 @@ fun HomeDiscovery(
                     DiscoverySectionHeader(
                         title = stringResource(R.string.moods_and_genres),
                         onMoreClick = onMoreMoodsClick,
-                        textModifier = sectionTextModifier
+                        modifier = sectionTextModifier
                     )
 
                     LazyHorizontalGrid(
@@ -179,7 +179,7 @@ fun HomeDiscovery(
                     DiscoverySectionHeader(
                         title = stringResource(R.string.new_released_albums),
                         onMoreClick = onMoreAlbumsClick,
-                        textModifier = sectionTextModifier
+                        modifier = sectionTextModifier
                     )
 
                     LazyRow(contentPadding = endPaddingValues) {
@@ -200,7 +200,7 @@ fun HomeDiscovery(
                         onMoreClick = page.trending.endpoint?.browseId?.let { browseId ->
                             { onPlaylistClick(browseId) }
                         },
-                        textModifier = sectionTextModifier
+                        modifier = sectionTextModifier
                     )
 
                     val trendingGridState = rememberLazyGridState()
@@ -302,13 +302,13 @@ fun HomeDiscovery(
 private fun DiscoverySectionHeader(
     title: String,
     onMoreClick: (() -> Unit)?,
-    textModifier: Modifier,
-    modifier: Modifier = Modifier
+    modifier: Modifier,
+    rowModifier: Modifier = Modifier
 ) {
     val typography = LocalAppearance.current.typography
 
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = rowModifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -321,7 +321,7 @@ private fun DiscoverySectionHeader(
             BasicText(
                 text = title,
                 style = typography.m.semiBold,
-                modifier = textModifier
+                modifier = modifier
             )
         }
 
@@ -329,7 +329,7 @@ private fun DiscoverySectionHeader(
             SecondaryTextButton(
                 text = stringResource(R.string.more),
                 onClick = it,
-                modifier = textModifier
+                modifier = modifier
             )
         }
     }

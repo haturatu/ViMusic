@@ -1,4 +1,4 @@
-.PHONY: build release clean
+.PHONY: build adbinstall release lint detekt clean
 
 NEWPIPEEXTRACTOR_REPO := https://github.com/TeamNewPipe/NewPipeExtractor
 NEWPIPEEXTRACTOR_REF := v0.25.2
@@ -9,8 +9,17 @@ NEWPIPEEXTRACTOR_ANDROID10_PATCH := patches/newpipeextractor-android10.patch
 build: $(NEWPIPEEXTRACTOR_DIR)
 	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew assembleDebug
 
+adbinstall: $(NEWPIPEEXTRACTOR_DIR)
+	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew installDebug
+
 release: $(NEWPIPEEXTRACTOR_DIR)
 	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew assembleRelease
+
+lint: $(NEWPIPEEXTRACTOR_DIR)
+	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew lint
+
+detekt: $(NEWPIPEEXTRACTOR_DIR)
+	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew detekt
 
 $(NEWPIPEEXTRACTOR_DIR):
 	mkdir -p build

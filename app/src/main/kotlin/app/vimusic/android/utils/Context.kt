@@ -8,13 +8,13 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.PowerManager
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.core.app.PendingIntentCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
+import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
@@ -76,7 +76,7 @@ fun launchYouTubeMusic(
     return try {
         val intent = Intent(
             Intent.ACTION_VIEW,
-            Uri.parse("https://music.youtube.com/${endpoint.dropWhile { it == '/' }}")
+            "https://music.youtube.com/${endpoint.dropWhile { it == '/' }}".toUri()
         ).apply {
             if (tryWithoutBrowser && isAtLeastAndroid11) {
                 flags = Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER

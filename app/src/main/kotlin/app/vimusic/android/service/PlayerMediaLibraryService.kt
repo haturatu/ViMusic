@@ -16,6 +16,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
+import androidx.media3.session.SessionError
 import app.vimusic.android.MainActivity
 import app.vimusic.android.R
 import app.vimusic.android.appContainer
@@ -327,7 +328,7 @@ class PlayerMediaLibraryService : MediaLibraryService(), ServiceConnection {
             }
 
             return Futures.immediateFuture(
-                if (item == null) LibraryResult.ofError(LibraryResult.RESULT_ERROR_BAD_VALUE)
+                if (item == null) LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
                 else LibraryResult.ofItem(item, null)
             )
         }

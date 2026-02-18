@@ -140,6 +140,7 @@ fun Lyrics(
 
     val (colorPalette, typography) = LocalAppearance.current
     val context = LocalContext.current
+    val noBrowserInstalled = stringResource(R.string.no_browser_installed)
     val menuState = LocalMenuState.current
     val binder = LocalPlayerServiceBinder.current
     val density = LocalDensity.current
@@ -149,16 +150,53 @@ fun Lyrics(
 
     var lyrics by remember { mutableStateOf<Lyrics?>(null) }
 
-    val showSynchronizedLyrics = remember(shouldShowSynchronizedLyrics, lyrics) {
-        shouldShowSynchronizedLyrics && lyrics?.synced?.isBlank() != true
-    }
+    val showSynchronizedLyrics = shouldShowSynchronizedLyrics
 
     var editing by remember(mediaId, shouldShowSynchronizedLyrics) { mutableStateOf(false) }
     var picking by remember(mediaId, shouldShowSynchronizedLyrics) { mutableStateOf(false) }
-    var error by remember(mediaId, shouldShowSynchronizedLyrics) { mutableStateOf(false) }
+    var isFetchingFixed by remember(mediaId) { mutableStateOf(false) }
+    var hasFixedFetchFinished by remember(mediaId) { mutableStateOf(false) }
+    var isFetchingSynced by remember(mediaId) { mutableStateOf(false) }
+    var hasSyncedFetchFinished by remember(mediaId) { mutableStateOf(false) }
 
-    val text = remember(lyrics, showSynchronizedLyrics) {
-        if (showSynchronizedLyrics) lyrics?.synced else lyrics?.fixed
+    val displaySyncedLyrics = remember(lyrics, showSynchronizedLyrics) {
+        showSynchronizedLyrics && !lyrics?.synced.isNullOrBlank()
+    }
+    val text = remember(lyrics, displaySyncedLyrics) {
+        if (displaySyncedLyrics) lyrics?.synced else lyrics?.fixed
+    }
+    val showLoading = remember(
+        shouldUpdateLyrics,
+        showSynchronizedLyrics,
+        displaySyncedLyrics,
+        hasFixedFetchFinished,
+        isFetchingFixed,
+        isFetchingSynced,
+        hasSyncedFetchFinished,
+        lyrics
+    ) {
+        if (showSynchronizedLyrics) {
+            !displaySyncedLyrics && shouldUpdateLyrics &&
+                    (isFetchingSynced || !hasSyncedFetchFinished)
+        } else {
+            lyrics?.fixed.isNullOrBlank() && shouldUpdateLyrics &&
+                    (isFetchingFixed || !hasFixedFetchFinished)
+        }
+    }
+    val showError = remember(showSynchronizedLyrics, showLoading, lyrics) {
+        if (showSynchronizedLyrics) !showLoading && lyrics?.synced.isNullOrBlank()
+        else !showLoading && lyrics?.fixed.isNullOrBlank()
+    }
+    val showLoadingOverlay = remember(showLoading, text) {
+        showLoading && text.isNullOrBlank()
+    }
+    val showSyncedInlineLoading = remember(
+        showSynchronizedLyrics,
+        displaySyncedLyrics,
+        isFetchingSynced,
+        showLoadingOverlay
+    ) {
+        showSynchronizedLyrics && !displaySyncedLyrics && isFetchingSynced && !showLoadingOverlay
     }
     var invalidLrc by remember(text) { mutableStateOf(false) }
 
@@ -170,7 +208,7 @@ fun Lyrics(
         }
     }
 
-    LaunchedEffect(mediaId, shouldShowSynchronizedLyrics) {
+    LaunchedEffect(mediaId) {
         runCatching {
             withContext(Dispatchers.IO) {
                 viewModel
@@ -178,11 +216,16 @@ fun Lyrics(
                     .distinctUntilChanged()
                     .cancellable()
                     .collect { currentLyrics ->
+                        lyrics = currentLyrics
+                        if (!currentLyrics?.fixed.isNullOrBlank()) hasFixedFetchFinished = true
+                        if (!currentLyrics?.synced.isNullOrBlank()) hasSyncedFetchFinished = true
+
                         if (
-                            !shouldUpdateLyrics ||
-                            (currentLyrics?.fixed != null && currentLyrics.synced != null)
-                        ) lyrics = currentLyrics
-                        else {
+                            shouldUpdateLyrics &&
+                            currentLyrics?.fixed.isNullOrBlank() &&
+                            !isFetchingFixed &&
+                            !hasFixedFetchFinished
+                        ) {
                             val mediaMetadata = currentMediaMetadataProvider()
                             var duration =
                                 withContext(Dispatchers.Main) { currentDurationProvider() }
@@ -202,90 +245,151 @@ fun Lyrics(
                                 else it
                             }
 
-                            lyrics = null
-                            error = false
-
                             val normalizedTitle = title.split("(")[0].trim()
-                            var fixed = currentLyrics?.fixed
-                            var synced = currentLyrics?.synced
 
-                            var attempt = 0
-                            while (attempt < 3) {
+                            isFetchingFixed = true
+                            try {
+                                var fixed = currentLyrics?.fixed
                                 if (fixed.isNullOrBlank()) {
                                     fixed = viewModel.fetchInnertubeLyrics(mediaId)
                                 }
 
-                                if (fixed.isNullOrBlank()) {
-                                    fixed = viewModel.fetchBestLrcLibLyrics(
-                                        artist = artist,
-                                        title = title,
-                                        duration = duration.milliseconds,
-                                        album = album,
-                                        synced = false
-                                    )
+                                var attempt = 0
+                                while (attempt < 3 && fixed.isNullOrBlank()) {
+                                    if (fixed.isNullOrBlank()) {
+                                        fixed = viewModel.fetchBestLrcLibLyrics(
+                                            artist = artist,
+                                            title = title,
+                                            duration = duration.milliseconds,
+                                            album = album,
+                                            synced = false
+                                        )
+                                    }
+
+                                    if (fixed.isNullOrBlank()) {
+                                        fixed = viewModel.fetchBestLrcLibLyrics(
+                                            artist = artist,
+                                            title = normalizedTitle,
+                                            duration = duration.milliseconds,
+                                            album = album,
+                                            synced = false
+                                        )
+                                    }
+                                    attempt++
                                 }
 
-                                if (synced.isNullOrBlank()) {
-                                    synced = viewModel.fetchBestLrcLibLyrics(
-                                        artist = artist,
-                                        title = title,
-                                        duration = duration.milliseconds,
-                                        album = album
-                                    )
+                                Lyrics(
+                                    songId = mediaId,
+                                    fixed = fixed.orEmpty(),
+                                    synced = currentLyrics?.synced.orEmpty()
+                                ).also {
+                                    ensureActive()
+                                    runCatching {
+                                        currentEnsureSongInserted()
+                                        viewModel.upsertLyrics(it)
+                                    }
                                 }
-
-                                if (synced.isNullOrBlank()) {
-                                    synced = viewModel.fetchBestLrcLibLyrics(
-                                        artist = artist,
-                                        title = normalizedTitle,
-                                        duration = duration.milliseconds,
-                                        album = album
-                                    )
-                                }
-
-                                if (fixed.isNullOrBlank()) {
-                                    fixed = viewModel.fetchBestLrcLibLyrics(
-                                        artist = artist,
-                                        title = normalizedTitle,
-                                        duration = duration.milliseconds,
-                                        album = album,
-                                        synced = false
-                                    )
-                                }
-
-                                if (synced.isNullOrBlank()) {
-                                    synced = viewModel.fetchKuGouLyrics(
-                                        artist = artist,
-                                        title = title,
-                                        durationSeconds = duration / 1000
-                                    )
-                                }
-
-                                if (!fixed.isNullOrBlank() && !synced.isNullOrBlank()) break
-                                attempt++
-                            }
-
-                            Lyrics(
-                                songId = mediaId,
-                                fixed = fixed.orEmpty(),
-                                synced = synced.orEmpty()
-                            ).also {
-                                ensureActive()
-                                runCatching {
-                                    currentEnsureSongInserted()
-                                    viewModel.upsertLyrics(it)
-                                }
+                            } finally {
+                                isFetchingFixed = false
+                                hasFixedFetchFinished = true
                             }
                         }
-
-                        error =
-                            (shouldShowSynchronizedLyrics && lyrics?.synced?.isBlank() == true) ||
-                                    (!shouldShowSynchronizedLyrics && lyrics?.fixed?.isBlank() == true)
                     }
             }
         }.exceptionOrNull()?.let {
             if (it is CancellationException) throw it
             else it.printStackTrace()
+        }
+    }
+
+    LaunchedEffect(mediaId, shouldShowSynchronizedLyrics, lyrics?.synced, shouldUpdateLyrics) {
+        if (!shouldShowSynchronizedLyrics) {
+            hasSyncedFetchFinished = false
+        }
+        if (!shouldUpdateLyrics) {
+            hasSyncedFetchFinished = true
+            return@LaunchedEffect
+        }
+        if (!shouldShowSynchronizedLyrics) return@LaunchedEffect
+        if (!lyrics?.synced.isNullOrBlank() || isFetchingSynced) return@LaunchedEffect
+
+        isFetchingSynced = true
+        hasSyncedFetchFinished = false
+        try {
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    val mediaMetadata = currentMediaMetadataProvider()
+                    var duration = withContext(Dispatchers.Main) { currentDurationProvider() }
+
+                    while (duration == C.TIME_UNSET) {
+                        delay(100)
+                        duration = withContext(Dispatchers.Main) { currentDurationProvider() }
+                    }
+
+                    val album = mediaMetadata.albumTitle?.toString()
+                    val artist = mediaMetadata.artist?.toString().orEmpty()
+                    val title = mediaMetadata.title?.toString().orEmpty().let {
+                        if (mediaId.startsWith(LOCAL_KEY_PREFIX)) it
+                            .substringBeforeLast('.')
+                            .trim()
+                        else it
+                    }
+                    val normalizedTitle = title.split("(")[0].trim()
+
+                    var synced = lyrics?.synced
+                    var attempt = 0
+                    while (attempt < 3) {
+                        if (synced.isNullOrBlank()) {
+                            synced = viewModel.fetchBestLrcLibLyrics(
+                                artist = artist,
+                                title = title,
+                                duration = duration.milliseconds,
+                                album = album
+                            )
+                        }
+
+                        if (synced.isNullOrBlank()) {
+                            synced = viewModel.fetchBestLrcLibLyrics(
+                                artist = artist,
+                                title = normalizedTitle,
+                                duration = duration.milliseconds,
+                                album = album
+                            )
+                        }
+
+                        if (synced.isNullOrBlank()) {
+                            synced = viewModel.fetchKuGouLyrics(
+                                artist = artist,
+                                title = title,
+                                durationSeconds = duration / 1000
+                            )
+                        }
+
+                        if (!synced.isNullOrBlank()) break
+                        attempt++
+                    }
+
+                    if (!synced.isNullOrBlank()) {
+                        ensureActive()
+                        runCatching {
+                            currentEnsureSongInserted()
+                            viewModel.upsertLyrics(
+                                Lyrics(
+                                    songId = mediaId,
+                                    fixed = lyrics?.fixed.orEmpty(),
+                                    synced = synced.orEmpty()
+                                )
+                            )
+                        }
+                    }
+                }
+            }.exceptionOrNull()?.let {
+                if (it is CancellationException) throw it
+                else it.printStackTrace()
+            }
+        } finally {
+            isFetchingSynced = false
+            hasSyncedFetchFinished = true
         }
     }
 
@@ -359,7 +463,7 @@ fun Lyrics(
         )
 
         AnimatedVisibility(
-            visible = error,
+            visible = showError,
             enter = slideInVertically { -it },
             exit = slideOutVertically { -it },
             modifier = Modifier.align(Alignment.TopCenter)
@@ -380,7 +484,7 @@ fun Lyrics(
         }
 
         AnimatedVisibility(
-            visible = !text.isNullOrBlank() && !error && invalidLrc && shouldShowSynchronizedLyrics,
+            visible = !text.isNullOrBlank() && !showError && invalidLrc && displaySyncedLyrics,
             enter = slideInVertically { -it },
             exit = slideOutVertically { -it },
             modifier = Modifier.align(Alignment.TopCenter)
@@ -394,6 +498,20 @@ fun Lyrics(
                     .fillMaxWidth(),
                 maxLines = if (pip) 1 else Int.MAX_VALUE,
                 overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        AnimatedVisibility(
+            visible = showSyncedInlineLoading && !showError,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.align(Alignment.TopCenter)
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .background(Color.Black.copy(0.4f))
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .size(20.dp)
             )
         }
 
@@ -421,7 +539,7 @@ fun Lyrics(
         }
 
         AnimatedContent(
-            targetState = showSynchronizedLyrics,
+            targetState = displaySyncedLyrics,
             transitionSpec = { fadeIn() togetherWith fadeOut() },
             label = ""
         ) { synchronized ->
@@ -495,7 +613,7 @@ fun Lyrics(
             )
         }
 
-        if (text == null && !error) Column(
+        if (showLoadingOverlay && !showError) Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.shimmer()
         ) {
@@ -579,7 +697,7 @@ fun Lyrics(
                                                     }
                                                 )
                                             } catch (e: ActivityNotFoundException) {
-                                                context.toast(context.getString(R.string.no_browser_installed))
+                                                context.toast(noBrowserInstalled)
                                             }
                                         }
                                     )

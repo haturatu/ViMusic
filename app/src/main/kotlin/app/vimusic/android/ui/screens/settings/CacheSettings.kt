@@ -38,6 +38,7 @@ fun CacheSettings() = with(DataPreferences) {
     val context = LocalContext.current
     val binder = LocalPlayerServiceBinder.current
     val coroutineScope = rememberCoroutineScope()
+    val cacheCleared = stringResource(R.string.cache_cleared)
 
     SettingsCategoryScreen(title = stringResource(R.string.cache)) {
         SettingsDescription(text = stringResource(R.string.cache_description))
@@ -80,7 +81,7 @@ fun CacheSettings() = with(DataPreferences) {
                         coroutineScope.launch(Dispatchers.IO) {
                             diskCache.clear()
                             withContext(Dispatchers.Main) {
-                                context.toast(context.getString(R.string.cache_cleared))
+                                context.toast(cacheCleared)
                             }
                         }
                     }
@@ -154,7 +155,7 @@ fun CacheSettings() = with(DataPreferences) {
                                 cache.removeResource(key)
                             }
                             withContext(Dispatchers.Main) {
-                                context.toast(context.getString(R.string.cache_cleared))
+                                context.toast(cacheCleared)
                             }
                         }
                     }

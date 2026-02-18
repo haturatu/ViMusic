@@ -289,6 +289,7 @@ fun MediaItemMenu(
     val uriHandler = LocalUriHandler.current
     val binder = LocalPlayerServiceBinder.current
     val context = LocalContext.current
+    val youtubeMusicNotInstalled = stringResource(R.string.youtube_music_not_installed)
 
     val isLocal by remember { derivedStateOf { mediaItem.isLocal } }
 
@@ -736,7 +737,7 @@ fun MediaItemMenu(
                     onDismiss()
                     binder?.player?.pause()
                     if (!launchYouTubeMusic(context, "watch?v=${mediaItem.mediaId}"))
-                        context.toast(context.getString(R.string.youtube_music_not_installed))
+                        context.toast(youtubeMusicNotInstalled)
                 }
             )
 

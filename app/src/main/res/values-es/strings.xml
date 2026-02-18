@@ -285,7 +285,7 @@
     <string name="ignoring_battery_optimizations">Restricción ya levantada</string>
     <string name="ignore_battery_optimizations_action">Desactivar restricciones en segundo plano</string>
     <string name="invincible_service">Servicio invencible</string>
-    <string name="invincible_service_description">Debería mantener la reproducción en funcionamiento el 99,99% del tiempo, en caso de que desactivar las optimizaciones de batería no sea suficiente</string>
+    <string name="invincible_service_description">Debería mantener la reproducción en funcionamiento el 99,99%% del tiempo, en caso de que desactivar las optimizaciones de batería no sea suficiente</string>
 
     <string name="need_help">¿Necesitas ayuda?</string>
     <string name="need_help_description">La mayoría de las veces, no es culpa del desarrollador (incluso después de activar el servicio invencible) que la aplicación deje de funcionar correctamente en segundo plano.\nComprueba si el fabricante de tu dispositivo mata tus aplicaciones (haz clic para redirigir)</string>

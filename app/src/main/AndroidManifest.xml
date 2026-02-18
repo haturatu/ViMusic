@@ -189,12 +189,16 @@
 
         <service
             android:name=".service.PlayerMediaLibraryService"
-            android:enabled="false"
+            android:enabled="true"
             android:exported="true"
             tools:ignore="ExportedService">
 
             <intent-filter>
                 <action android:name="androidx.media3.session.MediaLibraryService" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
 
             <intent-filter>
@@ -214,6 +218,10 @@
         <meta-data
             android:name="com.google.android.gms.car.notification.SmallIcon"
             android:resource="@drawable/app_icon" />
+
+        <meta-data
+            android:name="asset_statements"
+            android:resource="@string/asset_statements" />
 
         <meta-data
             android:name="NothingKey"

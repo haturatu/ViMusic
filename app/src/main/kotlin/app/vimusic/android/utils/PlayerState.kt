@@ -12,11 +12,13 @@ import androidx.compose.runtime.SnapshotMutationPolicy
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -67,7 +69,7 @@ fun Player?.positionAndDurationState(
     var shouldTick by remember {
         mutableStateOf(this?.isPlaying == true)
     }
-    var fastTickUntilMs by remember { mutableStateOf(0L) }
+    var fastTickUntilMs by remember { mutableLongStateOf(0L) }
 
     DisposableListener {
         object : Player.Listener {
@@ -163,6 +165,7 @@ fun rememberEqualizerLauncher(
     contentType: Int = AudioEffect.CONTENT_TYPE_MUSIC
 ): State<() -> Unit> {
     val context = LocalContext.current
+    val noEqualizerInstalled = stringResource(R.string.no_equalizer_installed)
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
 
@@ -178,7 +181,7 @@ fun rememberEqualizerLauncher(
                 )
             )
         } catch (e: ActivityNotFoundException) {
-            context.toast(context.getString(R.string.no_equalizer_installed))
+            context.toast(noEqualizerInstalled)
         }
     }
 }

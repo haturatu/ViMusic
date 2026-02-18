@@ -1,8 +1,9 @@
 package app.vimusic.core.data.utils
 
 import android.net.Uri
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.ConsistentCopyVisibility
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 open class RingBuffer<T>(val size: Int, private val init: (index: Int) -> T) : Iterable<T> {
     private val list = MutableList(size, init)
@@ -26,6 +27,7 @@ open class RingBuffer<T>(val size: Int, private val init: (index: Int) -> T) : I
 class UriCache<Key : Any, Meta>(size: Int = 16) {
     private val buffer = RingBuffer<CachedUri<Key, Meta>?>(size) { null }
 
+    @ConsistentCopyVisibility
     data class CachedUri<Key, Meta> internal constructor(
         val key: Key,
         val meta: Meta,

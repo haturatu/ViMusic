@@ -280,7 +280,7 @@
     <string name="ignoring_battery_optimizations">Beschränkung bereits aufgehoben</string>
     <string name="ignore_battery_optimizations_action">Hintergrundbeschränkungen deaktivieren</string>
     <string name="invincible_service">Nicht-beendbarer Dienst</string>
-    <string name="invincible_service_description">Sollte die Wiedergabe in 99,99% der Fälle aufrechterhalten, falls das Ausschalten der Batterieoptimierungen nicht ausreicht.</string>
+    <string name="invincible_service_description">Sollte die Wiedergabe in 99,99%% der Fälle aufrechterhalten, falls das Ausschalten der Batterieoptimierungen nicht ausreicht.</string>
 
     <string name="need_help">Brauchen Sie Hilfe?</string>
     <string name="need_help_description">In den meisten Fällen ist es nicht die Schuld des Entwicklers (selbst nach dem Einschalten des nicht-beendbaren Dienstes), dass die App im Hintergrund nicht mehr richtig funktioniert. Prüfen Sie, ob Ihr Gerätehersteller Ihre Apps beendet (zum Weiterleiten klicken)</string>
