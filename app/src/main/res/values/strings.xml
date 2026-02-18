@@ -408,10 +408,6 @@
     <string name="weekly">Weekly</string>
     <string name="version_check">Automatically check for updates</string>
 
-    <string name="skip_on_error">Autoskip</string>
-    <string name="skip_on_error_description">Skips the current song when there is an error.</string>
-    <string name="skip_on_error_notification">Skipped %s because of an error</string>
-    <string name="skip_on_error_notification_unknown_song">Skipped the current song because of an error</string>
     <string name="reverb_small_room">Small room</string>
     <string name="reverb_medium_room">Medium room</string>
     <string name="reverb_large_room">Large room</string>

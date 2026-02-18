@@ -186,12 +186,4 @@ object ServiceNotifications : NotificationChannels() {
         setLightsEnabled(true).setVibrationEnabled(true)
     }
 
-    val autoSkip by channel(
-        name = "autoskip",
-        description = R.string.skip_on_error,
-        importance = NotificationManagerCompat.IMPORTANCE_HIGH,
-        singleNotification = true
-    ) {
-        setLightsEnabled(true).setVibrationEnabled(true)
-    }
 }

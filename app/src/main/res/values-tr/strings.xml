@@ -376,10 +376,6 @@
     <string name="weekly">Haftalık</string>
     <string name="version_check">Güncellemeleri otomatik olarak kontrol et</string>
 
-    <string name="skip_on_error">Otomatik atla</string>
-    <string name="skip_on_error_description">Bir hata olduğunda mevcut şarkıyı atlar.</string>
-    <string name="skip_on_error_notification">Bir hata nedeniyle %s atlandı</string>
-    <string name="skip_on_error_notification_unknown_song">Bir hata nedeniyle mevcut şarkı atlandı</string>
     <string name="reverb_small_room">Small room</string>
     <string name="reverb_medium_room">Medium room</string>
     <string name="reverb_large_room">Large room</string>

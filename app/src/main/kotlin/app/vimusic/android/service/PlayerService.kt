@@ -508,24 +508,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             }
         }
 
-        if (!PlayerPreferences.skipOnError || !player.hasNextMediaItem()) return
-
-        val prev = player.currentMediaItem ?: return
-        player.seekToNextMediaItem()
-
-        ServiceNotifications.autoSkip.sendNotification(this) {
-            this
-                .setSmallIcon(R.drawable.app_icon)
-                .setCategory(NotificationCompat.CATEGORY_ERROR)
-                .setOnlyAlertOnce(false)
-                .setContentIntent(activityPendingIntent<MainActivity>())
-                .setContentText(
-                    prev.mediaMetadata.title?.let {
-                        getString(R.string.skip_on_error_notification, it)
-                    } ?: getString(R.string.skip_on_error_notification_unknown_song)
-                )
-                .setContentTitle(getString(R.string.skip_on_error))
-        }
+        return
     }
 
     private fun maybeRecoverPlaybackError() {

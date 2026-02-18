@@ -401,10 +401,6 @@
     <string name="playback_settings">Kecepatan &amp; nada</string>
     <string name="quick_picks_cache">Cache data pilihan cepat</string>
     <string name="quick_picks_cache_description">Menyimpan data pilihan cepat ke disk untuk akses offline</string>
-    <string name="skip_on_error">Lewati otomatis</string>
-    <string name="skip_on_error_description">Melewati lagu saat terjadi error.</string>
-    <string name="skip_on_error_notification">%s dilewati karena terjadi error</string>
-    <string name="skip_on_error_notification_unknown_song">Lagu saat ini dilewati karena terjadi error</string>
     <string name="sleep_timer_until_song_end">Sampai lagu selesai</string>
     <string name="version_check">Periksa pembaruan secara otomatis</string>
     <string name="weekly">Mingguan</string>

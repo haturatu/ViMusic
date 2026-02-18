@@ -399,10 +399,6 @@
     <string name="weekly">每周</string>
     <string name="version_check">自动检查更新</string>
 
-    <string name="skip_on_error">自动跳过</string>
-    <string name="skip_on_error_description">当发生错误时跳过当前歌曲</string>
-    <string name="skip_on_error_notification">由于错误，已跳过 %s</string>
-    <string name="skip_on_error_notification_unknown_song">由于错误，已跳过当前歌曲</string>
     <string name="reverb_small_room">小房间</string>
     <string name="reverb_medium_room">中等房间</string>
     <string name="reverb_large_room">大房间</string>
