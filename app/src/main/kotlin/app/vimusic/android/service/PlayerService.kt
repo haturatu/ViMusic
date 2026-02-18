@@ -480,7 +480,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         player.currentMediaItem?.mediaId?.let { mediaId ->
             if (error.findCause<InvalidPlaybackResponseException>() != null) {
                 playbackRetryManager.prepareRetry(mediaId) { uriCache.clear() }
-                player.pause()
                 player.prepare()
                 player.play()
                 return
@@ -490,7 +489,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         if (
             error.findCause<InvalidResponseCodeException>()?.responseCode == 416
         ) {
-            player.pause()
             player.prepare()
             player.play()
             return
