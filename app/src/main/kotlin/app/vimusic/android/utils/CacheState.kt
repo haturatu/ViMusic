@@ -154,6 +154,7 @@ class ConditionalCacheDataSourceFactory(
             }.getOrElse {
                 if (
                     it is ReadOnlyException ||
+                    it.findCause<ReadOnlyException>() != null ||
                     it is FileDataSource.FileDataSourceException ||
                     it.findCause<FileNotFoundException>() != null
                 ) {
