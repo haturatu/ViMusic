@@ -43,18 +43,13 @@ import app.vimusic.android.utils.medium
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.isAtLeastAndroid13
 import app.vimusic.core.ui.utils.isCompositionLaunched
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
 import kotlin.time.Duration.Companion.milliseconds
 
 private val permission = if (isAtLeastAndroid13) Manifest.permission.READ_MEDIA_AUDIO
@@ -123,10 +118,9 @@ fun HomeLocalSongs(onSearchClick: () -> Unit) = with(OrderPreferences) {
     }
 }
 
-private val mediaScope = CoroutineScope(Dispatchers.IO + CoroutineName("MediaStore worker"))
 fun Context.musicFilesAsFlow(
     songsRepository: SongsRepository
-): StateFlow<List<Song>> = callbackFlow {
+): Flow<List<Song>> = callbackFlow {
     val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
         override fun onChange(selfChange: Boolean) {
             trySend(Unit)
@@ -172,4 +166,3 @@ fun Context.musicFilesAsFlow(
     } ?: emptyList()
 }.distinctUntilChanged()
     .onEach(songsRepository::upsertSongs)
-    .stateIn(mediaScope, SharingStarted.Eagerly, listOf())
