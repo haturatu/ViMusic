@@ -38,8 +38,6 @@ import app.vimusic.core.ui.LocalAppearance
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.io.FileNotFoundException
-import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KProperty
 
 @Composable
 fun PlaylistDownloadIcon(
@@ -114,32 +112,20 @@ class ConditionalCacheDataSourceFactory(
     }
 
     override fun createDataSource() = object : DataSource {
-        private lateinit var selectedFactory: DataSource.Factory
+        private var selectedFactory: DataSource.Factory = upstreamDataSourceFactory
         private val transferListeners = mutableListOf<TransferListener>()
+        private var source: DataSource? = null
 
-        private fun createSource(factory: DataSource.Factory = selectedFactory) = factory.createDataSource().apply {
+        private fun createSource(factory: DataSource.Factory) = factory.createDataSource().apply {
             transferListeners.forEach { addTransferListener(it) }
         }
 
-        private var source by object : ReadWriteProperty<Any?, DataSource> {
-            var s: DataSource? = null
-
-            override fun getValue(thisRef: Any?, property: KProperty<*>) = s ?: run {
-                val newSource = createSource()
-                s = newSource
-                newSource
-            }
-
-            override fun setValue(thisRef: Any?, property: KProperty<*>, value: DataSource) {
-                s = value
-            }
-        }
+        private fun currentSource(): DataSource = source ?: createSource(selectedFactory).also { source = it }
 
         override fun read(buffer: ByteArray, offset: Int, length: Int): Int = runCatching {
-            source.read(buffer, offset, length)
+            currentSource().read(buffer, offset, length)
         }.getOrElse { error ->
             if (
-                ::selectedFactory.isInitialized &&
                 selectedFactory === cacheDataSourceFactory &&
                 (error is FileDataSource.FileDataSourceException ||
                         error.findCause<FileNotFoundException>() != null)
@@ -147,37 +133,41 @@ class ConditionalCacheDataSourceFactory(
                 // Cache file disappeared; fall back to upstream and retry once.
                 selectedFactory = upstreamDataSourceFactory
                 source = createSource(upstreamDataSourceFactory)
-                source.read(buffer, offset, length)
+                currentSource().read(buffer, offset, length)
             } else {
                 throw error
             }
         }
 
         override fun addTransferListener(transferListener: TransferListener) {
-            if (::selectedFactory.isInitialized) source.addTransferListener(transferListener)
-
+            source?.addTransferListener(transferListener)
             transferListeners += transferListener
         }
 
         override fun open(dataSpec: DataSpec): Long {
             selectedFactory =
                 if (shouldCache(dataSpec)) cacheDataSourceFactory else upstreamDataSourceFactory
+            source = createSource(selectedFactory)
 
             return runCatching {
-                source.open(dataSpec)
+                currentSource().open(dataSpec)
             }.getOrElse {
                 if (
                     it is ReadOnlyException ||
                     it is FileDataSource.FileDataSourceException ||
                     it.findCause<FileNotFoundException>() != null
                 ) {
+                    selectedFactory = upstreamDataSourceFactory
                     source = createSource(upstreamDataSourceFactory)
-                    source.open(dataSpec)
+                    currentSource().open(dataSpec)
                 } else throw it
             }
         }
 
-        override fun getUri() = source.uri
-        override fun close() = source.close()
+        override fun getUri() = source?.uri
+        override fun close() {
+            source?.close()
+            source = null
+        }
     }
 }
