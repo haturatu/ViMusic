@@ -696,9 +696,9 @@ interface Database {
             durationText = extras?.durationText,
             thumbnailUrl = mediaItem.mediaMetadata.artworkUri?.toString(),
             explicit = extras?.explicit == true
-        ).let(block).also { song ->
-            if (insert(song) == -1L) return
-        }
+        ).let(block)
+
+        insert(song)
 
         extras?.albumId?.let { albumId ->
             insert(
