@@ -1211,7 +1211,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
             val uri = runCatching { trimmed.toUri() }.getOrNull()
             if (uri != null) {
-                uri.getQueryParameter("v")?.takeIf { it.isNotBlank() }?.let { return it }
+                if (uri.isHierarchical) {
+                    uri.getQueryParameter("v")?.takeIf { it.isNotBlank() }?.let { return it }
+                }
 
                 val host = uri.host.orEmpty()
                 val path = uri.path.orEmpty()
@@ -1284,6 +1286,8 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 }
             )
         ) resolver@{ dataSpec ->
+            if (dataSpec.isLocal) return@resolver dataSpec
+
             val mediaId = dataSpec.key
                 ?.let(::extractYouTubeVideoId)
                 ?: run {
@@ -1304,9 +1308,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     .withAdditionalHeaders(mapOf("Range" to "bytes=$rangeText"))
             } ?: this
 
-            val resolvedDataSpec: DataSpec = if (dataSpec.isLocal) {
-                dataSpec
-            } else {
+            val resolvedDataSpec: DataSpec = run {
                 val cachedDataSpec = if (!forceFreshResolve) {
                     uriCache[mediaId]?.let { cachedUri ->
                         dataSpec
