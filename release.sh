@@ -38,15 +38,7 @@ require_cmd git
 require_cmd gh
 require_cmd make
 
-if [[ -z "$VERSION" ]]; then
-  echo "error: failed to read version from gradle.properties" >&2
-  exit 1
-fi
-
-if [[ ! -f "$ASSET_PATH" ]]; then
-  echo "info: asset not found at '$ASSET_PATH', running make release..."
-  make release
-fi
+make release
 
 if [[ ! -f "$ASSET_PATH" ]]; then
   echo "error: asset file not found: $ASSET_PATH" >&2
