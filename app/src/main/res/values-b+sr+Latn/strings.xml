@@ -392,10 +392,6 @@
     <string name="weekly">Nedeljno</string>
     <string name="version_check">Automatski proveri ažuriranja</string>
 
-    <string name="skip_on_error">Automatski preskoči</string>
-    <string name="skip_on_error_description">Preskače trenutnu pesmu kada dođe do greške.</string>
-    <string name="skip_on_error_notification">Pesma %s je preskočena zbog greške</string>
-    <string name="skip_on_error_notification_unknown_song">Trenutna pesma je preskočena zbog greške</string>
     <string name="reverb_small_room">Mala soba</string>
     <string name="reverb_medium_room">Srednja soba</string>
     <string name="reverb_large_room">Velika soba</string>

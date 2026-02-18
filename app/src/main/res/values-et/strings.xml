@@ -396,10 +396,6 @@
     <string name="weekly">Iga nädal</string>
     <string name="version_check">Automaatne uuenduste kontrollimine</string>
 
-    <string name="skip_on_error">Automaatselt vahele</string>
-    <string name="skip_on_error_description">Jätab praeguse laulu vahele, kui tekib viga.</string>
-    <string name="skip_on_error_notification">Jäteti %s vea tõttu vahele</string>
-    <string name="skip_on_error_notification_unknown_song">Jäteti praegune laul vea tõttu vahele</string>
     <string name="reverb_small_room">Väike ruum</string>
     <string name="reverb_medium_room">Keskmine ruum</string>
     <string name="reverb_large_room">Suur ruum</string>

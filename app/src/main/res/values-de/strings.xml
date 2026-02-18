@@ -380,10 +380,6 @@
     <string name="weekly">Wöchentlich</string>
     <string name="version_check">Automatisch nach Aktualisierungen suchen</string>
 
-    <string name="skip_on_error">Automatisch überspringen</string>
-    <string name="skip_on_error_description">Überspringt das aktuelle Lied, wenn ein Fehler auftritt.</string>
-    <string name="skip_on_error_notification">%s wegen eines Fehlers übersprungen</string>
-    <string name="skip_on_error_notification_unknown_song">Das aktuelle Lied wurde aufgrund eines Fehlers übersprungen.</string>
     <string name="reverb_small_room">Small room</string>
     <string name="reverb_medium_room">Medium room</string>
     <string name="reverb_large_room">Large room</string>
