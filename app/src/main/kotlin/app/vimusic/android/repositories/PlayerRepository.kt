@@ -55,7 +55,7 @@ object DatabasePlayerRepository : PlayerRepository {
         transaction {
             Database.clearQueue()
             Database.insert(queue)
-        }
+        }.join()
     }
 
     override fun loadQueue(): List<QueuedMediaItem> = Database.queue()

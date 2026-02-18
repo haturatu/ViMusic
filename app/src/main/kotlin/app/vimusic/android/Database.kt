@@ -61,6 +61,7 @@ import app.vimusic.core.data.enums.SortOrder
 import app.vimusic.core.ui.utils.songBundle
 import io.ktor.http.Url
 import kotlinx.coroutines.flow.Flow
+import java.util.concurrent.CompletableFuture
 
 @Dao
 @Suppress("TooManyFunctions")
@@ -202,7 +203,7 @@ interface Database {
         }
     }
 
-    @Query("SELECT * FROM QueuedMediaItem")
+    @Query("SELECT * FROM QueuedMediaItem ORDER BY id ASC")
     fun queue(): List<QueuedMediaItem>
 
     @Transaction
@@ -1120,12 +1121,26 @@ object Converters {
 val Database.internal: RoomDatabase
     get() = DatabaseInitializer.instance
 
-fun query(block: () -> Unit) = DatabaseInitializer.instance.queryExecutor.execute(block)
-
-fun transaction(block: () -> Unit) = with(DatabaseInitializer.instance) {
-    transactionExecutor.execute {
-        runInTransaction(block)
+fun query(block: () -> Unit): CompletableFuture<Unit> {
+    val future = CompletableFuture<Unit>()
+    DatabaseInitializer.instance.queryExecutor.execute {
+        runCatching(block)
+            .onSuccess { future.complete(Unit) }
+            .onFailure { future.completeExceptionally(it) }
     }
+    return future
+}
+
+fun transaction(block: () -> Unit): CompletableFuture<Unit> {
+    val future = CompletableFuture<Unit>()
+    with(DatabaseInitializer.instance) {
+        transactionExecutor.execute {
+            runCatching { runInTransaction(block) }
+                .onSuccess { future.complete(Unit) }
+                .onFailure { future.completeExceptionally(it) }
+        }
+    }
+    return future
 }
 
 val RoomDatabase.dbPath: String?
