@@ -37,6 +37,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,13 +52,6 @@ import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration.Companion.milliseconds
-
-private val executor = Executors.newCachedThreadPool()
-private val coroutineScope = CoroutineScope(
-    executor.asCoroutineDispatcher() +
-            SupervisorJob() +
-            CoroutineName("PrecacheService-Worker-Scope")
-)
 
 // While the class is not a singleton (lifecycle), there should only be one download state at a time
 private val mutableDownloadState = MutableStateFlow(false)
@@ -74,6 +68,13 @@ class PrecacheService : DownloadService(
     /* channelNameResourceId                = */ R.string.pre_cache,
     /* channelDescriptionResourceId         = */ 0
 ) {
+    private val executor = Executors.newCachedThreadPool()
+    private val coroutineScope = CoroutineScope(
+        executor.asCoroutineDispatcher() +
+                SupervisorJob() +
+                CoroutineName("PrecacheService-Worker-Scope")
+    )
+
     private val downloadQueue =
         Channel<DownloadManager>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -147,16 +148,18 @@ class PrecacheService : DownloadService(
             toast(getString(R.string.error_pre_cache))
         }
 
-        val cache = BlockingDeferredCache {
-            suspendCoroutine {
-                waiters += { it.resume(Unit) }
+        val cache = BlockingDeferredCache(
+            coroutineScope.async {
+                suspendCoroutine {
+                    waiters += { it.resume(Unit) }
+                }
+                binder?.cache ?: run {
+                    Log.w("PrecacheService", "PlayerService not bound; falling back to standalone cache")
+                    toast(getString(R.string.error_pre_cache))
+                    PlayerService.createCache(this@PrecacheService)
+                }
             }
-            binder?.cache ?: run {
-                Log.w("PrecacheService", "PlayerService not bound; falling back to standalone cache")
-                toast(getString(R.string.error_pre_cache))
-                PlayerService.createCache(this@PrecacheService)
-            }
-        }
+        )
 
         progressUpdaterJob?.cancel()
         progressUpdaterJob = coroutineScope.launch {
@@ -240,6 +243,8 @@ class PrecacheService : DownloadService(
 
         safeUnregisterReceiver(notificationActionReceiver)
         mutableDownloadState.update { false }
+        coroutineScope.cancel()
+        executor.shutdown()
     }
 
     companion object {
@@ -263,13 +268,11 @@ class PrecacheService : DownloadService(
 
             repository.insertMediaItem(mediaItem).onFailure { return }
 
-            coroutineScope.launch {
-                context.download<PrecacheService>(downloadRequest).exceptionOrNull()?.let {
-                    if (it is CancellationException) throw it
+            context.download<PrecacheService>(downloadRequest).exceptionOrNull()?.let {
+                if (it is CancellationException) throw it
 
-                    it.printStackTrace()
-                    context.toast(context.getString(R.string.error_pre_cache))
-                }
+                it.printStackTrace()
+                context.toast(context.getString(R.string.error_pre_cache))
             }
         }
     }
@@ -278,8 +281,6 @@ class PrecacheService : DownloadService(
 @Suppress("TooManyFunctions")
 @OptIn(UnstableApi::class)
 class BlockingDeferredCache(private val cache: Deferred<Cache>) : Cache {
-    constructor(init: suspend () -> Cache) : this(coroutineScope.async { init() })
-
     private val resolvedCache by lazy { runBlocking { cache.await() } }
 
     override fun getUid() = resolvedCache.uid

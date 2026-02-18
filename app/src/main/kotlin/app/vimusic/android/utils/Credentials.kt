@@ -1,6 +1,7 @@
 package app.vimusic.android.utils
 
 import android.content.Context
+import androidx.core.content.ContextCompat
 import androidx.credentials.CreatePasswordRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CredentialManagerCallback
@@ -10,26 +11,15 @@ import androidx.credentials.PasswordCredential
 import androidx.credentials.exceptions.CreateCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import kotlinx.coroutines.CancellableContinuation
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
-import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-private val executor = Executors.newCachedThreadPool()
-private val coroutineScope = CoroutineScope(
-    executor.asCoroutineDispatcher() + SupervisorJob() + CoroutineName("androidx-credentials-util")
-)
-
 private suspend inline fun <T> wrapper(
     crossinline block: (cont: CancellableContinuation<T>) -> Unit
-): T = withContext(coroutineScope.coroutineContext) {
-    runCatching {
+): T {
+    return runCatching {
         suspendCancellableCoroutine { cont ->
             runCatching {
                 block(cont)
@@ -69,7 +59,7 @@ suspend fun CredentialManager.upsert(
             password = password
         ),
         cancellationSignal = cont.asCancellationSignal,
-        executor = executor,
+        executor = ContextCompat.getMainExecutor(context),
         callback = callback<_, _, CreateCredentialCancellationException>(cont)
     )
 }
@@ -79,7 +69,7 @@ suspend fun CredentialManager.get(context: Context) = wrapper { cont ->
         context = context,
         request = GetCredentialRequest(listOf(GetPasswordOption())),
         cancellationSignal = cont.asCancellationSignal,
-        executor = executor,
+        executor = ContextCompat.getMainExecutor(context),
         callback = callback<_, _, GetCredentialCancellationException>(cont)
     )
 }.let { runCatching { it.credential as? PasswordCredential }.getOrNull() }
