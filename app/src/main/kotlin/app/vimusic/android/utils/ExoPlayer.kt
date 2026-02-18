@@ -86,6 +86,9 @@ private fun validateResponse(
     val contentRange = parseContentRange(header("Content-Range"))
     val contentLength = header("Content-Length")?.toLongOrNull()
 
+    // Full-response fallback from server is allowed; prioritize uninterrupted playback.
+    if (statusCode == 200) return
+
     if (contentRange != null && contentLength != null && contentRange.length != contentLength) {
         throw InvalidPlaybackResponseException(
             "Invalid response: Content-Range length ${contentRange.length} != Content-Length $contentLength"
