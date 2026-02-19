@@ -14,12 +14,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 private val coroutineScope = CoroutineScope(Dispatchers.IO + CoroutineName("PreferencesHolders"))
+private val writeMutex = Mutex()
 
 private val canWriteState get() = !Snapshot.current.readOnly && !Snapshot.current.root.readOnly
 
@@ -60,8 +63,10 @@ data class SharedPreferencesProperty<T : Any>(
 
     override fun setValue(thisRef: PreferencesHolder, property: KProperty<*>, value: T) =
         coroutineScope.launch {
-            thisRef.edit(commit = true) {
-                set(property.key, value)
+            writeMutex.withLock {
+                thisRef.edit(commit = false) {
+                    set(property.key, value)
+                }
             }
         }.let { }
 }
