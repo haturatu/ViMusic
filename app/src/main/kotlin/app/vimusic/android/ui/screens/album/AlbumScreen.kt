@@ -171,8 +171,10 @@ fun AlbumScreen(browseId: String) {
                             headerContent = headerContent,
                             thumbnailContent = thumbnailContent,
                             afterHeaderContent = {
-                                if (album == null) PlaylistInfo(playlist = albumPage)
-                                else PlaylistInfo(playlist = album)
+                                if (songs.isNotEmpty()) {
+                                    if (album == null) PlaylistInfo(playlist = albumPage)
+                                    else PlaylistInfo(playlist = album)
+                                }
                             }
                         )
 
