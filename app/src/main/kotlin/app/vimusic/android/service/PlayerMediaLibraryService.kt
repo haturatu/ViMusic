@@ -33,14 +33,18 @@ import app.vimusic.core.data.utils.CallValidator
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.SettableFuture
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 @OptIn(UnstableApi::class)
 class PlayerMediaLibraryService : MediaLibraryService(), ServiceConnection {
     private val mediaLibraryRepository by lazy { applicationContext.appContainer.mediaLibraryRepository }
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var lastSongs = emptyList<Song>()
 
     private var bound = false
@@ -60,6 +64,7 @@ class PlayerMediaLibraryService : MediaLibraryService(), ServiceConnection {
         session?.release()
         session = null
         if (bound) unbindService(this)
+        serviceScope.cancel()
         super.onDestroy()
     }
 
@@ -251,49 +256,56 @@ class PlayerMediaLibraryService : MediaLibraryService(), ServiceConnection {
             pageSize: Int,
             params: MediaLibraryService.LibraryParams?
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
-            val items = runBlocking(Dispatchers.IO) {
-                when (MediaId(parentId)) {
-                    MediaId.ROOT -> mutableListOf(
-                        songsMediaItem,
-                        playlistsMediaItem,
-                        albumsMediaItem
-                    )
+            val future = SettableFuture.create<LibraryResult<ImmutableList<MediaItem>>>()
+            serviceScope.launch {
+                val result = runCatching {
+                    val items = when (MediaId(parentId)) {
+                        MediaId.ROOT -> mutableListOf(
+                            songsMediaItem,
+                            playlistsMediaItem,
+                            albumsMediaItem
+                        )
 
-                    MediaId.SONGS ->
-                        mediaLibraryRepository
-                            .getRecentSongs(limit = 30)
-                            .also { lastSongs = it }
-                            .map { it.asBrowsableMediaItem }
-                            .toMutableList()
-                            .apply {
-                                if (isNotEmpty()) add(0, shuffleMediaItem)
-                            }
+                        MediaId.SONGS ->
+                            mediaLibraryRepository
+                                .getRecentSongs(limit = 30)
+                                .also { lastSongs = it }
+                                .map { it.asBrowsableMediaItem }
+                                .toMutableList()
+                                .apply {
+                                    if (isNotEmpty()) add(0, shuffleMediaItem)
+                                }
 
-                    MediaId.PLAYLISTS ->
-                        mediaLibraryRepository
-                            .getPlaylistPreviewsByDateAddedDesc()
-                            .map { it.asBrowsableMediaItem }
-                            .toMutableList()
-                            .apply {
-                                add(0, favoritesMediaItem)
-                                add(1, offlineMediaItem)
-                                add(2, topMediaItem)
-                                add(3, localMediaItem)
-                            }
+                        MediaId.PLAYLISTS ->
+                            mediaLibraryRepository
+                                .getPlaylistPreviewsByDateAddedDesc()
+                                .map { it.asBrowsableMediaItem }
+                                .toMutableList()
+                                .apply {
+                                    add(0, favoritesMediaItem)
+                                    add(1, offlineMediaItem)
+                                    add(2, topMediaItem)
+                                    add(3, localMediaItem)
+                                }
 
-                    MediaId.ALBUMS ->
-                        mediaLibraryRepository
-                            .getAlbumsByRowIdDesc()
-                            .map { it.asBrowsableMediaItem }
-                            .toMutableList()
+                        MediaId.ALBUMS ->
+                            mediaLibraryRepository
+                                .getAlbumsByRowIdDesc()
+                                .map { it.asBrowsableMediaItem }
+                                .toMutableList()
 
-                    else -> mutableListOf()
+                        else -> mutableListOf()
+                    }
+                    LibraryResult.ofItemList(ImmutableList.copyOf(items), params)
                 }
+                future.set(
+                    result.getOrElse {
+                        LibraryResult.ofError(SessionError.ERROR_UNKNOWN)
+                    }
+                )
             }
 
-            return Futures.immediateFuture(
-                LibraryResult.ofItemList(ImmutableList.copyOf(items), params)
-            )
+            return future
         }
 
         override fun onGetLibraryRoot(
@@ -359,72 +371,76 @@ class PlayerMediaLibraryService : MediaLibraryService(), ServiceConnection {
             controller: MediaSession.ControllerInfo,
             mediaItems: List<MediaItem>
         ): ListenableFuture<List<MediaItem>> {
-            val resolved: List<MediaItem> = runBlocking(Dispatchers.IO) {
-                val item = mediaItems.firstOrNull() ?: return@runBlocking mediaItems
-                val data = item.mediaId.split('/')
-                var index = 0
+            val future = SettableFuture.create<List<MediaItem>>()
+            serviceScope.launch {
+                val resolved = runCatching {
+                    val item = mediaItems.firstOrNull() ?: return@runCatching mediaItems
+                    val data = item.mediaId.split('/')
+                    var index = 0
 
-                val mediaList = when (data.getOrNull(0)?.let { MediaId(it) }) {
-                    MediaId.SHUFFLE -> lastSongs
+                    val mediaList = when (data.getOrNull(0)?.let { MediaId(it) }) {
+                        MediaId.SHUFFLE -> lastSongs
 
-                    MediaId.SONGS -> data.getOrNull(1)?.let { songId ->
-                        index = lastSongs.indexOfFirst { it.id == songId }
-                        lastSongs
-                    }
+                        MediaId.SONGS -> data.getOrNull(1)?.let { songId ->
+                            index = lastSongs.indexOfFirst { it.id == songId }
+                            lastSongs
+                        }
 
-                    MediaId.FAVORITES ->
-                        mediaLibraryRepository.getFavoritesShuffled()
+                        MediaId.FAVORITES ->
+                            mediaLibraryRepository.getFavoritesShuffled()
 
-                    MediaId.OFFLINE ->
-                        mediaLibraryRepository.getOfflineCachedShuffled { binder.isCached(it) }
+                        MediaId.OFFLINE ->
+                            mediaLibraryRepository.getOfflineCachedShuffled { binder.isCached(it) }
 
-                    MediaId.TOP -> {
-                        val duration = DataPreferences.topListPeriod.duration
-                        val length = DataPreferences.topListLength
+                        MediaId.TOP -> {
+                            val duration = DataPreferences.topListPeriod.duration
+                            val length = DataPreferences.topListLength
 
-                        mediaLibraryRepository.getTopSongs(
-                            durationMillis = duration?.inWholeMilliseconds,
-                            length = length
-                        )
-                    }
-
-                    MediaId.LOCAL ->
-                        mediaLibraryRepository.getLocalSongs(
-                            sortBy = OrderPreferences.localSongSortBy,
-                            sortOrder = OrderPreferences.localSongSortOrder
-                        )
-
-                    MediaId.PLAYLISTS ->
-                        data
-                            .getOrNull(1)
-                            ?.toLongOrNull()
-                            ?.let { playlistId ->
-                                mediaLibraryRepository.getPlaylistSongsShuffled(playlistId)
-                            }
-
-                    MediaId.ALBUMS ->
-                        data
-                            .getOrNull(1)
-                            ?.let { albumId ->
-                                mediaLibraryRepository.getAlbumSongs(albumId)
-                            }
-
-                    else -> emptyList()
-                }
-
-                (mediaList?.map(Song::asMediaItem) ?: emptyList()).also {
-                    if (it.isNotEmpty()) {
-                        withContext(Dispatchers.Main) {
-                            binder.player.forcePlayAtIndex(
-                                items = it,
-                                index = index.coerceIn(0, it.size)
+                            mediaLibraryRepository.getTopSongs(
+                                durationMillis = duration?.inWholeMilliseconds,
+                                length = length
                             )
+                        }
+
+                        MediaId.LOCAL ->
+                            mediaLibraryRepository.getLocalSongs(
+                                sortBy = OrderPreferences.localSongSortBy,
+                                sortOrder = OrderPreferences.localSongSortOrder
+                            )
+
+                        MediaId.PLAYLISTS ->
+                            data
+                                .getOrNull(1)
+                                ?.toLongOrNull()
+                                ?.let { playlistId ->
+                                    mediaLibraryRepository.getPlaylistSongsShuffled(playlistId)
+                                }
+
+                        MediaId.ALBUMS ->
+                            data
+                                .getOrNull(1)
+                                ?.let { albumId ->
+                                    mediaLibraryRepository.getAlbumSongs(albumId)
+                                }
+
+                        else -> emptyList()
+                    }
+
+                    (mediaList?.map(Song::asMediaItem) ?: emptyList()).also {
+                        if (it.isNotEmpty()) {
+                            withContext(Dispatchers.Main) {
+                                binder.player.forcePlayAtIndex(
+                                    items = it,
+                                    index = index.coerceIn(0, it.size)
+                                )
+                            }
                         }
                     }
                 }
+                future.set(resolved.getOrElse { mediaItems })
             }
 
-            return Futures.immediateFuture(resolved)
+            return future
         }
     }
 

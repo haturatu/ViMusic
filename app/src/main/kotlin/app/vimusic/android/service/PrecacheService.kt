@@ -31,11 +31,11 @@ import app.vimusic.android.utils.toast
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
@@ -48,7 +48,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
-import java.util.concurrent.Executors
+import java.util.concurrent.Executor
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration.Companion.milliseconds
@@ -68,12 +68,14 @@ class PrecacheService : DownloadService(
     /* channelNameResourceId                = */ R.string.pre_cache,
     /* channelDescriptionResourceId         = */ 0
 ) {
-    private val executor = Executors.newCachedThreadPool()
     private val coroutineScope = CoroutineScope(
-        executor.asCoroutineDispatcher() +
+        Dispatchers.IO +
                 SupervisorJob() +
                 CoroutineName("PrecacheService-Worker-Scope")
     )
+    private val downloadExecutor = Executor { command ->
+        coroutineScope.launch { command.run() }
+    }
 
     private val downloadQueue =
         Channel<DownloadManager>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -181,7 +183,7 @@ class PrecacheService : DownloadService(
                 cache = cache,
                 chunkLength = null
             ),
-            /* executor = */ executor
+            /* executor = */ downloadExecutor
         ).apply {
             maxParallelDownloads = 3
             minRetryCount = 1
@@ -244,7 +246,6 @@ class PrecacheService : DownloadService(
         safeUnregisterReceiver(notificationActionReceiver)
         mutableDownloadState.update { false }
         coroutineScope.cancel()
-        executor.shutdown()
     }
 
     companion object {

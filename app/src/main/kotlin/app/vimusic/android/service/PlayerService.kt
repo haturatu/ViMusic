@@ -612,15 +612,17 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         val mediaItemIndex = player.currentMediaItemIndex
         val mediaItemPosition = player.currentPosition
 
-        runCatching {
-            playerRepository.saveQueue(
-                mediaItems.mapIndexed { index, mediaItem ->
-                    QueuedMediaItem(
-                        mediaItem = mediaItem,
-                        position = if (index == mediaItemIndex) mediaItemPosition else null
-                    )
-                }
-            )
+        coroutineScope.launch(Dispatchers.IO) {
+            runCatching {
+                playerRepository.saveQueue(
+                    mediaItems.mapIndexed { index, mediaItem ->
+                        QueuedMediaItem(
+                            mediaItem = mediaItem,
+                            position = if (index == mediaItemIndex) mediaItemPosition else null
+                        )
+                    }
+                )
+            }
         }
     }
 

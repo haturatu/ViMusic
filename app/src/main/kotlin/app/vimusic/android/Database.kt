@@ -61,8 +61,12 @@ import app.vimusic.core.data.enums.SongSortBy
 import app.vimusic.core.data.enums.SortOrder
 import app.vimusic.core.ui.utils.songBundle
 import io.ktor.http.Url
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import java.util.concurrent.CompletableFuture
+import kotlinx.coroutines.launch
 
 @Dao
 @Suppress("TooManyFunctions")
@@ -1122,27 +1126,15 @@ object Converters {
 val Database.internal: RoomDatabase
     get() = DatabaseInitializer.instance
 
-fun query(block: () -> Unit): CompletableFuture<Unit> {
-    val future = CompletableFuture<Unit>()
-    DatabaseInitializer.instance.queryExecutor.execute {
-        runCatching(block)
-            .onSuccess { future.complete(Unit) }
-            .onFailure { future.completeExceptionally(it) }
-    }
-    return future
+fun query(block: () -> Unit): Job = databaseWriteScope.launch {
+    block()
 }
 
-fun transaction(block: () -> Unit): CompletableFuture<Unit> {
-    val future = CompletableFuture<Unit>()
-    with(DatabaseInitializer.instance) {
-        transactionExecutor.execute {
-            runCatching { runInTransaction(block) }
-                .onSuccess { future.complete(Unit) }
-                .onFailure { future.completeExceptionally(it) }
-        }
-    }
-    return future
+fun transaction(block: () -> Unit): Job = databaseWriteScope.launch {
+    DatabaseInitializer.instance.runInTransaction(block)
 }
+
+private val databaseWriteScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
 val RoomDatabase.dbPath: String?
     get() = openHelper.writableDatabase.path
