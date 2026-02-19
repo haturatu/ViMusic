@@ -12,6 +12,7 @@ import app.vimusic.providers.innertube.Innertube
 import app.vimusic.providers.innertube.models.bodies.PlayerBody
 import app.vimusic.providers.innertube.requests.player
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.runBlocking
 
 interface PlayerRepository {
     fun insertSong(mediaItem: MediaItem)
@@ -52,10 +53,12 @@ object DatabasePlayerRepository : PlayerRepository {
     }
 
     override fun saveQueue(queue: List<QueuedMediaItem>) {
-        transaction {
-            Database.clearQueue()
-            Database.insert(queue)
-        }.join()
+        runBlocking {
+            transaction {
+                Database.clearQueue()
+                Database.insert(queue)
+            }.join()
+        }
     }
 
     override fun loadQueue(): List<QueuedMediaItem> = Database.queue()
