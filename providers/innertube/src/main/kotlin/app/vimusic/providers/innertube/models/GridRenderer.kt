@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class GridRenderer(
     val items: List<Item>?,
+    val continuations: List<Continuation>?,
     val header: Header?
 ) {
     @Serializable

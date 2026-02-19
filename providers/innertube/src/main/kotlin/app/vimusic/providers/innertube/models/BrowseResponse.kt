@@ -8,7 +8,8 @@ import kotlinx.serialization.json.JsonNames
 data class BrowseResponse(
     val contents: Contents?,
     val header: Header?,
-    val microformat: Microformat?
+    val microformat: Microformat?,
+    val responseContext: ResponseContext?
 ) {
     @Serializable
     data class Contents(

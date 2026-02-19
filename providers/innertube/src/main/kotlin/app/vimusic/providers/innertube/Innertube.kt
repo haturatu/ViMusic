@@ -4,6 +4,7 @@ import app.vimusic.providers.innertube.models.MusicNavigationButtonRenderer
 import app.vimusic.providers.innertube.models.NavigationEndpoint
 import app.vimusic.providers.innertube.models.Runs
 import app.vimusic.providers.innertube.models.Thumbnail
+import app.vimusic.providers.innertube.models.Context
 import app.vimusic.providers.innertube.models.UserAgents
 import app.vimusic.providers.utils.runCatchingCancellable
 import io.ktor.client.HttpClient
@@ -37,6 +38,8 @@ import java.io.IOException
 
 object Innertube {
     private var javascriptChallenge: JavaScriptChallenge? = null
+    @Volatile
+    private var latestVisitorData: String? = null
 
     private val javascriptClient = HttpClient(OkHttp) {
         engine {
@@ -254,6 +257,16 @@ object Innertube {
 
     internal fun HttpRequestBuilder.mask(value: String = "*") =
         header("X-Goog-FieldMask", value)
+
+    internal fun withLatestVisitorData(context: Context): Context = context.copy(
+        client = context.client.copy(
+            visitorData = latestVisitorData ?: context.client.visitorData
+        )
+    )
+
+    internal fun updateLatestVisitorData(visitorData: String?) {
+        if (!visitorData.isNullOrBlank()) latestVisitorData = visitorData
+    }
 
     @Serializable
     data class Info<T : NavigationEndpoint.Endpoint>(

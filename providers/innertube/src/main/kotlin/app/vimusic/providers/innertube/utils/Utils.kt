@@ -43,5 +43,6 @@ infix operator fun <T : Innertube.Item> Innertube.ItemsPage<T>?.plus(other: Inne
     other.copy(
         items = (this?.items?.plus(other.items ?: emptyList()) ?: other.items)
             ?.distinctBy(Innertube.Item::key),
-        continuation = other.continuation ?: this?.continuation
+        continuation = other.continuation
+            ?.takeIf { it.isNotBlank() }
     )

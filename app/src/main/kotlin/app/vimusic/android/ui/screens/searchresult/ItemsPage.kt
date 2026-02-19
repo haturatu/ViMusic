@@ -92,7 +92,8 @@ inline fun <T : Innertube.Item> ItemsPage(
             provideItems(itemsPage?.continuation)
         }?.onSuccess {
             if (it == null) {
-                if (itemsPage == null) itemsPage = Innertube.ItemsPage(null, null)
+                itemsPage = (itemsPage ?: Innertube.ItemsPage(null, null))
+                    .copy(continuation = null)
             } else itemsPage += it
         }?.onFailure {
             itemsPage = itemsPage?.copy(continuation = null)
