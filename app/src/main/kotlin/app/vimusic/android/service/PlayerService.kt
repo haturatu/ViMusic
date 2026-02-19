@@ -1372,6 +1372,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
                 val start = dataSpec.uriPositionOffset
                 val length = (contentLength - start).coerceAtMost(chunkLength)
+                // HTTP Range end is inclusive, while `length` is a byte count.
                 val rangeText = "$start-${start + length - 1}"
 
                 this.subrange(start, length)
