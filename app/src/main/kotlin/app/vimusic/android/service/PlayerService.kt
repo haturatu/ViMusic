@@ -150,7 +150,6 @@ import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import java.io.IOException
@@ -1392,9 +1391,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
                 cachedDataSpec ?: run {
                     val result = try {
-                        runBlocking(Dispatchers.IO) {
-                            NewPipeExtractorClient.resolveAudioStream(mediaId)
-                        }
+                        NewPipeExtractorClient.resolveAudioStream(mediaId)
                     } catch (error: ContentNotSupportedException) {
                         throw PlayableFormatNotFoundException(error)
                     } catch (error: StreamInfo.StreamExtractException) {
@@ -1419,24 +1416,21 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                         throw PlayableFormatNotFoundException()
                     }
 
-                    val mediaItem = runCatching {
-                        runBlocking(Dispatchers.IO) { findMediaItem(mediaId) }
-                    }.getOrNull()
-                    val extras = mediaItem?.mediaMetadata?.extras?.songBundle
+                    val durationText = streamInfo.duration
+                        .takeIf { it > 0 }
+                        ?.let(DateUtils::formatElapsedTime)
+                        ?.removePrefix("0")
 
-                    if (extras?.durationText == null) {
-                        val durationSeconds = streamInfo.duration
-                        if (durationSeconds > 0) {
-                            DateUtils.formatElapsedTime(durationSeconds)
-                                .removePrefix("0")
-                                .let { durationText ->
-                                    extras?.durationText = durationText
-                                    playerRepository.updateDurationText(mediaId, durationText)
-                                }
-                        }
-                    }
+                    fun writeTask(mediaItem: MediaItem?) {
+                        mediaItem
+                            ?.mediaMetadata
+                            ?.extras
+                            ?.songBundle
+                            ?.takeIf { it.durationText == null }
+                            ?.let { extras ->
+                                extras.durationText = durationText ?: return@let
+                            }
 
-                    val writeTask = {
                         runCatching {
                             mediaItem?.let { item ->
                                 playerRepository.insertSong(item)
@@ -1454,13 +1448,20 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                                     lastModified = null
                                 )
                             )
+
+                            durationText?.let {
+                                playerRepository.updateDurationText(mediaId, it)
+                            }
                         }
                     }
 
                     if (dbWriteScope != null) {
-                        dbWriteScope.launch(Dispatchers.IO) { writeTask() }
+                        dbWriteScope.launch(Dispatchers.IO) {
+                            val mediaItem = runCatching { findMediaItem(mediaId) }.getOrNull()
+                            writeTask(mediaItem)
+                        }
                     } else {
-                        writeTask()
+                        writeTask(null)
                     }
 
                     val uri = audioStream.content.toUri()
