@@ -7,18 +7,20 @@ import app.vimusic.android.models.Format
 import app.vimusic.android.models.QueuedMediaItem
 import app.vimusic.android.query
 import app.vimusic.android.transaction
+import app.vimusic.android.internal
 import androidx.media3.common.MediaItem
 import app.vimusic.providers.innertube.Innertube
 import app.vimusic.providers.innertube.models.bodies.PlayerBody
 import app.vimusic.providers.innertube.requests.player
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 interface PlayerRepository {
     fun insertSong(mediaItem: MediaItem)
     fun incrementTotalPlayTimeMs(songId: String, totalPlayTimeMs: Long)
     fun insertEvent(event: Event)
-    fun saveQueue(queue: List<QueuedMediaItem>)
+    suspend fun saveQueue(queue: List<QueuedMediaItem>)
     fun loadQueue(): List<QueuedMediaItem>
     fun clearQueue()
     suspend fun filterBlacklistedSongs(items: List<MediaItem>): List<MediaItem>
@@ -52,14 +54,13 @@ object DatabasePlayerRepository : PlayerRepository {
         }
     }
 
-    override fun saveQueue(queue: List<QueuedMediaItem>) {
-        runBlocking {
-            transaction {
+    override suspend fun saveQueue(queue: List<QueuedMediaItem>) =
+        withContext(Dispatchers.IO) {
+            Database.internal.runInTransaction {
                 Database.clearQueue()
                 Database.insert(queue)
-            }.join()
+            }
         }
-    }
 
     override fun loadQueue(): List<QueuedMediaItem> = Database.queue()
 
