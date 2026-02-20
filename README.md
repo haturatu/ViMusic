@@ -19,6 +19,18 @@
 ## About
 - Currently maintained as a hobby project.
 
+## This Repository
+
+- Maintain the original ViMusic small binary size as much as possible and avoid unnecessary bloat
+- Make things asynchronous wherever possible
+- Refactor the codebase
+- Improve network stability
+- Focus on performance while preserving existing features
+- Keep the implementation as minimal as possible
+  - In other words, even if my repository dies, I want to keep it easy for others to fork
+
+because this repository is maintained with these principles in mind, issues that require large or fundamental changes may be
+
 ## Features
 - Play (almost) any song or video from YouTube Music
 - Background playback
