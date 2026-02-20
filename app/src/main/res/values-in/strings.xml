@@ -238,7 +238,6 @@
     <string name="pause_playback_history">Jeda riwayat pemutaran</string>
     <string name="pause_playback_history_description">Hentikan pemutaran yang sedang digunakan untuk pilihan cepat</string>
     <string name="pause_playback_history_warning">Harap diperhatikan: hal ini tidak akan memengaruhi cache offline!</string>
-    <string name="reset_quick_picks">Setel ulang pilihan cepat</string>
     <string name="quick_picks_empty">Pilihan cepat telat dibersihkan</string>
     <string name="pause_playback_time">Jeda waktu pemutaran</string>
     <string name="format_pause_playback_time_description">Berhenti menyimpan waktu pemutaran. Ini menghentikan statistik di daftar putar \'%1$s teratas saya\'!</string>
@@ -372,10 +371,6 @@
 
     <plurals name="format_reset_blacklist_description">
         <item quantity="other">Hapus semua %1$s lagu dari daftar hitam</item>
-    </plurals>
-
-    <plurals name="format_reset_quick_picks_amount">
-        <item quantity="other">Hapus %1$s peristiwa pemutaran</item>
     </plurals>
 
     <plurals name="song_count_plural">

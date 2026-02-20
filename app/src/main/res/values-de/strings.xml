@@ -246,7 +246,6 @@
     <string name="pause_playback_history">Pausieren des Wiedergabeverlaufs</string>
     <string name="pause_playback_history_description">Stoppt die Verwendung von Wiedergabeereignissen für die Startseite</string>
     <string name="pause_playback_history_warning">Bitte beachten Sie: Dies hat keine Auswirkungen auf das Offline-Caching!</string>
-    <string name="reset_quick_picks">Startseite zurücksetzen</string>
     <string name="quick_picks_empty">Startseite wird zurückgesetzt</string>
     <string name="pause_playback_time">Wiedergabezeit pausieren</string>
     <string name="format_pause_playback_time_description">Stoppt die Speicherung der Wiedergabedauer. Dadurch wird die Statistik in der Wiedergabeliste \"Meine Top %1$s\" angehalten!</string>
@@ -390,11 +389,6 @@
     <plurals name="format_reset_blacklist_description">
         <item quantity="one">Entferne %1$s Lied von der schwarzen Liste</item>
         <item quantity="other">Alle %1$s Songs von der Schwarzen Liste entfernen</item>
-    </plurals>
-
-    <plurals name="format_reset_quick_picks_amount">
-        <item quantity="one">Wiedergabeereignis %1$s löschen</item>
-        <item quantity="other">%1$s Wiedergabeereignisse löschen</item>
     </plurals>
 
     <plurals name="song_count_plural">

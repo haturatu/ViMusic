@@ -9,7 +9,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.vimusic.android.LocalAppContainer
@@ -39,8 +38,6 @@ fun DatabaseSettings() = with(DataPreferences) {
     val errorMessage = stringResource(R.string.error_message)
     val noFileChooserInstalled = stringResource(R.string.no_file_chooser_installed)
     val coroutineScope = rememberCoroutineScope()
-
-    val eventsCount by viewModel.observeEventsCount().collectAsStateWithLifecycle(initialValue = 0)
 
     val blacklistLength by viewModel.observeBlacklistLength().collectAsStateWithLifecycle(initialValue = 0)
 
@@ -97,20 +94,6 @@ fun DatabaseSettings() = with(DataPreferences) {
                 SettingsDescription(
                     text = stringResource(R.string.pause_playback_history_warning),
                     important = true
-                )
-            }
-
-            AnimatedVisibility(visible = !(pauseHistory && eventsCount == 0)) {
-                SettingsEntry(
-                    title = stringResource(R.string.reset_quick_picks),
-                    text = if (eventsCount > 0) pluralStringResource(
-                        R.plurals.format_reset_quick_picks_amount,
-                        eventsCount,
-                        eventsCount
-                    )
-                    else stringResource(R.string.quick_picks_empty),
-                    onClick = viewModel::clearEvents,
-                    isEnabled = eventsCount > 0
                 )
             }
 

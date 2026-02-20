@@ -252,7 +252,6 @@
     <string name="pause_playback_history">Приостановить историю воспроизведений</string>
     <string name="pause_playback_history_description">Останавливает использование событий воспроизведения для быстрого выбора</string>
     <string name="pause_playback_history_warning">Обратите внимание: это не повлияет на оффлайн-кэширование!</string>
-    <string name="reset_quick_picks">Сбросить быстрый выбор</string>
     <string name="quick_picks_empty">Быстрый выбор очищен</string>
     <string name="pause_playback_time">Приостановить время воспроизведения</string>
     <string name="format_pause_playback_time_description">Останавливает сохранение времени воспроизведения. Это приостанавливает статистику в плейлисте "Мой топ %1$s"!</string>
@@ -407,12 +406,6 @@
         <item quantity="one">Удалить %1$s песню из черного списка</item>
         <item quantity="few">Удалить все %1$s песен из черного списка</item>
         <item quantity="many">Удалить все %1$s песен из черного списка</item>
-    </plurals>
-
-    <plurals name="format_reset_quick_picks_amount">
-        <item quantity="one">Удалить %1$s событие воспроизведения</item>
-        <item quantity="few">Удалить %1$s событий воспроизведения</item>
-        <item quantity="many">Удалить %1$s событий воспроизведения</item>
     </plurals>
 
     <plurals name="song_count_plural">

@@ -9,9 +9,7 @@ import java.io.OutputStream
 class DatabaseSettingsViewModel(
     private val repository: DatabaseSettingsRepository
 ) : ViewModel() {
-    fun observeEventsCount() = repository.observeEventsCount()
     fun observeBlacklistLength() = repository.observeBlacklistLength()
-    fun clearEvents() = repository.clearEvents()
     fun resetBlacklist() = repository.resetBlacklist()
     suspend fun backupTo(output: OutputStream) = repository.backupTo(output)
     suspend fun restoreFrom(input: InputStream) = repository.restoreFrom(input)

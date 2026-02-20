@@ -253,7 +253,6 @@
     <string name="pause_playback_history">暂停播放历史</string>
     <string name="pause_playback_history_description">停止使用播放事件进行快速选择</string>
     <string name="pause_playback_history_warning">请注意：这不会影响离线缓存！</string>
-    <string name="reset_quick_picks">重置快速选择</string>
     <string name="quick_picks_empty">快速选择已清空</string>
     <string name="pause_playback_time">暂停播放时间</string>
     <string name="format_pause_playback_time_description">停止保存播放时间。这将暂停 “我的热门 %1$s” 播放列表中的统计数据！</string>
@@ -408,10 +407,6 @@
 
     <plurals name="format_reset_blacklist_description">
         <item quantity="other">从黑名单中移除所有 %1$s 首歌曲</item>
-    </plurals>
-
-    <plurals name="format_reset_quick_picks_amount">
-        <item quantity="other">删除 %1$s 次播放事件</item>
     </plurals>
 
     <plurals name="song_count_plural">

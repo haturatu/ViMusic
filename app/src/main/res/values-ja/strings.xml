@@ -252,8 +252,7 @@
     <string name="cleanup">削除</string>
     <string name="pause_playback_history">再生履歴を一時停止</string>
     <string name="pause_playback_history_description">クイックピックで使用される再生イベントを停止します</string>
-    <string name="pause_playback_history_warning">注意: これはオフライン キャッシュには影響しません</string>
-    <string name="reset_quick_picks">おすすめのリセット</string>
+    <string name="pause_playback_history_warning">注意: これはオフライン キャッシュには影響しません</string>
     <string name="quick_picks_empty">おすすめはありません</string>
     <string name="pause_playback_time">再生時間の保存を一時停止</string>
     <string name="format_pause_playback_time_description">再生時間の保存を停止します\n「My Top %1$s」の統計が一時停止されます</string>
@@ -397,11 +396,7 @@
 
     <plurals name="format_reset_blacklist_description">
         <item quantity="other">ブラックリストから %1$s の曲をすべて削除する</item>
-    </plurals>
-
-    <plurals name="format_reset_quick_picks_amount">
-        <item quantity="other">%1$s の再生イベントを削除する</item>
-    </plurals>
+    </plurals>
 
     <plurals name="song_count_plural">
         <item quantity="other">%1$d 曲</item>
