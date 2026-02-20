@@ -651,6 +651,18 @@ interface Database {
     @Query("DELETE FROM Event")
     fun clearEvents()
 
+    @Query(
+        """
+        DELETE FROM Event
+        WHERE id NOT IN (
+            SELECT id FROM Event
+            ORDER BY timestamp DESC, id DESC
+            LIMIT :maxCount
+        )
+        """
+    )
+    fun pruneEvents(maxCount: Int)
+
     @Query("DELETE FROM Event WHERE songId = :songId")
     fun clearEventsFor(songId: String)
 
