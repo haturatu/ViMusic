@@ -29,7 +29,7 @@
 - Keep the implementation as minimal as possible
   - In other words, even if my repository dies, I want to keep it easy for others to fork
 
-because this repository is maintained with these principles in mind, issues that require large or fundamental changes may be
+because this repository is maintained with these principles in mind, issues that require large or fundamental changes may be closed.
 
 ## Features
 - Play (almost) any song or video from YouTube Music
