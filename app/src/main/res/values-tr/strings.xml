@@ -242,7 +242,6 @@
     <string name="pause_playback_history">Oynatma geçmişini duraklat</string>
     <string name="pause_playback_history_description">Hızlı seçimler için kullanılan oynatma etkinliklerini durdurur</string>
     <string name="pause_playback_history_warning">Lütfen unutmayın: Bu, çevrimdışı önbelleğe almayı etkilemez!</string>
-    <string name="reset_quick_picks">Hızlı seçimleri sıfırla</string>
     <string name="quick_picks_empty">Hızlı seçimler temizlendi</string>
     <string name="pause_playback_time">Oynatma süresini duraklat</string>
     <string name="format_pause_playback_time_description">Oynatma süresinin kaydedilmesini durdurur. Bu, \'En İyi %1$s\' oyna listesindeki istatistikleri duraklatır!</string>
@@ -386,11 +385,6 @@
     <plurals name="format_reset_blacklist_description">
         <item quantity="one">%1$s şarkıyı kara listeden kaldır</item>
         <item quantity="other">Tüm %1$s şarkıyı kara listeden kaldır</item>
-    </plurals>
-
-    <plurals name="format_reset_quick_picks_amount">
-        <item quantity="one">%1$s oynatma olayını sil</item>
-        <item quantity="other">%1$s oynatma olayını sil</item>
     </plurals>
 
     <plurals name="song_count_plural">

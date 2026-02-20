@@ -252,7 +252,6 @@
     <string name="pause_playback_history">Peata esituse ajalugu</string>
     <string name="pause_playback_history_description">Peatab esituse sündmuste kasutamise kiirvalikute jaoks</string>
     <string name="pause_playback_history_warning">Palun pane tähele: see ei mõjuta offline vahemälu!</string>
-    <string name="reset_quick_picks">Lähtesta kiirvalikud</string>
     <string name="quick_picks_empty">Kiirvalikud on kustutatud</string>
     <string name="pause_playback_time">Peata esituse aeg</string>
     <string name="format_pause_playback_time_description">Peatab esitusaega salvestamise. See peatab statistika "Minu tipp %1$s" esitusloendis!</string>
@@ -406,11 +405,6 @@
     <plurals name="format_reset_blacklist_description">
         <item quantity="one">Eemalda %1$s laul mustast nimekirjast</item>
         <item quantity="other">Eemalda kõik %1$s laulu mustast nimekirjast</item>
-    </plurals>
-
-    <plurals name="format_reset_quick_picks_amount">
-        <item quantity="one">Kustuta %1$s esituse sündmus</item>
-        <item quantity="other">Kustuta %1$s esituse sündmused</item>
     </plurals>
 
     <plurals name="song_count_plural">

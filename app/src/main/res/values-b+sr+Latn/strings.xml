@@ -250,7 +250,6 @@
     <string name="pause_playback_history">Pauziraj istoriju reprodukcije</string>
     <string name="pause_playback_history_description">Zaustavlja praćenje reprodukcija za brzi izbor</string>
     <string name="pause_playback_history_warning">Napomena: ovo neće uticati na keširanje van mreže!</string>
-    <string name="reset_quick_picks">Resetuj brze izbore</string>
     <string name="quick_picks_empty">Brzi izbor je obrisan</string>
     <string name="pause_playback_time">Pauziraj vreme reprodukcije</string>
     <string name="format_pause_playback_time_description">Zaustavlja beleženje vremena reprodukcije. Ovo pauzira statistike u plejlisti "Moj top %1$s"!</string>
@@ -403,12 +402,6 @@
         <item quantity="one">Ukloni %1$s pesmu sa crne liste</item>
         <item quantity="few">Ukloni %1$s pesme sa crne liste</item>
         <item quantity="other">Ukloni sve %1$s pesme sa crne liste</item>
-    </plurals>
-
-    <plurals name="format_reset_quick_picks_amount">
-        <item quantity="one">Obriši %1$s reprodukciju</item>
-        <item quantity="few">Obriši %1$s reprodukcije</item>
-        <item quantity="other">Obriši %1$s reprodukcija</item>
     </plurals>
 
     <plurals name="song_count_plural">
