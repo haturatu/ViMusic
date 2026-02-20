@@ -269,6 +269,10 @@
     <string name="backup">Backup</string>
     <string name="backup_description">Personal preferences (i.e. the theme mode) and the cache are excluded.</string>
     <string name="backup_action_description">Export the database to the external storage</string>
+    <string name="auto_backup">Auto backup</string>
+    <string name="auto_backup_description">Automatically backs up every 15 minutes</string>
+    <string name="backup_folder">Backup folder</string>
+    <string name="backup_folder_not_selected">No folder selected</string>
     <string name="restore">Restore</string>
     <string name="restore_warning">Existing data will be overwritten.\nViMusic will automatically close itself after restoring the database.</string>
     <string name="restore_description">Import the database from the external storage</string>

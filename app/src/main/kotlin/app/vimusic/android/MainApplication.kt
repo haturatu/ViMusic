@@ -146,6 +146,7 @@ import app.vimusic.android.utils.setDefaultPalette
 import app.vimusic.android.utils.shouldBePlaying
 import app.vimusic.android.utils.toast
 import app.vimusic.android.utils.YouTubeRadioDataSource
+import app.vimusic.android.work.DatabaseAutoBackupWorker
 import app.vimusic.compose.persist.LocalPersistMap
 import app.vimusic.compose.persist.PersistMap
 import app.vimusic.compose.preferences.PreferencesHolder
@@ -612,6 +613,7 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         appContainer = AppContainer(this).also(AppContainer::initialize)
         MonetCompat.enablePaletteCompat()
         ServiceNotifications.createAll(this)
+        DatabaseAutoBackupWorker.upsert(this)
     }
 
     override fun newImageLoader(context: PlatformContext) = ImageLoader.Builder(this)

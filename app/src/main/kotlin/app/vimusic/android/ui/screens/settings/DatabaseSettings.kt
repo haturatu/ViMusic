@@ -1,6 +1,8 @@
 package app.vimusic.android.ui.screens.settings
 
 import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -20,6 +22,7 @@ import app.vimusic.android.ui.screens.Route
 import app.vimusic.android.ui.viewmodels.DatabaseSettingsViewModel
 import app.vimusic.android.utils.intent
 import app.vimusic.android.utils.toast
+import app.vimusic.android.work.DatabaseAutoBackupWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -38,6 +41,7 @@ fun DatabaseSettings() = with(DataPreferences) {
     val context = LocalContext.current
     val errorMessage = stringResource(R.string.error_message)
     val noFileChooserInstalled = stringResource(R.string.no_file_chooser_installed)
+    val folderNotSelected = stringResource(R.string.backup_folder_not_selected)
     val coroutineScope = rememberCoroutineScope()
 
     val eventsCount by viewModel.observeEventsCount().collectAsStateWithLifecycle(initialValue = 0)
@@ -81,6 +85,32 @@ fun DatabaseSettings() = with(DataPreferences) {
             }.onFailure {
                 context.toast(errorMessage)
             }
+        }
+    }
+
+    val autoBackupFolderLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        if (uri == null) {
+            return@rememberLauncherForActivityResult
+        }
+
+        runCatching {
+            context.applicationContext.contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
+            if (autoDatabaseBackupTreeUri != uri.toString()) {
+                autoDatabaseBackupDocumentUri = ""
+            }
+            autoDatabaseBackupTreeUri = uri.toString()
+            DatabaseAutoBackupWorker.upsert(
+                context = context.applicationContext,
+                enabled = autoDatabaseBackupEnabled,
+                treeUri = uri.toString()
+            )
+        }.onFailure {
+            context.toast(errorMessage)
         }
     }
 
@@ -139,6 +169,47 @@ fun DatabaseSettings() = with(DataPreferences) {
             title = stringResource(R.string.backup),
             description = stringResource(R.string.backup_description)
         ) {
+            val backupFolderSummary = autoDatabaseBackupTreeUri
+                .takeIf(String::isNotBlank)
+                ?.let { Uri.parse(it).lastPathSegment }
+                ?: folderNotSelected
+
+            SwitchSettingsEntry(
+                title = stringResource(R.string.auto_backup),
+                text = stringResource(R.string.auto_backup_description),
+                isChecked = autoDatabaseBackupEnabled,
+                isEnabled = autoDatabaseBackupTreeUri.isNotBlank() || autoDatabaseBackupEnabled,
+                onCheckedChange = {
+                    if (autoDatabaseBackupEnabled) {
+                        autoDatabaseBackupEnabled = false
+                        DatabaseAutoBackupWorker.upsert(
+                            context = context.applicationContext,
+                            enabled = false,
+                            treeUri = autoDatabaseBackupTreeUri
+                        )
+                    } else {
+                        autoDatabaseBackupEnabled = true
+                        DatabaseAutoBackupWorker.upsert(
+                            context = context.applicationContext,
+                            enabled = true,
+                            treeUri = autoDatabaseBackupTreeUri
+                        )
+                    }
+                }
+            )
+
+            SettingsEntry(
+                title = stringResource(R.string.backup_folder),
+                text = backupFolderSummary,
+                onClick = {
+                    try {
+                        autoBackupFolderLauncher.launch(null)
+                    } catch (_: ActivityNotFoundException) {
+                        context.toast(noFileChooserInstalled)
+                    }
+                }
+            )
+
             SettingsEntry(
                 title = stringResource(R.string.backup),
                 text = stringResource(R.string.backup_action_description),

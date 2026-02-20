@@ -27,6 +27,9 @@ object DataPreferences : GlobalPreferencesHolder() {
     var shouldCacheQuickPicks by boolean(true)
     var cachedQuickPicks by json(Innertube.RelatedPage())
     var autoSyncPlaylists by boolean(true)
+    var autoDatabaseBackupEnabled by boolean(false)
+    var autoDatabaseBackupTreeUri by string("")
+    var autoDatabaseBackupDocumentUri by string("")
 
     enum class TopListPeriod(
         val displayName: @Composable () -> String,
