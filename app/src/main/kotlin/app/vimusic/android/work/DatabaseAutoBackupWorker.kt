@@ -10,8 +10,13 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import app.vimusic.android.Database
+import app.vimusic.android.dbPath
+import app.vimusic.android.internal
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.repositories.DefaultDatabaseSettingsRepository
+import java.io.FileInputStream
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
 class DatabaseAutoBackupWorker(
@@ -56,6 +61,24 @@ class DatabaseAutoBackupWorker(
     override suspend fun doWork(): Result {
         val treeUriValue = DataPreferences.autoDatabaseBackupTreeUri
         if (treeUriValue.isBlank()) return Result.failure()
+        val previousHash = DataPreferences.autoDatabaseBackupLastSha256
+
+        val currentHash = runCatching {
+            Database.checkpoint()
+            val path = requireNotNull(Database.internal.dbPath) { "Database path is null" }
+            sha256(path)
+        }.getOrElse {
+            it.printStackTrace()
+            return Result.retry()
+        }
+
+        if (
+            previousHash.isNotBlank() &&
+            previousHash == currentHash &&
+            DataPreferences.autoDatabaseBackupDocumentUri.isNotBlank()
+        ) {
+            return Result.success()
+        }
 
         val resolver = applicationContext.contentResolver
         val treeUri = Uri.parse(treeUriValue)
@@ -84,6 +107,7 @@ class DatabaseAutoBackupWorker(
             }.use { output ->
                 DefaultDatabaseSettingsRepository.backupTo(output)
             }
+            DataPreferences.autoDatabaseBackupLastSha256 = currentHash
             Result.success()
         } catch (throwable: Throwable) {
             throwable.printStackTrace()
@@ -139,5 +163,20 @@ class DatabaseAutoBackupWorker(
         }
 
         return null
+    }
+
+    private fun sha256(path: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+
+        FileInputStream(path).use { input ->
+            while (true) {
+                val bytesRead = input.read(buffer)
+                if (bytesRead <= 0) break
+                digest.update(buffer, 0, bytesRead)
+            }
+        }
+
+        return digest.digest().joinToString(separator = "") { byte -> "%02x".format(byte) }
     }
 }

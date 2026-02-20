@@ -30,6 +30,7 @@ object DataPreferences : GlobalPreferencesHolder() {
     var autoDatabaseBackupEnabled by boolean(false)
     var autoDatabaseBackupTreeUri by string("")
     var autoDatabaseBackupDocumentUri by string("")
+    var autoDatabaseBackupLastSha256 by string("")
 
     enum class TopListPeriod(
         val displayName: @Composable () -> String,

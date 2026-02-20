@@ -102,6 +102,7 @@ fun DatabaseSettings() = with(DataPreferences) {
             )
             if (autoDatabaseBackupTreeUri != uri.toString()) {
                 autoDatabaseBackupDocumentUri = ""
+                autoDatabaseBackupLastSha256 = ""
             }
             autoDatabaseBackupTreeUri = uri.toString()
             DatabaseAutoBackupWorker.upsert(
