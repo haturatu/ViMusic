@@ -37,6 +37,8 @@ interface PlayerRepository {
 }
 
 object DatabasePlayerRepository : PlayerRepository {
+    private const val MAX_EVENT_HISTORY_COUNT = 5000
+
     override fun insertSong(mediaItem: MediaItem) {
         Database.insert(mediaItem)
     }
@@ -51,6 +53,8 @@ object DatabasePlayerRepository : PlayerRepository {
                 .onFailure { throwable ->
                     if (throwable !is SQLiteConstraintException) throw throwable
                 }
+            runCatching { Database.pruneEvents(MAX_EVENT_HISTORY_COUNT) }
+                .onFailure(Throwable::printStackTrace)
         }
     }
 
