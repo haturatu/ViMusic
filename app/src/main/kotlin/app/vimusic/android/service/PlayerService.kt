@@ -610,14 +610,20 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         val mediaItems = player.currentTimeline.mediaItems
         val mediaItemIndex = player.currentMediaItemIndex
         val mediaItemPosition = player.currentPosition
+        if (mediaItems.isEmpty() || mediaItemIndex !in mediaItems.indices) return
+
+        // Persist only the current item and upcoming items.
+        // Past timeline entries are not needed for restore and can grow unbounded in radio mode.
+        val pendingItems = mediaItems.drop(mediaItemIndex)
 
         coroutineScope.launch(Dispatchers.IO) {
             runCatching {
                 playerRepository.saveQueue(
-                    mediaItems.mapIndexed { index, mediaItem ->
+                    pendingItems.mapIndexed { index, mediaItem ->
                         QueuedMediaItem(
+                            id = index.toLong() + 1L,
                             mediaItem = mediaItem,
-                            position = if (index == mediaItemIndex) mediaItemPosition else null
+                            position = if (index == 0) mediaItemPosition else null
                         )
                     }
                 )
