@@ -306,6 +306,8 @@
     <string name="audio">オーディオ</string>
     <string name="skip_silence">無音部分をスキップ</string>
     <string name="skip_silence_description">再生中に無音部分をスキップする</string>
+    <string name="pause_when_volume_at_minimum">最小音量で一時停止</string>
+    <string name="pause_when_volume_at_minimum_description">音量が0になったときに再生を自動で一時停止します</string>
     <string name="minimum_silence_length">最低無音時間</string>
     <string name="minimum_silence_length_description">音声がスキップされる最低無音時間</string>
     <string name="minimum_silence_length_warning">変更を適用するには、プレーヤーを再起動する必要があります</string>

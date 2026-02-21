@@ -348,7 +348,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 }
 
                 streamVolumeFlow(stream).collectLatest {
-                    handler.post { if (it == min) player.pause() }
+                    handler.post {
+                        if (it == min && PlayerPreferences.pauseWhenVolumeAtMinimum) player.pause()
+                    }
                 }
             }
         }

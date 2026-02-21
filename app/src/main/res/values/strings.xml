@@ -323,6 +323,8 @@
     <string name="audio">Audio</string>
     <string name="skip_silence">Skip silence</string>
     <string name="skip_silence_description">Skip silent parts during playback</string>
+    <string name="pause_when_volume_at_minimum">Pause at minimum volume</string>
+    <string name="pause_when_volume_at_minimum_description">Automatically pause playback when music volume reaches zero</string>
     <string name="minimum_silence_length">Minimum silence length</string>
     <string name="minimum_silence_length_description">The minimum time the audio has to be silent to get skipped</string>
     <string name="minimum_silence_length_warning">Player has to be restarted for the changes to be effective!</string>

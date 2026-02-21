@@ -77,6 +77,13 @@ fun PlayerSettings() = with(PlayerPreferences) {
                 }
             )
 
+            SwitchSettingsEntry(
+                title = stringResource(R.string.pause_when_volume_at_minimum),
+                text = stringResource(R.string.pause_when_volume_at_minimum_description),
+                isChecked = pauseWhenVolumeAtMinimum,
+                onCheckedChange = { pauseWhenVolumeAtMinimum = it }
+            )
+
             AnimatedVisibility(visible = skipSilence) {
                 val initialValue by remember { derivedStateOf { minimumSilence.toFloat() / 1000L } }
                 var newValue by remember(initialValue) { mutableFloatStateOf(initialValue) }
