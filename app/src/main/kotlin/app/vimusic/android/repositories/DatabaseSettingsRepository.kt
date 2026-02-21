@@ -11,6 +11,8 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 interface DatabaseSettingsRepository {
     fun observeBlacklistLength(): Flow<Int>
@@ -27,9 +29,27 @@ object DefaultDatabaseSettingsRepository : DatabaseSettingsRepository {
     }
 
     override suspend fun backupTo(output: OutputStream) {
-        Database.checkpoint()
-        val path = requireNotNull(Database.internal.dbPath) { "Database path is null" }
-        FileInputStream(path).use { input -> input.copyTo(output) }
+        withContext(Dispatchers.IO) {
+            val path = requireNotNull(Database.internal.dbPath) { "Database path is null" }
+            val tmpBackup = File.createTempFile("vimusic_backup_", ".db")
+
+            try {
+                runCatching {
+                    Database.checkpoint()
+                    val escapedPath = tmpBackup.absolutePath.replace("'", "''")
+                    Database.internal.openHelper.writableDatabase.execSQL("VACUUM INTO '$escapedPath'")
+                }.getOrElse {
+                    // Fallback for SQLite engines where VACUUM INTO is unavailable.
+                    FileInputStream(path).use { input ->
+                        FileOutputStream(tmpBackup).use(input::copyTo)
+                    }
+                }
+
+                FileInputStream(tmpBackup).use { input -> input.copyTo(output) }
+            } finally {
+                tmpBackup.delete()
+            }
+        }
     }
 
     override suspend fun restoreFrom(input: InputStream) {
