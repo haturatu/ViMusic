@@ -261,7 +261,6 @@
     <string name="pause_playback_history">Pause playback history</string>
     <string name="pause_playback_history_description">Stops playback events being used for quick picks</string>
     <string name="pause_playback_history_warning">Please note: this won\'t affect offline caching!</string>
-    <string name="reset_quick_picks">Reset quick picks</string>
     <string name="quick_picks_empty">Quick picks are cleared</string>
     <string name="pause_playback_time">Pause playback time</string>
     <string name="format_pause_playback_time_description">Stops playback time from being saved. This pauses the statistics in the \'My Top %1$s\' playlist!</string>
@@ -424,11 +423,6 @@
     <plurals name="format_reset_blacklist_description">
         <item quantity="one">Remove %1$s song from the blacklist</item>
         <item quantity="other">Remove all %1$s songs from the blacklist</item>
-    </plurals>
-
-    <plurals name="format_reset_quick_picks_amount">
-        <item quantity="one">Delete %1$s playback event</item>
-        <item quantity="other">Delete %1$s playback events</item>
     </plurals>
 
     <plurals name="song_count_plural">

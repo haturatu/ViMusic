@@ -3,7 +3,6 @@ package app.vimusic.android.repositories
 import app.vimusic.android.Database
 import app.vimusic.android.dbPath
 import app.vimusic.android.internal
-import app.vimusic.android.query
 import app.vimusic.android.transaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -16,22 +15,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 interface DatabaseSettingsRepository {
-    fun observeEventsCount(): Flow<Int>
     fun observeBlacklistLength(): Flow<Int>
-    fun clearEvents()
     fun resetBlacklist()
     suspend fun backupTo(output: OutputStream)
     suspend fun restoreFrom(input: InputStream)
 }
 
 object DefaultDatabaseSettingsRepository : DatabaseSettingsRepository {
-    override fun observeEventsCount(): Flow<Int> = Database.eventsCount().distinctUntilChanged()
-
     override fun observeBlacklistLength(): Flow<Int> = Database.blacklistLength().distinctUntilChanged()
-
-    override fun clearEvents() {
-        query(Database::clearEvents)
-    }
 
     override fun resetBlacklist() {
         transaction { Database.resetBlacklist() }

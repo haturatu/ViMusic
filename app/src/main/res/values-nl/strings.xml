@@ -254,7 +254,6 @@
     <string name="pause_playback_history">Pauzeer afspeelgeschiedenis</string>
     <string name="pause_playback_history_description">Stopt de verzameling van afspeelgebeurtenissen voor Snelle keuzes</string>
     <string name="pause_playback_history_warning">Let op: dit verandert niets aan offline cachen!</string>
-    <string name="reset_quick_picks">Reset Snelle keuzes</string>
     <string name="quick_picks_empty">Snelle keuzes geleegd</string>
     <string name="pause_playback_time">Pauzeer afspeeltijd</string>
     <string name="format_pause_playback_time_description">Stopt met het opslaan van afspeeltijd. Dit pauzeert de statistieken in de \'Mijn top %1$s\' afspeellijst</string>
@@ -412,11 +411,6 @@
     <plurals name="format_reset_blacklist_description">
         <item quantity="one">Haal %1$s nummer van de zwarte lijst</item>
         <item quantity="other">Haal %1$s nummers van de zwarte lijst</item>
-    </plurals>
-
-    <plurals name="format_reset_quick_picks_amount">
-        <item quantity="one">Verwijder %1$s afspeelgebeurtenis</item>
-        <item quantity="other">Verwijder %1$s afspeelgebeurtenissen</item>
     </plurals>
 
     <plurals name="song_count_plural">

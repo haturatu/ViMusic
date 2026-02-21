@@ -648,20 +648,23 @@ interface Database {
     @Query("SELECT COUNT (*) FROM Event")
     fun eventsCount(): Flow<Int>
 
+    @Query("SELECT COUNT (*) FROM Event")
+    fun eventsCountNow(): Int
+
     @Query("DELETE FROM Event")
     fun clearEvents()
 
     @Query(
         """
         DELETE FROM Event
-        WHERE id NOT IN (
+        WHERE id IN (
             SELECT id FROM Event
-            ORDER BY timestamp DESC, id DESC
-            LIMIT :maxCount
+            ORDER BY timestamp ASC, id ASC
+            LIMIT :count
         )
         """
     )
-    fun pruneEvents(maxCount: Int)
+    fun deleteOldestEvents(count: Int)
 
     @Query("DELETE FROM Event WHERE songId = :songId")
     fun clearEventsFor(songId: String)

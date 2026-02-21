@@ -249,7 +249,6 @@
     <string name="pause_playback_history">Pausar historial de reproducción</string>
     <string name="pause_playback_history_description">Detiene el uso de eventos de reproducción para selecciones rápidas</string>
     <string name="pause_playback_history_warning">Nota: ¡esto no afectará al almacenamiento en caché sin conexión!</string>
-    <string name="reset_quick_picks">Restablecer selecciones rápidas</string>
     <string name="quick_picks_empty">Las selecciones rápidas están vacías</string>
     <string name="pause_playback_time">Pausar tiempo de reproducción</string>
     <string name="format_pause_playback_time_description">Detiene el guardado del tiempo de reproducción. ¡Esto pausa las estadísticas en la lista de reproducción \'Mi Top %1$s\'!</string>
@@ -399,12 +398,6 @@
         <item quantity="one">Eliminar %1$s canción de la lista negra</item>
         <item quantity="many">Eliminar todas las %1$s canciones de la lista negra</item>
         <item quantity="other">Eliminar todas las %1$s canciones de la lista negra</item>
-    </plurals>
-
-    <plurals name="format_reset_quick_picks_amount">
-        <item quantity="one">Eliminar %1$s evento de reproducción</item>
-        <item quantity="many">Eliminar %1$s eventos de reproducción</item>
-        <item quantity="other">Eliminar %1$s eventos de reproducción</item>
     </plurals>
 
     <plurals name="song_count_plural">
