@@ -17,6 +17,8 @@ object PlayerPreferences : GlobalPreferencesHolder() {
     var skipSilence by skipSilenceProperty
     val volumeNormalizationProperty = boolean(false)
     var volumeNormalization by volumeNormalizationProperty
+    val pauseWhenVolumeAtMinimumProperty = boolean(true)
+    var pauseWhenVolumeAtMinimum by pauseWhenVolumeAtMinimumProperty
     val volumeNormalizationBaseGainProperty = float(5.00f)
     var volumeNormalizationBaseGain by volumeNormalizationBaseGainProperty
     val reverbProperty = enum(Reverb.None)
