@@ -20,8 +20,10 @@ import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.scheduler.Requirements
 import androidx.media3.exoplayer.workmanager.WorkManagerScheduler
+import app.vimusic.android.Database
 import app.vimusic.android.R
 import app.vimusic.android.appContainer
+import app.vimusic.android.models.Format
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.utils.ActionReceiver
 import app.vimusic.android.utils.download
@@ -198,7 +200,24 @@ class PrecacheService : DownloadService(
                         downloadManager: DownloadManager,
                         download: Download,
                         finalException: Exception?
-                    ) = downloadQueue.trySend(downloadManager).let { }
+                    ) {
+                        if (download.state == Download.STATE_COMPLETED && download.contentLength > 0L) {
+                            val songId = download.request.id
+                            runCatching {
+                                val updated = Database.updateFormatContentLength(songId, download.contentLength)
+                                if (updated == 0) {
+                                    Database.insert(
+                                        Format(
+                                            songId = songId,
+                                            contentLength = download.contentLength
+                                        )
+                                    )
+                                }
+                            }.onFailure(Throwable::printStackTrace)
+                        }
+
+                        downloadQueue.trySend(downloadManager).let { }
+                    }
 
                     override fun onDownloadRemoved(
                         downloadManager: DownloadManager,

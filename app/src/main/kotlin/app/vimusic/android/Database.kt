@@ -462,6 +462,9 @@ interface Database {
     @Query("SELECT * FROM Format WHERE songId = :songId")
     fun format(songId: String): Flow<Format?>
 
+    @Query("UPDATE Format SET contentLength = :contentLength WHERE songId = :songId")
+    fun updateFormatContentLength(songId: String, contentLength: Long): Int
+
     @Transaction
     @Query(
         """
