@@ -40,6 +40,7 @@ import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException
 import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.datasource.cache.Cache
+import androidx.media3.datasource.cache.ContentMetadata
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
@@ -539,6 +540,8 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
             extractYouTubeVideoId(mediaItem.mediaId)
         } ?: return
+
+        if (isFullyCached(cache, mediaId)) return
 
         val now = System.currentTimeMillis()
         if (
@@ -1320,6 +1323,12 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             return trimmed
         }
 
+        private fun isFullyCached(cache: Cache, mediaId: String): Boolean {
+            val contentLength = ContentMetadata.getContentLength(cache.getContentMetadata(mediaId))
+            if (contentLength <= 0L) return false
+            return cache.isCached(mediaId, 0L, contentLength)
+        }
+
         fun createDatabaseProvider(context: Context) = StandaloneDatabaseProvider(context)
         fun createCache(
             context: Context,
@@ -1371,6 +1380,10 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     Log.w(TAG, "DataSpec key missing; skipping cache resolution")
                     return@resolver dataSpec
                 }
+
+            if (isFullyCached(cache, mediaId)) {
+                return@resolver dataSpec
+            }
 
             val forceFreshResolve = playbackRetryManager?.consumeForceFreshResolve(mediaId) == true
 
