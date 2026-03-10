@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.os.Bundle
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
@@ -75,6 +76,7 @@ import app.vimusic.android.utils.GlyphInterface
 import app.vimusic.android.utils.InvincibleService
 import app.vimusic.android.utils.TimerJob
 import app.vimusic.android.utils.YouTubeRadio
+import app.vimusic.android.utils.YouTubeRadioState
 import app.vimusic.android.utils.activityPendingIntent
 import app.vimusic.android.utils.asDataSource
 import app.vimusic.android.utils.broadcastPendingIntent
@@ -160,6 +162,8 @@ import android.os.Binder as AndroidBinder
 
 const val LOCAL_KEY_PREFIX = "local:"
 private const val TAG = "PlayerService"
+private const val PERSISTENT_QUEUE_MAX_PAST_ITEMS = 50
+private const val PERSISTENT_QUEUE_MAX_FUTURE_ITEMS = 50
 
 @get:OptIn(UnstableApi::class)
 val DataSpec.isLocal get() = key?.startsWith(LOCAL_KEY_PREFIX) == true
@@ -603,7 +607,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
         radio?.let { radio ->
             coroutineScope.launch(Dispatchers.Main) {
-                player.addMediaItems(radio.process())
+                val radioItems = radio.process().map { it.withRadioState(radio) }
+                syncCurrentMediaItemRadioState(radio)
+                player.addMediaItems(radioItems)
             }
         }
     }
@@ -616,18 +622,20 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         val mediaItemPosition = player.currentPosition
         if (mediaItems.isEmpty() || mediaItemIndex !in mediaItems.indices) return
 
-        // Persist only the current item and upcoming items.
-        // Past timeline entries are not needed for restore and can grow unbounded in radio mode.
-        val pendingItems = mediaItems.drop(mediaItemIndex)
+        val startIndex = (mediaItemIndex - PERSISTENT_QUEUE_MAX_PAST_ITEMS).coerceAtLeast(0)
+        val endExclusive = (mediaItemIndex + PERSISTENT_QUEUE_MAX_FUTURE_ITEMS + 1)
+            .coerceAtMost(mediaItems.size)
+        val persistedItems = mediaItems.subList(startIndex, endExclusive)
+        val persistedCurrentIndex = mediaItemIndex - startIndex
 
         coroutineScope.launch(Dispatchers.IO) {
             runCatching {
                 playerRepository.saveQueue(
-                    pendingItems.mapIndexed { index, mediaItem ->
+                    persistedItems.mapIndexed { index, mediaItem ->
                         QueuedMediaItem(
                             id = index.toLong() + 1L,
                             mediaItem = mediaItem,
-                            position = if (index == 0) mediaItemPosition else null
+                            position = if (index == persistedCurrentIndex) mediaItemPosition else null
                         )
                     }
                 )
@@ -649,6 +657,10 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             val index = queue
                 .indexOfFirst { it.position != null }
                 .coerceAtLeast(0)
+            val restoredRadio = queue.getOrNull(index)
+                ?.mediaItem
+                ?.radioStateOrNull()
+                ?.let(::radioFromState)
 
             withContext(Dispatchers.Main) {
                 runCatching {
@@ -668,6 +680,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                         /* startPositionMs = */ queue[index].position ?: C.TIME_UNSET
                     )
                     player.prepare()
+                    radio = restoredRadio
 
                     isNotificationStarted = true
                     startForegroundService(this@PlayerService, intent<PlayerService>())
@@ -1136,10 +1149,13 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             ).let { radioData ->
                 isLoadingRadio = true
                 radioJob = coroutineScope.launch {
-                    val items = radioData.process().let { playerRepository.filterBlacklistedSongs(it) }
+                    val items = radioData.process()
+                        .map { it.withRadioState(radioData) }
+                        .let { playerRepository.filterBlacklistedSongs(it) }
                     prefetchMediaItems(items)
 
                     withContext(Dispatchers.Main) {
+                        syncCurrentMediaItemRadioState(radioData)
                         if (justAdd) player.addMediaItems(items.drop(1))
                         else player.forcePlayFromBeginning(items)
                     }
@@ -1241,6 +1257,57 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             }
         }
     }
+
+    private fun syncCurrentMediaItemRadioState(radio: YouTubeRadio) {
+        val currentIndex = player.currentMediaItemIndex
+        if (currentIndex !in 0 until player.mediaItemCount) return
+
+        player.replaceMediaItem(currentIndex, player.getMediaItemAt(currentIndex).withRadioState(radio))
+    }
+
+    private fun MediaItem.withRadioState(radio: YouTubeRadio): MediaItem {
+        val radioState = radio.snapshot()
+        val extras = Bundle(mediaMetadata.extras ?: Bundle()).apply {
+            songBundle.apply {
+                isRadio = true
+                radioVideoId = radioState.videoId ?: this@withRadioState.mediaId
+                radioPlaylistId = radioState.playlistId
+                radioPlaylistSetVideoId = radioState.playlistSetVideoId
+                radioParams = radioState.params
+                radioContinuation = radioState.continuation
+            }
+        }
+
+        return buildUpon()
+            .setMediaMetadata(
+                mediaMetadata.buildUpon()
+                    .setExtras(extras)
+                    .build()
+            )
+            .build()
+    }
+
+    private fun MediaItem.radioStateOrNull(): YouTubeRadioState? {
+        val extras = mediaMetadata.extras?.songBundle ?: return null
+        if (!extras.isRadio) return null
+
+        return YouTubeRadioState(
+            videoId = extras.radioVideoId ?: mediaId,
+            playlistId = extras.radioPlaylistId,
+            playlistSetVideoId = extras.radioPlaylistSetVideoId,
+            params = extras.radioParams,
+            continuation = extras.radioContinuation
+        )
+    }
+
+    private fun radioFromState(state: YouTubeRadioState): YouTubeRadio = YouTubeRadio(
+        videoId = state.videoId,
+        playlistId = state.playlistId,
+        playlistSetVideoId = state.playlistSetVideoId,
+        parameters = state.params,
+        nextContinuation = state.continuation,
+        dataSource = applicationContext.appContainer.youTubeRadioDataSource
+    )
 
     inner class NotificationActionReceiver internal constructor() :
         ActionReceiver("app.vimusic.android") {
