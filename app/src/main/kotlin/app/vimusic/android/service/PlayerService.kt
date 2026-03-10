@@ -160,6 +160,8 @@ import android.os.Binder as AndroidBinder
 
 const val LOCAL_KEY_PREFIX = "local:"
 private const val TAG = "PlayerService"
+private const val PERSISTENT_QUEUE_MAX_PAST_ITEMS = 50
+private const val PERSISTENT_QUEUE_MAX_FUTURE_ITEMS = 50
 
 @get:OptIn(UnstableApi::class)
 val DataSpec.isLocal get() = key?.startsWith(LOCAL_KEY_PREFIX) == true
@@ -616,18 +618,20 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         val mediaItemPosition = player.currentPosition
         if (mediaItems.isEmpty() || mediaItemIndex !in mediaItems.indices) return
 
-        // Persist only the current item and upcoming items.
-        // Past timeline entries are not needed for restore and can grow unbounded in radio mode.
-        val pendingItems = mediaItems.drop(mediaItemIndex)
+        val startIndex = (mediaItemIndex - PERSISTENT_QUEUE_MAX_PAST_ITEMS).coerceAtLeast(0)
+        val endExclusive = (mediaItemIndex + PERSISTENT_QUEUE_MAX_FUTURE_ITEMS + 1)
+            .coerceAtMost(mediaItems.size)
+        val persistedItems = mediaItems.subList(startIndex, endExclusive)
+        val persistedCurrentIndex = mediaItemIndex - startIndex
 
         coroutineScope.launch(Dispatchers.IO) {
             runCatching {
                 playerRepository.saveQueue(
-                    pendingItems.mapIndexed { index, mediaItem ->
+                    persistedItems.mapIndexed { index, mediaItem ->
                         QueuedMediaItem(
                             id = index.toLong() + 1L,
                             mediaItem = mediaItem,
-                            position = if (index == 0) mediaItemPosition else null
+                            position = if (index == persistedCurrentIndex) mediaItemPosition else null
                         )
                     }
                 )
