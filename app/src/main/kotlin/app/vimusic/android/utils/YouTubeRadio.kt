@@ -13,6 +13,14 @@ data class YouTubeRadioPage(
     val playlistSetVideoId: String?
 )
 
+data class YouTubeRadioState(
+    val videoId: String?,
+    val playlistId: String?,
+    val playlistSetVideoId: String?,
+    val params: String?,
+    val continuation: String?
+)
+
 interface YouTubeRadioDataSource {
     suspend fun fetchFirstPage(
         videoId: String?,
@@ -29,13 +37,20 @@ data class YouTubeRadio(
     private var playlistId: String? = null,
     private var playlistSetVideoId: String? = null,
     private var parameters: String? = null,
+    private var nextContinuation: String? = null,
     private val dataSource: YouTubeRadioDataSource
 ) {
     private companion object {
         private const val TAG = "YouTubeRadio"
     }
 
-    private var nextContinuation: String? = null
+    fun snapshot() = YouTubeRadioState(
+        videoId = videoId,
+        playlistId = playlistId,
+        playlistSetVideoId = playlistSetVideoId,
+        params = parameters,
+        continuation = nextContinuation
+    )
 
     suspend fun process(): List<MediaItem> {
         return runCatching {

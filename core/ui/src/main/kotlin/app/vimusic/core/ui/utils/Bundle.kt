@@ -234,6 +234,12 @@ class SongBundleAccessor(val extras: Bundle = Bundle()) : BundleAccessor {
     var artistIds by extras.stringList
     var explicit by extras.boolean
     var isFromPersistentQueue by extras.boolean
+    var isRadio by extras.boolean
+    var radioVideoId by extras.string
+    var radioPlaylistId by extras.string
+    var radioPlaylistSetVideoId by extras.string
+    var radioParams by extras.string
+    var radioContinuation by extras.string
 }
 
 inline val Bundle.songBundle get() = SongBundleAccessor(this)
