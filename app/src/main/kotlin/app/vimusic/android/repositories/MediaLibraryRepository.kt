@@ -4,7 +4,6 @@ import app.vimusic.android.Database
 import app.vimusic.android.models.Album
 import app.vimusic.android.models.PlaylistPreview
 import app.vimusic.android.models.Song
-import app.vimusic.android.models.SongWithContentLength
 import app.vimusic.core.data.enums.SongSortBy
 import app.vimusic.core.data.enums.SortOrder
 import kotlinx.coroutines.flow.cancellable
@@ -17,7 +16,7 @@ interface MediaLibraryRepository {
     suspend fun getPlaylistPreviewsByDateAddedDesc(): List<PlaylistPreview>
     suspend fun getAlbumsByRowIdDesc(): List<Album>
     suspend fun getFavoritesShuffled(): List<Song>
-    suspend fun getOfflineCachedShuffled(isCached: (SongWithContentLength) -> Boolean): List<Song>
+    suspend fun getOfflineCachedShuffled(isCached: (Song) -> Boolean): List<Song>
     suspend fun getTopSongs(durationMillis: Long?, length: Int): List<Song>
     suspend fun getLocalSongs(sortBy: SongSortBy, sortOrder: SortOrder): List<Song>
     suspend fun getPlaylistSongsShuffled(playlistId: Long): List<Song>?
@@ -38,12 +37,14 @@ object DatabaseMediaLibraryRepository : MediaLibraryRepository {
         Database.favorites().first().shuffled()
 
     override suspend fun getOfflineCachedShuffled(
-        isCached: (SongWithContentLength) -> Boolean
+        isCached: (Song) -> Boolean
     ): List<Song> = Database
-        .songsWithContentLength()
+        .songs(
+            sortBy = SongSortBy.DateAdded,
+            sortOrder = SortOrder.Descending
+        )
         .first()
         .filter(isCached)
-        .map(SongWithContentLength::song)
         .shuffled()
 
     override suspend fun getTopSongs(durationMillis: Long?, length: Int): List<Song> {

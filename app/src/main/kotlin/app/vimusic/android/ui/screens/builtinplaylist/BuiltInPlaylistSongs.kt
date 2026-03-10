@@ -82,7 +82,7 @@ fun BuiltInPlaylistSongs(
             sortOrder = sortOrder,
             topPeriodMillis = topListPeriod.duration?.inWholeMilliseconds,
             topLength = topListLength,
-            isOfflineCached = { songWithContentLength -> binder?.isCached(songWithContentLength) ?: false }
+            isOfflineCached = { song -> binder?.isCached(song) ?: false }
         ).collect { songs = it.toImmutableList() }
     }
 

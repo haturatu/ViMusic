@@ -66,7 +66,6 @@ import app.vimusic.android.models.Event
 import app.vimusic.android.models.Format
 import app.vimusic.android.models.QueuedMediaItem
 import app.vimusic.android.models.Song
-import app.vimusic.android.models.SongWithContentLength
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.preferences.PlayerPreferences
@@ -1180,8 +1179,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             stopSelf()
         }
 
-        fun isCached(song: SongWithContentLength) =
-            song.contentLength?.let { cache.isCached(song.song.id, 0L, it) } ?: false
+        fun isCached(mediaId: String) = isFullyCached(cache, mediaId)
+
+        fun isCached(song: Song) = isCached(song.id)
 
         fun playFromSearch(query: String) {
             coroutineScope.launch {
