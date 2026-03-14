@@ -1480,6 +1480,12 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 cachedDataSpec ?: run {
                     val result = try {
                         NewPipeExtractorClient.resolveAudioStream(mediaId)
+                    } catch (error: IOException) {
+                        throw PlaybackException(
+                            /* message = */ "Unknown playback error",
+                            /* cause = */ error,
+                            /* errorCode = */ PlaybackException.ERROR_CODE_UNSPECIFIED
+                        )
                     } catch (error: ContentNotSupportedException) {
                         throw PlayableFormatNotFoundException(error)
                     } catch (error: StreamInfo.StreamExtractException) {
