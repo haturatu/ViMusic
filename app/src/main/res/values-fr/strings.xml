@@ -107,7 +107,7 @@
     <string name="quote_open">“</string>
     <string name="quote_close">„</string>
     
-    <string name="moods_and_genres">Humeurs et Genres</string>
+    <string name="moods_and_genres">Ambiances et Genres</string>
     <string name="new_released_albums">Nouveautés</string>
     <string name="more">Plus</string>
     
@@ -161,7 +161,7 @@
     <string name="playback_speed">Vitesse</string>
     <string name="playback_pitch">Pas</string>
     <string name="playback_settings">Vitesse et hauteur</string>
-    <string name="minimum_speed_value">Pourquoi ferais-tu ça ?!</string>
+    <string name="minimum_speed_value">Pourquoi feriez-vous cela ?!</string>
     <string name="volume_boost">Augmentation du volume</string>
     <string name="queue_loop">Boucle de file d\'attente</string>
     <string name="add_queue_to_playlist">Ajouter une file d\'attente à la playlist</string>
@@ -191,7 +191,7 @@
     <string name="color_source">Source de couleur d\'accentuation</string>
     <string name="color_source_default">Défaut</string>
     <string name="color_source_dynamic">Dynamique</string>
-    <string name="color_source_material_you">Votre Appareil</string>
+    <string name="color_source_material_you">Material You</string>
     
     <string name="darkness">Obscurité</string>
     <string name="darkness_normal">Normal</string>
@@ -359,7 +359,7 @@
     <string name="username">Nom d\'utilisateur</string>
     <string name="password">Mot de passe</string>
     <string name="login">Se connecter</string>
-    <string name="sync_description">Vous pouvez héberger des playlists ailleurs et les synchroniser avec ViTune. Actuellement, seule la fonction Piped est prise en charge.</string>
+    <string name="sync_description">Vous pouvez héberger des playlists ailleurs et les synchroniser avec ViMusic. Actuellement, seule la fonction Piped est prise en charge.</string>
     <string name="add_account">Ajouter un compte</string>
     <string name="add_account_description">Liez un compte Piped avec votre instance, votre nom d\'utilisateur et votre mot de passe.</string>
     <string name="learn_more">En savoir plus</string>
