@@ -29,6 +29,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlin.time.Duration
 
+private val googleusercontentThumbnailSizeRegex = Regex("([=-])w\\d+-h\\d+")
+
 val Innertube.SongItem.asMediaItem: MediaItem
     get() = MediaItem.Builder()
         .setMediaId(key)
@@ -148,7 +150,13 @@ fun String?.thumbnail(
 ): String? {
     val actualSize = size.coerceAtMost(maxSize)
     return when {
-        this?.startsWith("https://lh3.googleusercontent.com") == true -> "$this-w$actualSize-h$actualSize"
+        this?.startsWith("https://lh3.googleusercontent.com") == true ||
+                this?.startsWith("https://yt3.googleusercontent.com") == true ->
+            googleusercontentThumbnailSizeRegex
+                .replace(this) { "${it.groupValues[1]}w$actualSize-h$actualSize" }
+                .takeUnless { it == this }
+                ?: "$this=w$actualSize-h$actualSize"
+
         this?.startsWith("https://yt3.ggpht.com") == true -> "$this-w$actualSize-h$actualSize-s$actualSize"
         else -> this
     }
