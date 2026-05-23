@@ -41,7 +41,7 @@ import app.vimusic.android.R
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.preferences.PlayerPreferences
-import app.vimusic.android.service.PlayerMediaLibraryService
+import app.vimusic.android.service.PlayerService
 import app.vimusic.android.service.PrecacheService
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
 import app.vimusic.android.ui.components.themed.SliderDialog
@@ -79,7 +79,7 @@ fun OtherSettings() {
     val coroutineScope = rememberCoroutineScope()
 
     var isAndroidAutoEnabled by remember {
-        val component = ComponentName(context, PlayerMediaLibraryService::class.java)
+        val component = ComponentName(context, PlayerService::class.java)
         val disabledFlag = PackageManager.COMPONENT_ENABLED_STATE_DISABLED
         val enabledFlag = PackageManager.COMPONENT_ENABLED_STATE_ENABLED
 

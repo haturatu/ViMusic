@@ -1,14 +1,14 @@
 package app.vimusic.android.utils
 
-import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Binder
 import android.os.Handler
+import android.os.IBinder
 import android.os.Looper
 import androidx.core.content.ContextCompat
+import androidx.media3.session.MediaLibraryService
 import app.vimusic.core.ui.utils.isAtLeastAndroid12
 
 // https://stackoverflow.com/q/53502244/16885569
@@ -18,7 +18,7 @@ import app.vimusic.core.ui.utils.isAtLeastAndroid12
 // 2 - Do not call stopForeground but provide a button to dismiss the notification - bad UX;
 // 3 - Lower the targetSdk (e.g. to 23) - security concerns;
 // 4 - Host the service in a separate process - overkill and pathetic.
-abstract class InvincibleService : Service() {
+abstract class InvincibleService : MediaLibraryService() {
     protected val handler = Handler(Looper.getMainLooper())
 
     protected abstract val isInvincibilityEnabled: Boolean
@@ -29,10 +29,10 @@ abstract class InvincibleService : Service() {
     private val isAllowedToStartForegroundServices: Boolean
         get() = !isAtLeastAndroid12 || isIgnoringBatteryOptimizations
 
-    override fun onBind(intent: Intent?): Binder? {
+    override fun onBind(intent: Intent?): IBinder? {
         invincibility?.stop()
         invincibility = null
-        return null
+        return super.onBind(intent)
     }
 
     override fun onRebind(intent: Intent?) {
