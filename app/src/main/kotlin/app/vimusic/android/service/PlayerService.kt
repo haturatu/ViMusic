@@ -204,6 +204,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private var radio: YouTubeRadio? = null
     private val playbackRetryManager = PlaybackRetryManager(longArrayOf(500L, 1500L, 3000L))
     private var lastAutoSongs = emptyList<Song>()
+    // Android Auto asks for search results after onSearch; keep the YouTube results for selection.
+    private var lastAutoSearchQuery: String? = null
+    private var lastAutoSearchItems = emptyList<MediaItem>()
 
     private lateinit var bitmapProvider: BitmapProvider
 
@@ -405,6 +408,27 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             isBrowsable = false,
             isPlayable = true
         )
+
+    // Android Auto needs explicit browsable/playable metadata to show YouTube search results.
+    private val MediaItem.asAutoSearchResult
+        get() = MediaItem.Builder()
+            .setMediaId(mediaId)
+            .setUri(mediaId)
+            .setCustomCacheKey(mediaId)
+            .setMediaMetadata(
+                androidx.media3.common.MediaMetadata.Builder()
+                    .setTitle(mediaMetadata.title)
+                    .setSubtitle(mediaMetadata.artist)
+                    .setArtist(mediaMetadata.artist)
+                    .setAlbumTitle(mediaMetadata.albumTitle)
+                    .setArtworkUri(mediaMetadata.artworkUri)
+                    .setExtras(mediaMetadata.extras)
+                    .setIsBrowsable(false)
+                    .setIsPlayable(true)
+                    .setMediaType(androidx.media3.common.MediaMetadata.MEDIA_TYPE_MUSIC)
+                    .build()
+            )
+            .build()
 
     @Suppress("CyclomaticComplexMethod")
     override fun onCreate() {
@@ -1338,7 +1362,32 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             query: String,
             params: MediaLibraryService.LibraryParams?
         ): ListenableFuture<LibraryResult<Void>> {
-            if (query.isNotBlank()) binder.playFromSearch(query)
+            val trimmedQuery = query.trim()
+            if (trimmedQuery.isNotBlank()) {
+                coroutineScope.launch {
+                    // Use the same YouTube Music search source as the in-app search screen.
+                    val items = runCatching {
+                        searchResultRepository
+                            .searchSongs(query = trimmedQuery, continuation = null)
+                            ?.getOrThrow()
+                            ?.items
+                            .orEmpty()
+                            .map { it.asMediaItem.asAutoSearchResult }
+                    }.getOrDefault(emptyList())
+
+                    lastAutoSearchQuery = trimmedQuery
+                    lastAutoSearchItems = items
+
+                    withContext(Dispatchers.Main) {
+                        session.notifySearchResultChanged(
+                            controller,
+                            trimmedQuery,
+                            items.size,
+                            params
+                        )
+                    }
+                }
+            }
             return Futures.immediateFuture(LibraryResult.ofVoid())
         }
 
@@ -1349,8 +1398,52 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             page: Int,
             pageSize: Int,
             params: MediaLibraryService.LibraryParams?
-        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> =
-            Futures.immediateFuture(LibraryResult.ofItemList(ImmutableList.of(), params))
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
+            val future = SettableFuture.create<LibraryResult<ImmutableList<MediaItem>>>()
+            coroutineScope.launch {
+                val result = runCatching {
+                    // Return YouTube search results to the Android Auto search template.
+                    val safePage = page.coerceAtLeast(0)
+                    val safePageSize = pageSize.coerceIn(1, 50)
+                    val trimmedQuery = query.trim()
+                    val items = query
+                        .trim()
+                        .takeIf(String::isNotBlank)
+                        ?.let { trimmedQuery ->
+                            val cached = lastAutoSearchItems.takeIf {
+                                lastAutoSearchQuery == trimmedQuery && it.isNotEmpty()
+                            }
+                            cached ?: runCatching {
+                                searchResultRepository
+                                    .searchSongs(query = trimmedQuery, continuation = null)
+                                    ?.getOrThrow()
+                                    ?.items
+                                    .orEmpty()
+                                    .map { it.asMediaItem.asAutoSearchResult }
+                            }.getOrDefault(emptyList())
+                                .also {
+                                    lastAutoSearchQuery = trimmedQuery
+                                    lastAutoSearchItems = it
+                                }
+                        }
+                        .orEmpty()
+
+                    val from = safePage * safePageSize
+                    val pageItems = if (from >= items.size) emptyList()
+                    else items.subList(from, minOf(from + safePageSize, items.size))
+
+                    LibraryResult.ofItemList(ImmutableList.copyOf(pageItems), params)
+                }
+
+                future.set(
+                    result.getOrElse {
+                        LibraryResult.ofError(SessionError.ERROR_UNKNOWN)
+                    }
+                )
+            }
+
+            return future
+        }
 
         @Suppress("CyclomaticComplexMethod")
         override fun onAddMediaItems(
@@ -1364,6 +1457,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     val item = mediaItems.firstOrNull() ?: return@runCatching mediaItems
                     val data = item.mediaId.split('/')
                     var index = 0
+
+                    val cachedSearchItem = lastAutoSearchItems.firstOrNull { it.mediaId == item.mediaId }
+                    if (cachedSearchItem != null) return@runCatching listOf(cachedSearchItem)
 
                     val mediaList = when (data.getOrNull(0)?.let { AutoMediaId(it) }) {
                         AutoMediaId.SHUFFLE -> lastAutoSongs
