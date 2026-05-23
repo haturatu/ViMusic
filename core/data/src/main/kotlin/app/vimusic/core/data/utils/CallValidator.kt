@@ -128,7 +128,7 @@ value class Whitelist(private val map: WhitelistMap = mapOf()) {
     }
 
     fun isWhitelisted(pak: String, signature: String) =
-        map[pak]?.first { it.signature == signature } != null
+        map[pak]?.any { it.signature == signature } == true
 
     data class Key(
         val signature: String,
