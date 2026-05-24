@@ -32,7 +32,7 @@ suspend fun <T : Innertube.Item> Innertube.searchPage(
         ?.content
         ?.sectionListRenderer
         ?.contents
-        ?.lastOrNull()
+        ?.lastOrNull { it.musicShelfRenderer != null }
         ?.musicShelfRenderer
         ?.toItemsPage(fromMusicShelfRendererContent)
 }
