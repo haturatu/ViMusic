@@ -3,11 +3,13 @@ package app.vimusic.android.service
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
@@ -17,6 +19,7 @@ import android.media.audiofx.LoudnessEnhancer
 import android.media.audiofx.PresetReverb
 import android.text.format.DateUtils
 import android.util.Log
+import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -57,18 +60,24 @@ import androidx.media3.exoplayer.audio.SilenceSkippingAudioProcessor
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.media3.session.LibraryResult
+import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaStyleNotificationHelper
+import androidx.media3.session.SessionError
 import app.vimusic.android.MainActivity
 import app.vimusic.android.R
 import app.vimusic.android.appContainer
 import app.vimusic.android.extractor.NewPipeExtractorClient
 import app.vimusic.android.models.Event
 import app.vimusic.android.models.Format
+import app.vimusic.android.models.Album
+import app.vimusic.android.models.PlaylistPreview
 import app.vimusic.android.models.QueuedMediaItem
 import app.vimusic.android.models.Song
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.preferences.DataPreferences
+import app.vimusic.android.preferences.OrderPreferences
 import app.vimusic.android.preferences.PlayerPreferences
 import app.vimusic.android.utils.ActionReceiver
 import app.vimusic.android.utils.ConditionalCacheDataSourceFactory
@@ -78,6 +87,7 @@ import app.vimusic.android.utils.TimerJob
 import app.vimusic.android.utils.YouTubeRadio
 import app.vimusic.android.utils.YouTubeRadioState
 import app.vimusic.android.utils.activityPendingIntent
+import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.asDataSource
 import app.vimusic.android.utils.broadcastPendingIntent
 import app.vimusic.android.utils.defaultDataSource
@@ -85,6 +95,7 @@ import app.vimusic.android.utils.enqueue
 import app.vimusic.android.utils.findCause
 import app.vimusic.android.utils.findNextMediaItemById
 import app.vimusic.android.utils.forcePlayFromBeginning
+import app.vimusic.android.utils.forcePlayAtIndex
 import app.vimusic.android.utils.forceSeekToNext
 import app.vimusic.android.utils.forceSeekToPrevious
 import app.vimusic.android.utils.get
@@ -117,6 +128,10 @@ import app.vimusic.providers.innertube.models.NavigationEndpoint
 import app.vimusic.providers.sponsorblock.models.Action
 import app.vimusic.providers.sponsorblock.models.Category
 import app.vimusic.providers.sponsorblock.models.Segment
+import com.google.common.collect.ImmutableList
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.SettableFuture
 import org.schabi.newpipe.extractor.exceptions.ContentNotAvailableException
 import org.schabi.newpipe.extractor.exceptions.ContentNotSupportedException
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
@@ -159,6 +174,7 @@ import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import android.os.Binder as AndroidBinder
+import android.os.IBinder
 
 const val LOCAL_KEY_PREFIX = "local:"
 private const val TAG = "PlayerService"
@@ -176,9 +192,10 @@ val Song.isLocal get() = id.startsWith(LOCAL_KEY_PREFIX)
 @OptIn(UnstableApi::class)
 class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListener.Callback {
     private val playerRepository by lazy { applicationContext.appContainer.playerRepository }
+    private val mediaLibraryRepository by lazy { applicationContext.appContainer.mediaLibraryRepository }
     private val searchResultRepository by lazy { applicationContext.appContainer.searchResultRepository }
     private val sponsorBlockRepository by lazy { applicationContext.appContainer.sponsorBlockRepository }
-    private lateinit var mediaSession: MediaSession
+    private lateinit var mediaSession: MediaLibraryService.MediaLibrarySession
     private lateinit var cache: SimpleCache
     private lateinit var player: ExoPlayer
     private val uriCache = UriCache<String, Long?>(size = 64)
@@ -186,6 +203,10 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private var timerJob: TimerJob? by mutableStateOf(null)
     private var radio: YouTubeRadio? = null
     private val playbackRetryManager = PlaybackRetryManager(longArrayOf(500L, 1500L, 3000L))
+    private var lastAutoSongs = emptyList<Song>()
+    // Android Auto asks for search results after onSearch; keep the YouTube results for selection.
+    private var lastAutoSearchQuery: String? = null
+    private var lastAutoSearchItems = emptyList<MediaItem>()
 
     private lateinit var bitmapProvider: BitmapProvider
 
@@ -236,10 +257,178 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private var lastProactiveRefreshMediaId: String? = null
     private var lastProactiveRefreshAtMs: Long = 0L
 
-    override fun onBind(intent: Intent?): AndroidBinder {
-        super.onBind(intent)
-        return binder
+    override fun onBind(intent: Intent?): IBinder? {
+        return super.onBind(intent) ?: binder
     }
+
+    override fun onGetSession(
+        controllerInfo: MediaSession.ControllerInfo
+    ): MediaLibraryService.MediaLibrarySession = mediaSession
+
+    private fun browseItem(
+        id: String,
+        title: String,
+        subtitle: String? = null,
+        iconUri: Uri? = null,
+        isBrowsable: Boolean,
+        isPlayable: Boolean
+    ) = MediaItem.Builder()
+        .setMediaId(id)
+        .setMediaMetadata(
+            androidx.media3.common.MediaMetadata.Builder()
+                .setTitle(title)
+                .setSubtitle(subtitle)
+                .setArtworkUri(iconUri)
+                .setIsBrowsable(isBrowsable)
+                .setIsPlayable(isPlayable)
+                .build()
+        )
+        .build()
+
+    private fun uriFor(@DrawableRes id: Int) = Uri.Builder()
+        .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+        .authority(resources.getResourcePackageName(id))
+        .appendPath(resources.getResourceTypeName(id))
+        .appendPath(resources.getResourceEntryName(id))
+        .build()
+
+    private val rootMediaItem
+        get() = browseItem(
+            id = AutoMediaId.ROOT.id,
+            title = applicationInfo.loadLabel(packageManager).toString(),
+            isBrowsable = true,
+            isPlayable = false
+        )
+
+    private val songsMediaItem
+        get() = browseItem(
+            id = AutoMediaId.SONGS.id,
+            title = getString(R.string.songs),
+            iconUri = uriFor(R.drawable.musical_notes),
+            isBrowsable = true,
+            isPlayable = false
+        )
+
+    private val playlistsMediaItem
+        get() = browseItem(
+            id = AutoMediaId.PLAYLISTS.id,
+            title = getString(R.string.playlists),
+            iconUri = uriFor(R.drawable.playlist),
+            isBrowsable = true,
+            isPlayable = false
+        )
+
+    private val albumsMediaItem
+        get() = browseItem(
+            id = AutoMediaId.ALBUMS.id,
+            title = getString(R.string.albums),
+            iconUri = uriFor(R.drawable.disc),
+            isBrowsable = true,
+            isPlayable = false
+        )
+
+    private val favoritesMediaItem
+        get() = browseItem(
+            id = AutoMediaId.FAVORITES.id,
+            title = getString(R.string.favorites),
+            iconUri = uriFor(R.drawable.heart),
+            isBrowsable = false,
+            isPlayable = true
+        )
+
+    private val offlineMediaItem
+        get() = browseItem(
+            id = AutoMediaId.OFFLINE.id,
+            title = getString(R.string.offline),
+            iconUri = uriFor(R.drawable.airplane),
+            isBrowsable = false,
+            isPlayable = true
+        )
+
+    private val topMediaItem
+        get() = browseItem(
+            id = AutoMediaId.TOP.id,
+            title = getString(
+                R.string.format_my_top_playlist,
+                DataPreferences.topListLength.toString()
+            ),
+            iconUri = uriFor(R.drawable.trending),
+            isBrowsable = false,
+            isPlayable = true
+        )
+
+    private val localMediaItem
+        get() = browseItem(
+            id = AutoMediaId.LOCAL.id,
+            title = getString(R.string.local),
+            iconUri = uriFor(R.drawable.download),
+            isBrowsable = false,
+            isPlayable = true
+        )
+
+    private val shuffleMediaItem
+        get() = browseItem(
+            id = AutoMediaId.SHUFFLE.id,
+            title = getString(R.string.shuffle),
+            iconUri = uriFor(R.drawable.shuffle),
+            isBrowsable = false,
+            isPlayable = true
+        )
+
+    private val Song.asAutoBrowsableMediaItem
+        get() = browseItem(
+            id = (AutoMediaId.SONGS / id).id,
+            title = title,
+            subtitle = artistsText,
+            iconUri = thumbnailUrl?.toUri(),
+            isBrowsable = false,
+            isPlayable = true
+        )
+
+    private val PlaylistPreview.asAutoBrowsableMediaItem
+        get() = browseItem(
+            id = (AutoMediaId.PLAYLISTS / playlist.id.toString()).id,
+            title = playlist.name,
+            subtitle = resources.getQuantityString(
+                R.plurals.song_count_plural,
+                songCount,
+                songCount
+            ),
+            iconUri = uriFor(R.drawable.playlist),
+            isBrowsable = false,
+            isPlayable = true
+        )
+
+    private val Album.asAutoBrowsableMediaItem
+        get() = browseItem(
+            id = (AutoMediaId.ALBUMS / id).id,
+            title = title.orEmpty(),
+            subtitle = authorsText.orEmpty(),
+            iconUri = thumbnailUrl?.toUri(),
+            isBrowsable = false,
+            isPlayable = true
+        )
+
+    // Android Auto needs explicit browsable/playable metadata to show YouTube search results.
+    private val MediaItem.asAutoSearchResult
+        get() = MediaItem.Builder()
+            .setMediaId(mediaId)
+            .setUri(mediaId)
+            .setCustomCacheKey(mediaId)
+            .setMediaMetadata(
+                androidx.media3.common.MediaMetadata.Builder()
+                    .setTitle(mediaMetadata.title)
+                    .setSubtitle(mediaMetadata.artist)
+                    .setArtist(mediaMetadata.artist)
+                    .setAlbumTitle(mediaMetadata.albumTitle)
+                    .setArtworkUri(mediaMetadata.artworkUri)
+                    .setExtras(mediaMetadata.extras)
+                    .setIsBrowsable(false)
+                    .setIsPlayable(true)
+                    .setMediaType(androidx.media3.common.MediaMetadata.MEDIA_TYPE_MUSIC)
+                    .build()
+            )
+            .build()
 
     @Suppress("CyclomaticComplexMethod")
     override fun onCreate() {
@@ -286,7 +475,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         updateRepeatMode()
         maybeRestorePlayerQueue()
 
-        mediaSession = MediaSession.Builder(this, player)
+        mediaSession = MediaLibraryService.MediaLibrarySession.Builder(this, player, AutoSessionCallback())
             .setSessionActivity(activityPendingIntent<MainActivity>())
             .build()
 
@@ -1060,6 +1249,300 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     if (isAtLeastAndroid10) setOffloadMode(AudioSink.OFFLOAD_MODE_DISABLED)
                 }
         }
+    }
+
+    @Stable
+    private inner class AutoSessionCallback : MediaLibraryService.MediaLibrarySession.Callback {
+        @Suppress("CyclomaticComplexMethod")
+        override fun onGetChildren(
+            session: MediaLibraryService.MediaLibrarySession,
+            controller: MediaSession.ControllerInfo,
+            parentId: String,
+            page: Int,
+            pageSize: Int,
+            params: MediaLibraryService.LibraryParams?
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
+            val future = SettableFuture.create<LibraryResult<ImmutableList<MediaItem>>>()
+            coroutineScope.launch {
+                val result = runCatching {
+                    val items = when (AutoMediaId(parentId)) {
+                        AutoMediaId.ROOT -> mutableListOf(
+                            songsMediaItem,
+                            playlistsMediaItem,
+                            albumsMediaItem
+                        )
+
+                        AutoMediaId.SONGS ->
+                            mediaLibraryRepository
+                                .getRecentSongs(limit = 30)
+                                .also { lastAutoSongs = it }
+                                .map { it.asAutoBrowsableMediaItem }
+                                .toMutableList()
+                                .apply {
+                                    if (isNotEmpty()) add(0, shuffleMediaItem)
+                                }
+
+                        AutoMediaId.PLAYLISTS ->
+                            mediaLibraryRepository
+                                .getPlaylistPreviewsByDateAddedDesc()
+                                .map { it.asAutoBrowsableMediaItem }
+                                .toMutableList()
+                                .apply {
+                                    add(0, favoritesMediaItem)
+                                    add(1, offlineMediaItem)
+                                    add(2, topMediaItem)
+                                    add(3, localMediaItem)
+                                }
+
+                        AutoMediaId.ALBUMS ->
+                            mediaLibraryRepository
+                                .getAlbumsByRowIdDesc()
+                                .map { it.asAutoBrowsableMediaItem }
+                                .toMutableList()
+
+                        else -> mutableListOf()
+                    }
+                    LibraryResult.ofItemList(ImmutableList.copyOf(items), params)
+                }
+
+                future.set(
+                    result.getOrElse {
+                        LibraryResult.ofError(SessionError.ERROR_UNKNOWN)
+                    }
+                )
+            }
+
+            return future
+        }
+
+        override fun onGetLibraryRoot(
+            session: MediaLibraryService.MediaLibrarySession,
+            controller: MediaSession.ControllerInfo,
+            params: MediaLibraryService.LibraryParams?
+        ): ListenableFuture<LibraryResult<MediaItem>> = Futures.immediateFuture(
+            LibraryResult.ofItem(
+                rootMediaItem,
+                MediaLibraryService.LibraryParams.Builder()
+                    .setExtras(Bundle().apply {
+                        putBoolean("android.media.browse.CONTENT_STYLE_SUPPORTED", true)
+                        putInt("android.media.browse.CONTENT_STYLE_BROWSABLE_HINT", 1)
+                        putInt("android.media.browse.CONTENT_STYLE_PLAYABLE_HINT", 1)
+                    })
+                    .build()
+            )
+        )
+
+        override fun onGetItem(
+            session: MediaLibraryService.MediaLibrarySession,
+            controller: MediaSession.ControllerInfo,
+            mediaId: String
+        ): ListenableFuture<LibraryResult<MediaItem>> {
+            val item = when (AutoMediaId(mediaId)) {
+                AutoMediaId.ROOT -> rootMediaItem
+                AutoMediaId.SONGS -> songsMediaItem
+                AutoMediaId.PLAYLISTS -> playlistsMediaItem
+                AutoMediaId.ALBUMS -> albumsMediaItem
+                AutoMediaId.FAVORITES -> favoritesMediaItem
+                AutoMediaId.OFFLINE -> offlineMediaItem
+                AutoMediaId.TOP -> topMediaItem
+                AutoMediaId.LOCAL -> localMediaItem
+                AutoMediaId.SHUFFLE -> shuffleMediaItem
+                else -> null
+            }
+
+            return Futures.immediateFuture(
+                if (item == null) LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
+                else LibraryResult.ofItem(item, null)
+            )
+        }
+
+        override fun onSearch(
+            session: MediaLibraryService.MediaLibrarySession,
+            controller: MediaSession.ControllerInfo,
+            query: String,
+            params: MediaLibraryService.LibraryParams?
+        ): ListenableFuture<LibraryResult<Void>> {
+            val trimmedQuery = query.trim()
+            if (trimmedQuery.isNotBlank()) {
+                coroutineScope.launch {
+                    // Use the same YouTube Music search source as the in-app search screen.
+                    val items = runCatching {
+                        searchResultRepository
+                            .searchSongs(query = trimmedQuery, continuation = null)
+                            ?.getOrThrow()
+                            ?.items
+                            .orEmpty()
+                            .map { it.asMediaItem.asAutoSearchResult }
+                    }.getOrDefault(emptyList())
+
+                    lastAutoSearchQuery = trimmedQuery
+                    lastAutoSearchItems = items
+
+                    withContext(Dispatchers.Main) {
+                        session.notifySearchResultChanged(
+                            controller,
+                            trimmedQuery,
+                            items.size,
+                            params
+                        )
+                    }
+                }
+            }
+            return Futures.immediateFuture(LibraryResult.ofVoid())
+        }
+
+        override fun onGetSearchResult(
+            session: MediaLibraryService.MediaLibrarySession,
+            controller: MediaSession.ControllerInfo,
+            query: String,
+            page: Int,
+            pageSize: Int,
+            params: MediaLibraryService.LibraryParams?
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
+            val future = SettableFuture.create<LibraryResult<ImmutableList<MediaItem>>>()
+            coroutineScope.launch {
+                val result = runCatching {
+                    // Return YouTube search results to the Android Auto search template.
+                    val safePage = page.coerceAtLeast(0)
+                    val safePageSize = pageSize.coerceIn(1, 50)
+                    val trimmedQuery = query.trim()
+                    val items = query
+                        .trim()
+                        .takeIf(String::isNotBlank)
+                        ?.let { trimmedQuery ->
+                            val cached = lastAutoSearchItems.takeIf {
+                                lastAutoSearchQuery == trimmedQuery && it.isNotEmpty()
+                            }
+                            cached ?: runCatching {
+                                searchResultRepository
+                                    .searchSongs(query = trimmedQuery, continuation = null)
+                                    ?.getOrThrow()
+                                    ?.items
+                                    .orEmpty()
+                                    .map { it.asMediaItem.asAutoSearchResult }
+                            }.getOrDefault(emptyList())
+                                .also {
+                                    lastAutoSearchQuery = trimmedQuery
+                                    lastAutoSearchItems = it
+                                }
+                        }
+                        .orEmpty()
+
+                    val from = safePage * safePageSize
+                    val pageItems = if (from >= items.size) emptyList()
+                    else items.subList(from, minOf(from + safePageSize, items.size))
+
+                    LibraryResult.ofItemList(ImmutableList.copyOf(pageItems), params)
+                }
+
+                future.set(
+                    result.getOrElse {
+                        LibraryResult.ofError(SessionError.ERROR_UNKNOWN)
+                    }
+                )
+            }
+
+            return future
+        }
+
+        @Suppress("CyclomaticComplexMethod")
+        override fun onAddMediaItems(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            mediaItems: List<MediaItem>
+        ): ListenableFuture<List<MediaItem>> {
+            val future = SettableFuture.create<List<MediaItem>>()
+            coroutineScope.launch {
+                val resolved = runCatching {
+                    val item = mediaItems.firstOrNull() ?: return@runCatching mediaItems
+                    val data = item.mediaId.split('/')
+                    var index = 0
+
+                    val cachedSearchItem = lastAutoSearchItems.firstOrNull { it.mediaId == item.mediaId }
+                    if (cachedSearchItem != null) return@runCatching listOf(cachedSearchItem)
+
+                    val mediaList = when (data.getOrNull(0)?.let { AutoMediaId(it) }) {
+                        AutoMediaId.SHUFFLE -> lastAutoSongs
+
+                        AutoMediaId.SONGS -> data.getOrNull(1)?.let { songId ->
+                            index = lastAutoSongs.indexOfFirst { it.id == songId }
+                            lastAutoSongs
+                        }
+
+                        AutoMediaId.FAVORITES ->
+                            mediaLibraryRepository.getFavoritesShuffled()
+
+                        AutoMediaId.OFFLINE ->
+                            mediaLibraryRepository.getOfflineCachedShuffled { binder.isCached(it) }
+
+                        AutoMediaId.TOP -> {
+                            val duration = DataPreferences.topListPeriod.duration
+                            val length = DataPreferences.topListLength
+
+                            mediaLibraryRepository.getTopSongs(
+                                durationMillis = duration?.inWholeMilliseconds,
+                                length = length
+                            )
+                        }
+
+                        AutoMediaId.LOCAL ->
+                            mediaLibraryRepository.getLocalSongs(
+                                sortBy = OrderPreferences.localSongSortBy,
+                                sortOrder = OrderPreferences.localSongSortOrder
+                            )
+
+                        AutoMediaId.PLAYLISTS ->
+                            data
+                                .getOrNull(1)
+                                ?.toLongOrNull()
+                                ?.let { playlistId ->
+                                    mediaLibraryRepository.getPlaylistSongsShuffled(playlistId)
+                                }
+
+                        AutoMediaId.ALBUMS ->
+                            data
+                                .getOrNull(1)
+                                ?.let { albumId ->
+                                    mediaLibraryRepository.getAlbumSongs(albumId)
+                                }
+
+                        else -> emptyList()
+                    }
+
+                    (mediaList?.map(Song::asMediaItem) ?: emptyList()).also {
+                        if (it.isNotEmpty()) {
+                            withContext(Dispatchers.Main) {
+                                player.forcePlayAtIndex(
+                                    items = it,
+                                    index = index.coerceIn(0, it.lastIndex.coerceAtLeast(0))
+                                )
+                            }
+                        }
+                    }
+                }
+                future.set(resolved.getOrElse { mediaItems })
+            }
+
+            return future
+        }
+    }
+
+    @JvmInline
+    private value class AutoMediaId(val id: String) : CharSequence by id {
+        companion object {
+            val ROOT = AutoMediaId("root")
+            val SONGS = AutoMediaId("songs")
+            val PLAYLISTS = AutoMediaId("playlists")
+            val ALBUMS = AutoMediaId("albums")
+
+            val FAVORITES = AutoMediaId("favorites")
+            val OFFLINE = AutoMediaId("offline")
+            val TOP = AutoMediaId("top")
+            val LOCAL = AutoMediaId("local")
+            val SHUFFLE = AutoMediaId("shuffle")
+        }
+
+        operator fun div(other: String) = AutoMediaId("$id/$other")
     }
 
     @Stable
