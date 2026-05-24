@@ -3,8 +3,10 @@ package app.vimusic.android
 import android.content.ContentValues
 import android.content.Context
 import android.database.SQLException
+import android.database.sqlite.SQLiteConstraintException
 import android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE
 import android.os.Parcel
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.core.database.getFloatOrNull
 import androidx.core.database.getLongOrNull
@@ -723,29 +725,47 @@ interface Database {
 
         insert(song)
 
+        fun handleOptionalRelationInsertFailure(relation: String, error: Throwable) {
+            if (error is SQLiteConstraintException) {
+                Log.w("Database", "Skipping invalid $relation relation for song ${song.id}", error)
+            } else {
+                throw error
+            }
+        }
+
         extras?.albumId?.let { albumId ->
-            insert(
-                Album(id = albumId, title = mediaItem.mediaMetadata.albumTitle?.toString()),
-                SongAlbumMap(songId = song.id, albumId = albumId, position = null)
-            )
+            runCatching {
+                insert(
+                    Album(id = albumId, title = mediaItem.mediaMetadata.albumTitle?.toString()),
+                    SongAlbumMap(songId = song.id, albumId = albumId, position = null)
+                )
+            }.onFailure { error ->
+                handleOptionalRelationInsertFailure("album", error)
+            }
         }
 
         extras?.artistNames?.let { artistNames ->
             extras.artistIds?.let { artistIds ->
-                if (artistNames.size == artistIds.size) insert(
-                    artistNames.mapIndexed { index, artistName ->
-                        Artist(
-                            id = artistIds[index],
-                            name = artistName
+                if (artistNames.size == artistIds.size) {
+                    runCatching {
+                        insert(
+                            artistNames.mapIndexed { index, artistName ->
+                                Artist(
+                                    id = artistIds[index],
+                                    name = artistName
+                                )
+                            },
+                            artistIds.map { artistId ->
+                                SongArtistMap(
+                                    songId = song.id,
+                                    artistId = artistId
+                                )
+                            }
                         )
-                    },
-                    artistIds.map { artistId ->
-                        SongArtistMap(
-                            songId = song.id,
-                            artistId = artistId
-                        )
+                    }.onFailure { error ->
+                        handleOptionalRelationInsertFailure("artist", error)
                     }
-                )
+                }
             }
         }
     }
