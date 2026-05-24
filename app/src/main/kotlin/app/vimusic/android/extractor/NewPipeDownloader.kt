@@ -1,11 +1,16 @@
 package app.vimusic.android.extractor
 
+import android.util.Log
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
+import java.net.Inet4Address
+import java.net.Inet6Address
+import java.net.InetAddress
+import java.util.concurrent.TimeUnit
 
 class NewPipeDownloader(
     private val client: OkHttpClient
@@ -45,5 +50,56 @@ class NewPipeDownloader(
     companion object {
         const val USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
+
+        fun client(dnsTarget: NewPipeDnsTarget) = OkHttpClient.Builder()
+            .retryOnConnectionFailure(dnsTarget == NewPipeDnsTarget.System)
+            .connectTimeout(if (dnsTarget == NewPipeDnsTarget.System) 10 else 4, TimeUnit.SECONDS)
+            .readTimeout(if (dnsTarget == NewPipeDnsTarget.System) 10 else 8, TimeUnit.SECONDS)
+            .dns { hostname ->
+                when (dnsTarget) {
+                    NewPipeDnsTarget.System -> InetAddress.getAllByName(hostname).toList()
+                    is NewPipeDnsTarget.Resolved -> resolveAddresses(hostname, dnsTarget.index)
+                }
+            }
+            .build()
+
+        private fun resolveAddresses(hostname: String, index: Int): List<InetAddress> {
+            val addresses = InetAddress.getAllByName(hostname).toList()
+            val ordered = addresses
+                .filterIsInstance<Inet4Address>()
+                .zipLongest(addresses.filterIsInstance<Inet6Address>())
+                .flatMap { (ipv4, ipv6) -> listOfNotNull(ipv4, ipv6) }
+
+            val selected = ordered.getOrNull(index) ?: return addresses.also {
+                Log.d(TAG, "Using system DNS hostname=$hostname index=$index addresses=${addresses.size}")
+            }
+
+            return listOf(selected.also {
+                Log.d(TAG, "Resolved DNS hostname=$hostname index=$index address=${it.hostAddress}")
+            })
+        }
+
+        private fun <T> List<T>.zipLongest(other: List<T>): List<Pair<T?, T?>> {
+            val maxSize = maxOf(size, other.size)
+            return (0 until maxSize).map { index ->
+                getOrNull(index) to other.getOrNull(index)
+            }
+        }
+
+        private const val TAG = "NewPipeDownloader"
+    }
+}
+
+sealed interface NewPipeDnsTarget {
+    val label: String
+
+    data object System : NewPipeDnsTarget {
+        override val label = "system"
+    }
+
+    data class Resolved(
+        val index: Int
+    ) : NewPipeDnsTarget {
+        override val label = "resolved[$index]"
     }
 }
