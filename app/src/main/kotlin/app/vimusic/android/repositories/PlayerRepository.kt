@@ -1,6 +1,7 @@
 package app.vimusic.android.repositories
 
 import android.database.sqlite.SQLiteConstraintException
+import android.util.Log
 import app.vimusic.android.Database
 import app.vimusic.android.models.Event
 import app.vimusic.android.models.Format
@@ -37,6 +38,7 @@ interface PlayerRepository {
 }
 
 object DatabasePlayerRepository : PlayerRepository {
+    private const val TAG = "DatabasePlayerRepository"
     private const val MAX_EVENT_HISTORY_COUNT = 500
     private const val EVENT_PRUNE_BATCH_SIZE = 350
 
@@ -90,7 +92,9 @@ object DatabasePlayerRepository : PlayerRepository {
     }
 
     override fun insertFormat(format: Format) {
-        transaction { Database.insert(format) }
+        transaction {
+            insertFormatIgnoringMissingSong(format)
+        }
     }
 
     override fun observeLikedAt(songId: String): Flow<Long?> = Database.likedAt(songId)
@@ -110,7 +114,7 @@ object DatabasePlayerRepository : PlayerRepository {
             ?.onSuccess { response ->
                 response?.streamingData?.highestQualityFormat?.let { format ->
                     Database.insert(mediaItem)
-                    Database.insert(
+                    insertFormatIgnoringMissingSong(
                         Format(
                             songId = songId,
                             itag = format.itag,
@@ -129,5 +133,17 @@ object DatabasePlayerRepository : PlayerRepository {
 
     override fun setLoudnessBoost(songId: String, loudnessBoost: Float?) {
         transaction { Database.setLoudnessBoost(songId = songId, loudnessBoost = loudnessBoost) }
+    }
+
+    private fun insertFormatIgnoringMissingSong(format: Format) {
+        runCatching {
+            Database.insert(format)
+        }.onFailure { throwable ->
+            if (throwable is SQLiteConstraintException) {
+                Log.w(TAG, "Skipping format insert without song ${format.songId}", throwable)
+            } else {
+                throw throwable
+            }
+        }
     }
 }
