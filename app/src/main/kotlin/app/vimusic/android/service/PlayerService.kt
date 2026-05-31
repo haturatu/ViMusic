@@ -17,7 +17,6 @@ import android.media.AudioManager
 import android.media.audiofx.AudioEffect
 import android.media.audiofx.LoudnessEnhancer
 import android.media.audiofx.PresetReverb
-import android.text.format.DateUtils
 import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
@@ -42,7 +41,6 @@ import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException
-import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.ContentMetadata
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
@@ -57,9 +55,7 @@ import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink.DefaultAudioProcessorChain
 import androidx.media3.exoplayer.audio.SilenceSkippingAudioProcessor
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
-import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
@@ -68,9 +64,7 @@ import androidx.media3.session.SessionError
 import app.vimusic.android.MainActivity
 import app.vimusic.android.R
 import app.vimusic.android.appContainer
-import app.vimusic.android.extractor.NewPipeExtractorClient
 import app.vimusic.android.models.Event
-import app.vimusic.android.models.Format
 import app.vimusic.android.models.Album
 import app.vimusic.android.models.PlaylistPreview
 import app.vimusic.android.models.QueuedMediaItem
@@ -80,7 +74,6 @@ import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.preferences.OrderPreferences
 import app.vimusic.android.preferences.PlayerPreferences
 import app.vimusic.android.utils.ActionReceiver
-import app.vimusic.android.utils.ConditionalCacheDataSourceFactory
 import app.vimusic.android.utils.GlyphInterface
 import app.vimusic.android.utils.InvincibleService
 import app.vimusic.android.utils.TimerJob
@@ -88,9 +81,7 @@ import app.vimusic.android.utils.YouTubeRadio
 import app.vimusic.android.utils.YouTubeRadioState
 import app.vimusic.android.utils.activityPendingIntent
 import app.vimusic.android.utils.asMediaItem
-import app.vimusic.android.utils.asDataSource
 import app.vimusic.android.utils.broadcastPendingIntent
-import app.vimusic.android.utils.defaultDataSource
 import app.vimusic.android.utils.enqueue
 import app.vimusic.android.utils.findCause
 import app.vimusic.android.utils.findNextMediaItemById
@@ -99,24 +90,19 @@ import app.vimusic.android.utils.forcePlayAtIndex
 import app.vimusic.android.utils.forceSeekToNext
 import app.vimusic.android.utils.forceSeekToPrevious
 import app.vimusic.android.utils.get
-import app.vimusic.android.utils.handleRangeErrors
-import app.vimusic.android.utils.handleUnknownErrors
 import app.vimusic.android.utils.InvalidPlaybackResponseException
 import app.vimusic.android.utils.intent
 import app.vimusic.android.utils.mediaItems
 import app.vimusic.android.utils.PlaybackRetryManager
 import app.vimusic.android.utils.progress
-import app.vimusic.android.utils.readOnlyWhen
 import app.vimusic.android.utils.safeUnregisterReceiver
 import app.vimusic.android.utils.setPlaybackPitch
 import app.vimusic.android.utils.shouldBePlaying
 import app.vimusic.android.utils.thumbnail
 import app.vimusic.android.utils.timer
 import app.vimusic.android.utils.toast
-import app.vimusic.android.utils.withFreshConnectionHeaders
 import app.vimusic.compose.preferences.SharedPreferencesProperty
 import app.vimusic.core.data.enums.ExoPlayerDiskCacheSize
-import app.vimusic.core.data.utils.UriCache
 import app.vimusic.core.ui.utils.EqualizerIntentBundleAccessor
 import app.vimusic.core.ui.utils.isAtLeastAndroid10
 import app.vimusic.core.ui.utils.isAtLeastAndroid6
@@ -132,14 +118,6 @@ import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
-import org.schabi.newpipe.extractor.exceptions.ContentNotAvailableException
-import org.schabi.newpipe.extractor.exceptions.ContentNotSupportedException
-import org.schabi.newpipe.extractor.exceptions.ExtractionException
-import org.schabi.newpipe.extractor.exceptions.ParsingException
-import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
-import org.schabi.newpipe.extractor.stream.StreamInfo
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -198,7 +176,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private lateinit var mediaSession: MediaLibraryService.MediaLibrarySession
     private lateinit var cache: SimpleCache
     private lateinit var player: ExoPlayer
-    private val uriCache = UriCache<String, Long?>(size = 64)
 
     private var timerJob: TimerJob? by mutableStateOf(null)
     private var radio: YouTubeRadio? = null
@@ -214,7 +191,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private var preferenceUpdaterJob: Job? = null
     private var volumeNormalizationJob: Job? = null
     private var sponsorBlockJob: Job? = null
-    private var proactiveRefreshJob: Job? = null
 
     override var isInvincibilityEnabled by mutableStateOf(false)
 
@@ -253,9 +229,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private val glyphInterface by lazy { GlyphInterface(applicationContext) }
 
     private var poiTimestamp: Long? by mutableStateOf(null)
-    private var proactiveRefreshInFlight = false
-    private var lastProactiveRefreshMediaId: String? = null
-    private var lastProactiveRefreshAtMs: Long = 0L
 
     override fun onBind(intent: Intent?): IBinder? {
         return super.onBind(intent) ?: binder
@@ -497,7 +470,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
         notificationActionReceiver.register()
         maybeResumePlaybackWhenDeviceConnected()
-        startProactiveRefreshLoop()
 
         preferenceUpdaterJob = coroutineScope.launch {
             fun <T : Any> subscribe(
@@ -581,7 +553,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
             loudnessEnhancer?.release()
             preferenceUpdaterJob?.cancel()
-            proactiveRefreshJob?.cancel()
 
             coroutineScope.cancel()
             glyphInterface.close()
@@ -669,7 +640,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
         player.currentMediaItem?.mediaId?.let { mediaId ->
             if (error.findCause<InvalidPlaybackResponseException>() != null) {
-                playbackRetryManager.prepareRetry(mediaId) { uriCache.clear() }
+                playbackRetryManager.prepareRetry(mediaId) {}
                 player.prepare()
                 player.play()
                 return
@@ -691,7 +662,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     {
                         if (player.currentMediaItem?.mediaId != mediaId) return@postDelayed
 
-                        playbackRetryManager.prepareRetry(mediaId) { uriCache.clear() }
+                        playbackRetryManager.prepareRetry(mediaId) {}
 
                         player.prepare()
                         player.play()
@@ -708,88 +679,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private fun maybeRecoverPlaybackError() {
         if (player.playerError != null) player.prepare()
     }
-
-    private fun startProactiveRefreshLoop() {
-        proactiveRefreshJob?.cancel()
-        proactiveRefreshJob = coroutineScope.launch(Dispatchers.IO) {
-            while (isActive) {
-                delay(PROACTIVE_REFRESH_POLL_INTERVAL_MS)
-                maybeProactivelyRefreshCurrentStream()
-            }
-        }
-    }
-
-    private suspend fun maybeProactivelyRefreshCurrentStream() {
-        if (proactiveRefreshInFlight) return
-
-        val mediaId = withContext(Dispatchers.Main) {
-            if (!player.isPlaying) return@withContext null
-            val mediaItem = player.currentMediaItem ?: return@withContext null
-            if (mediaItem.isLocal) return@withContext null
-
-            val bufferedAheadMs = (player.bufferedPosition - player.currentPosition).coerceAtLeast(0L)
-            if (bufferedAheadMs > PROACTIVE_REFRESH_THRESHOLD_MS) return@withContext null
-
-            extractYouTubeVideoId(mediaItem.mediaId)
-        } ?: return
-
-        if (isFullyCached(cache, mediaId)) return
-
-        val now = System.currentTimeMillis()
-        if (
-            lastProactiveRefreshMediaId == mediaId &&
-            (now - lastProactiveRefreshAtMs) < PROACTIVE_REFRESH_MIN_INTERVAL_MS
-        ) return
-
-        proactiveRefreshInFlight = true
-        lastProactiveRefreshMediaId = mediaId
-        lastProactiveRefreshAtMs = now
-
-        runCatching {
-            val result = NewPipeExtractorClient.resolveAudioStream(mediaId)
-            val streamInfo = result.streamInfo
-            if (streamInfo.id != mediaId) return@runCatching
-
-            val audioStream = result.audioStream
-            if (!audioStream.isUrl) return@runCatching
-
-            val url = audioStream.content
-            if (!preflightAudioStream(url)) return@runCatching
-
-            uriCache.push(
-                key = mediaId,
-                meta = null,
-                uri = url.toUri(),
-                validUntil = null
-            )
-            playbackRetryManager.markForceFreshResolve(mediaId)
-        }.onFailure {
-            Log.w(TAG, "Proactive refresh failed for $mediaId", it)
-        }
-
-        proactiveRefreshInFlight = false
-    }
-
-    private fun preflightAudioStream(url: String): Boolean = runCatching {
-        val request = Request.Builder()
-            .url(url)
-            .get()
-            .header("Range", "bytes=0-1")
-            .header("User-Agent", PREVIEW_USER_AGENT)
-            .build()
-
-        preflightHttpClient.newCall(request).execute().use { response ->
-            val code = response.code
-            val contentRange = response.header("Content-Range")
-            val contentLength = response.header("Content-Length")?.toLongOrNull()
-
-            when (code) {
-                206 -> !contentRange.isNullOrBlank()
-                200 -> contentLength == null || contentLength > 0L
-                else -> false
-            }
-        }
-    }.getOrDefault(false)
 
     private fun maybeProcessRadio() {
         if (player.mediaItemCount - player.currentMediaItemIndex > 3) return
@@ -1199,20 +1088,15 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             ?.let { ServiceNotifications.default.startForeground(this, it) }
     }
 
-    private fun createMediaSourceFactory() = DefaultMediaSourceFactory(
-        /* dataSourceFactory = */ createYouTubeDataSourceResolverFactory(
+    private fun createMediaSourceFactory() = NewPipeAudioMediaSourceFactory(
+        context = applicationContext,
+        cache = cache,
             findMediaItem = { videoId ->
                 withContext(Dispatchers.Main) {
                     player.findNextMediaItemById(videoId)
                 }
             },
-            context = applicationContext,
-            cache = cache,
-            uriCache = uriCache,
-            dbWriteScope = coroutineScope,
-            playbackRetryManager = playbackRetryManager
-        ),
-        /* extractorsFactory = */ DefaultExtractorsFactory()
+        dbWriteScope = coroutineScope
     ).setLoadErrorHandlingPolicy(
         object : DefaultLoadErrorHandlingPolicy() {
             override fun isEligibleForFallback(exception: IOException) = true
@@ -1705,40 +1589,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         }
     }.let { }
 
-    private fun shouldPrefetch(mediaItem: MediaItem) =
-        !mediaItem.isLocal && mediaItem.mediaId.isNotBlank()
-
     private fun prefetchMediaItems(mediaItems: List<MediaItem>) {
-        val ids = mediaItems
-            .asSequence()
-            .filter(::shouldPrefetch)
-            .map { extractYouTubeVideoId(it.mediaId) }
-            .distinct()
-            .take(PREFETCH_MAX)
-            .toList()
-
-        if (ids.isEmpty()) return
-
-        coroutineScope.launch(Dispatchers.IO) {
-            ids.forEach { mediaId ->
-                if (uriCache[mediaId] != null) return@forEach
-
-                runCatching {
-                    val result = NewPipeExtractorClient.resolveAudioStream(mediaId)
-                    val streamInfo = result.streamInfo
-                    if (streamInfo.id != mediaId) return@runCatching
-                    val audioStream = result.audioStream
-                    if (!audioStream.isUrl) return@runCatching
-
-                    uriCache.push(
-                        key = mediaId,
-                        meta = null,
-                        uri = audioStream.content.toUri(),
-                        validUntil = null
-                    )
-                }.onFailure { it.printStackTrace() }
-            }
-        }
+        // NewPipe-style playback resolves streams while building the media source. The old
+        // URL-prefetch path bypasses that resolver and can reject valid non-URL adaptive streams.
     }
 
     private fun syncCurrentMediaItemRadioState(radio: YouTubeRadio) {
@@ -1820,22 +1673,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     companion object {
         private const val DEFAULT_CACHE_DIRECTORY = "exoplayer"
         private const val DEFAULT_CHUNK_LENGTH = 2 * 1024 * 1024L
-        private const val PREFETCH_MAX = 6
-        private const val PROACTIVE_REFRESH_THRESHOLD_MS = 12_000L
-        private const val PROACTIVE_REFRESH_POLL_INTERVAL_MS = 2_000L
-        private const val PROACTIVE_REFRESH_MIN_INTERVAL_MS = 6_000L
-        private const val PREVIEW_USER_AGENT =
-            "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
-        private val preflightHttpClient by lazy {
-            OkHttpClient.Builder()
-                .retryOnConnectionFailure(true)
-                .connectTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
-                .build()
-        }
         private val youtubeIdRegex = Regex("^[A-Za-z0-9_-]{11}$")
 
-        private fun extractYouTubeVideoId(raw: String): String {
+        fun extractYouTubeVideoId(raw: String): String {
             val trimmed = raw.trim()
             if (youtubeIdRegex.matches(trimmed)) return trimmed
 
@@ -1897,171 +1737,5 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             SimpleCache(directory, cacheEvictor, createDatabaseProvider(context))
         }
 
-        @Suppress("CyclomaticComplexMethod")
-        fun createYouTubeDataSourceResolverFactory(
-            context: Context,
-            cache: Cache,
-            chunkLength: Long? = DEFAULT_CHUNK_LENGTH,
-            findMediaItem: suspend (videoId: String) -> MediaItem? = { null },
-            uriCache: UriCache<String, Long?> = UriCache(),
-            dbWriteScope: CoroutineScope? = null,
-            playbackRetryManager: PlaybackRetryManager? = null
-        ): DataSource.Factory {
-            val playerRepository = context.appContainer.playerRepository
-
-            return ResolvingDataSource.Factory(
-            ConditionalCacheDataSourceFactory(
-                cacheDataSourceFactory = cache.readOnlyWhen { PlayerPreferences.pauseCache }.asDataSource,
-                upstreamDataSourceFactory = context.defaultDataSource,
-                shouldCache = { dataSpec ->
-                    if (dataSpec.isLocal) return@ConditionalCacheDataSourceFactory false
-                    if (!DataPreferences.cacheFavoritesOnly) return@ConditionalCacheDataSourceFactory true
-
-                    val mediaId = dataSpec.key?.let(::extractYouTubeVideoId) ?: return@ConditionalCacheDataSourceFactory false
-                    playerRepository.isFavoriteNow(mediaId)
-                }
-            )
-        ) resolver@{ dataSpec ->
-            if (dataSpec.isLocal) return@resolver dataSpec
-
-            val mediaId = dataSpec.key
-                ?.let(::extractYouTubeVideoId)
-                ?: run {
-                    Log.w(TAG, "DataSpec key missing; skipping cache resolution")
-                    return@resolver dataSpec
-                }
-
-            if (isFullyCached(cache, mediaId)) {
-                return@resolver dataSpec
-            }
-
-            val forceFreshResolve = playbackRetryManager?.consumeForceFreshResolve(mediaId) == true
-
-            fun DataSpec.ranged(contentLength: Long?) = contentLength?.let {
-                if (chunkLength == null) return@let null
-
-                val start = dataSpec.uriPositionOffset
-                val length = (contentLength - start).coerceAtMost(chunkLength)
-                // HTTP Range end is inclusive, while `length` is a byte count.
-                val rangeText = "$start-${start + length - 1}"
-
-                this.subrange(start, length)
-                    .withAdditionalHeaders(mapOf("Range" to "bytes=$rangeText"))
-            } ?: this
-
-            val resolvedDataSpec: DataSpec = run {
-                val cachedDataSpec = if (!forceFreshResolve) {
-                    uriCache[mediaId]?.let { cachedUri ->
-                        dataSpec
-                            .withUri(cachedUri.uri)
-                            .ranged(cachedUri.meta)
-                    }
-                } else {
-                    null
-                }
-
-                cachedDataSpec ?: run {
-                    val result = try {
-                        NewPipeExtractorClient.resolveAudioStream(mediaId)
-                    } catch (error: IOException) {
-                        throw PlaybackException(
-                            /* message = */ "Unknown playback error",
-                            /* cause = */ error,
-                            /* errorCode = */ PlaybackException.ERROR_CODE_UNSPECIFIED
-                        )
-                    } catch (error: ContentNotSupportedException) {
-                        throw PlayableFormatNotFoundException(error)
-                    } catch (error: StreamInfo.StreamExtractException) {
-                        throw PlayableFormatNotFoundException(error)
-                    } catch (error: ContentNotAvailableException) {
-                        throw UnplayableException(error)
-                    } catch (error: ReCaptchaException) {
-                        throw LoginRequiredException(error)
-                    } catch (error: ParsingException) {
-                        throw UnplayableException(error)
-                    } catch (error: ExtractionException) {
-                        throw UnplayableException(error)
-                    }
-
-                    val streamInfo = result.streamInfo
-                    if (streamInfo.id != mediaId) {
-                        throw VideoIdMismatchException()
-                    }
-
-                    val audioStream = result.audioStream
-                    if (!audioStream.isUrl) {
-                        throw PlayableFormatNotFoundException()
-                    }
-
-                    val durationText = streamInfo.duration
-                        .takeIf { it > 0 }
-                        ?.let(DateUtils::formatElapsedTime)
-                        ?.removePrefix("0")
-
-                    fun writeTask(mediaItem: MediaItem?) {
-                        mediaItem
-                            ?.mediaMetadata
-                            ?.extras
-                            ?.songBundle
-                            ?.takeIf { it.durationText == null }
-                            ?.let { extras ->
-                                extras.durationText = durationText ?: return@let
-                            }
-
-                        runCatching {
-                            mediaItem?.let { item ->
-                                playerRepository.insertSong(item)
-                            }
-                            playerRepository.insertFormat(
-                                Format(
-                                    songId = mediaId,
-                                    itag = audioStream.itag.takeIf { it > 0 },
-                                    mimeType = audioStream.format?.mimeType,
-                                    bitrate = audioStream.averageBitrate
-                                        .takeIf { it > 0 }
-                                        ?.toLong(),
-                                    loudnessDb = null,
-                                    contentLength = null,
-                                    lastModified = null
-                                )
-                            )
-
-                            durationText?.let {
-                                playerRepository.updateDurationText(mediaId, it)
-                            }
-                        }
-                    }
-
-                    if (dbWriteScope != null) {
-                        dbWriteScope.launch(Dispatchers.IO) {
-                            val mediaItem = runCatching { findMediaItem(mediaId) }.getOrNull()
-                            writeTask(mediaItem)
-                        }
-                    } else {
-                        writeTask(null)
-                    }
-
-                    val uri = audioStream.content.toUri()
-
-                    uriCache.push(
-                        key = mediaId,
-                        meta = null,
-                        uri = uri,
-                        validUntil = null
-                    )
-
-                    dataSpec
-                        .withUri(uri)
-                        .ranged(null)
-                }
-            }
-
-            if (forceFreshResolve) resolvedDataSpec.withFreshConnectionHeaders() else resolvedDataSpec
-        }
-            .handleUnknownErrors {
-                uriCache.clear()
-            }
-            .handleRangeErrors()
-        }
     }
 }

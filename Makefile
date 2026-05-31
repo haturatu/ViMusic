@@ -1,7 +1,7 @@
 .PHONY: build adbinstall release lint detekt clean
 
 NEWPIPEEXTRACTOR_REPO := https://github.com/TeamNewPipe/NewPipeExtractor
-NEWPIPEEXTRACTOR_REF := v0.25.2
+NEWPIPEEXTRACTOR_REF := v0.26.2
 NEWPIPEEXTRACTOR_DIR := build/newpipeextractor
 NEWPIPEEXTRACTOR_PATCH := patches/newpipeextractor.patch
 NEWPIPEEXTRACTOR_ANDROID10_PATCH := patches/newpipeextractor-android10.patch

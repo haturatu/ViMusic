@@ -8,7 +8,6 @@ import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
 import java.net.Inet4Address
-import java.net.Inet6Address
 import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 
@@ -67,23 +66,14 @@ class NewPipeDownloader(
             val addresses = InetAddress.getAllByName(hostname).toList()
             val ordered = addresses
                 .filterIsInstance<Inet4Address>()
-                .zipLongest(addresses.filterIsInstance<Inet6Address>())
-                .flatMap { (ipv4, ipv6) -> listOfNotNull(ipv4, ipv6) }
 
-            val selected = ordered.getOrNull(index) ?: return addresses.also {
-                Log.d(TAG, "Using system DNS hostname=$hostname index=$index addresses=${addresses.size}")
+            val selected = ordered.getOrNull(index) ?: return ordered.also {
+                Log.d(TAG, "Using IPv4 DNS hostname=$hostname index=$index addresses=${ordered.size}")
             }
 
             return listOf(selected.also {
                 Log.d(TAG, "Resolved DNS hostname=$hostname index=$index address=${it.hostAddress}")
             })
-        }
-
-        private fun <T> List<T>.zipLongest(other: List<T>): List<Pair<T?, T?>> {
-            val maxSize = maxOf(size, other.size)
-            return (0 until maxSize).map { index ->
-                getOrNull(index) to other.getOrNull(index)
-            }
         }
 
         private const val TAG = "NewPipeDownloader"

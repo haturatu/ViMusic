@@ -179,11 +179,10 @@ class PrecacheService : DownloadService(
             /* context = */ this,
             /* databaseProvider = */ PlayerService.createDatabaseProvider(this),
             /* cache = */ cache,
-            /* upstreamFactory = */ PlayerService.createYouTubeDataSourceResolverFactory(
-                findMediaItem = { null },
+            /* upstreamFactory = */ NewPipeAudioMediaSourceFactory.createDataSourceFactory(
                 context = this,
                 cache = cache,
-                chunkLength = null
+                resolveDashManifestUri = NewPipeAudioMediaSourceFactory::resolveDashManifestUri
             ),
             /* executor = */ downloadExecutor
         ).apply {
@@ -279,8 +278,7 @@ class PrecacheService : DownloadService(
             val downloadRequest = DownloadRequest
                 .Builder(
                     /* id      = */ mediaItem.mediaId,
-                    /* uri     = */ mediaItem.requestMetadata.mediaUri
-                        ?: "https://youtube.com/watch?v=${mediaItem.mediaId}".toUri()
+                    /* uri     = */ mediaItem.mediaId.toUri()
                 )
                 .setCustomCacheKey(mediaItem.mediaId)
                 .setData(mediaItem.mediaId.encodeToByteArray())

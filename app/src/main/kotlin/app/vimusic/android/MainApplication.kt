@@ -117,6 +117,7 @@ import app.vimusic.android.repositories.InnertubeYouTubeRadioDataSource
 import app.vimusic.android.repositories.ApiSponsorBlockRepository
 import app.vimusic.android.service.PlayerService
 import app.vimusic.android.extractor.NewPipeExtractorClient
+import app.vimusic.android.extractor.NewPipePoTokenProvider
 import app.vimusic.android.service.ServiceNotifications
 import app.vimusic.android.service.downloadState
 import app.vimusic.android.ui.components.BottomSheetMenu
@@ -182,6 +183,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeStreamExtractor
 
 private const val TAG = "MainActivity"
 private val coroutineScope = CoroutineScope(Dispatchers.IO)
@@ -583,6 +585,9 @@ class AppContainer(
 
     fun initialize() {
         DatabaseInitializer(application.applicationContext)
+        NewPipePoTokenProvider.initialize(application.applicationContext)
+        YoutubeStreamExtractor.setPoTokenProvider(NewPipePoTokenProvider)
+        YoutubeStreamExtractor.setFetchIosClient(false)
         NewPipeExtractorClient.ensureInitialized()
     }
 }
