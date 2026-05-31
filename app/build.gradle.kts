@@ -151,6 +151,7 @@ dependencies {
     runtimeOnly(projects.core.materialCompat)
 
     implementation(libs.exoplayer)
+    implementation(libs.exoplayer.dash)
     implementation(libs.exoplayer.workmanager)
     implementation(libs.media3.session)
 
@@ -171,8 +172,9 @@ dependencies {
     implementation(libs.slf4j)
     implementation(libs.logback)
     implementation(libs.okhttp)
+    implementation(libs.newpipe.nanojson)
     implementation(libs.re2j)
-    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.25.2")
+    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.2")
 
     implementation(projects.providers.github)
     implementation(projects.providers.innertube)

@@ -9,6 +9,7 @@ import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheSpan
@@ -179,11 +180,10 @@ class PrecacheService : DownloadService(
             /* context = */ this,
             /* databaseProvider = */ PlayerService.createDatabaseProvider(this),
             /* cache = */ cache,
-            /* upstreamFactory = */ PlayerService.createYouTubeDataSourceResolverFactory(
-                findMediaItem = { null },
+            /* upstreamFactory = */ NewPipeAudioMediaSourceFactory.createDataSourceFactory(
                 context = this,
                 cache = cache,
-                chunkLength = null
+                resolveDashManifestUri = NewPipeAudioMediaSourceFactory::resolveDashManifestUri
             ),
             /* executor = */ downloadExecutor
         ).apply {
@@ -279,9 +279,9 @@ class PrecacheService : DownloadService(
             val downloadRequest = DownloadRequest
                 .Builder(
                     /* id      = */ mediaItem.mediaId,
-                    /* uri     = */ mediaItem.requestMetadata.mediaUri
-                        ?: "https://youtube.com/watch?v=${mediaItem.mediaId}".toUri()
+                    /* uri     = */ mediaItem.mediaId.toUri()
                 )
+                .setMimeType(MimeTypes.APPLICATION_MPD)
                 .setCustomCacheKey(mediaItem.mediaId)
                 .setData(mediaItem.mediaId.encodeToByteArray())
                 .build()

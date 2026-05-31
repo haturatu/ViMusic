@@ -3,6 +3,7 @@
 package app.vimusic.android.utils
 
 import android.content.Context
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.C
 import androidx.media3.common.PlaybackException
@@ -162,11 +163,11 @@ class CatchingDataSourceFactory(
         override fun open(dataSpec: DataSpec) = runCatching {
             parent.open(dataSpec)
         }.getOrElse { ex ->
-            ex.printStackTrace()
+            Log.e(EXO_PLAYER_DATA_SOURCE_TAG, "DataSource open failed: ${ex.playbackDebugMessage(dataSpec)}", ex)
 
             if (ex is PlaybackException) throw ex
             else throw PlaybackException(
-                /* message = */ "Unknown playback error",
+                /* message = */ "Unknown playback error: ${ex.playbackDebugMessage(dataSpec)}",
                 /* cause = */ ex,
                 /* errorCode = */ PlaybackException.ERROR_CODE_UNSPECIFIED
             ).also { onError?.invoke(it) }
@@ -183,6 +184,26 @@ fun DataSource.Factory.handleUnknownErrors(
     parent = this,
     onError = onError
 )
+
+private fun Throwable.playbackDebugMessage(dataSpec: DataSpec): String {
+    val response = findCause<InvalidResponseCodeException>()
+    val uriText = dataSpec.uri.toString().take(160)
+    return buildString {
+        append(this@playbackDebugMessage::class.java.simpleName)
+        message?.takeIf { it.isNotBlank() }?.let {
+            append(": ")
+            append(it)
+        }
+        response?.let {
+            append(" httpStatus=")
+            append(it.responseCode)
+        }
+        append(" uri=")
+        append(uriText)
+    }
+}
+
+private const val EXO_PLAYER_DATA_SOURCE_TAG = "ExoPlayerDataSource"
 
 val Cache.asDataSource
     get() = CacheDataSource.Factory()
