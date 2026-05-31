@@ -9,7 +9,6 @@ import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheSpan
@@ -281,7 +280,6 @@ class PrecacheService : DownloadService(
                     /* id      = */ mediaItem.mediaId,
                     /* uri     = */ mediaItem.mediaId.toUri()
                 )
-                .setMimeType(MimeTypes.APPLICATION_MPD)
                 .setCustomCacheKey(mediaItem.mediaId)
                 .setData(mediaItem.mediaId.encodeToByteArray())
                 .build()

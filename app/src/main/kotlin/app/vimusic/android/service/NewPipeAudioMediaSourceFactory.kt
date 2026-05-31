@@ -3,12 +3,10 @@ package app.vimusic.android.service
 import android.content.Context
 import android.net.Uri
 import android.text.format.DateUtils
-import android.util.Base64
 import android.util.Log
 import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MimeTypes
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultDataSource
@@ -33,8 +31,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
-import org.schabi.newpipe.extractor.services.youtube.dashmanifestcreators.YoutubeOtfDashManifestCreator
-import org.schabi.newpipe.extractor.services.youtube.dashmanifestcreators.YoutubeProgressiveDashManifestCreator
 import org.schabi.newpipe.extractor.stream.DeliveryMethod
 import java.io.IOException
 
@@ -57,7 +53,8 @@ class NewPipeAudioMediaSourceFactory(
         } else {
             mediaItem.buildUpon()
                 .setUri(mediaItem.mediaId)
-                .setMimeType(MimeTypes.APPLICATION_MPD)
+                .setMimeType(null)
+                .setCustomCacheKey(mediaItem.mediaId)
                 .build()
         }
 
@@ -86,12 +83,11 @@ class NewPipeAudioMediaSourceFactory(
     private fun resolveDashManifestUriForPlayback(mediaId: String): Uri {
         val result = resolveAudioResult(mediaId)
         writeStreamMetadata(mediaId, result)
-        return resolveDashManifestUri(result)
+        return resolvePlaybackUri(result)
     }
 
     private fun writeStreamMetadata(mediaId: String, result: app.vimusic.android.extractor.NewPipeAudioResult) {
         val streamInfo = result.streamInfo
-        val audioStream = result.audioStream
         val durationText = streamInfo.duration
             .takeIf { it > 0 }
             ?.let(DateUtils::formatElapsedTime)
@@ -115,9 +111,9 @@ class NewPipeAudioMediaSourceFactory(
                 playerRepository.insertFormat(
                     Format(
                         songId = mediaId,
-                        itag = audioStream.itag.takeIf { it > 0 },
-                        mimeType = audioStream.format?.mimeType,
-                        bitrate = audioStream.averageBitrate
+                        itag = result.selectedItag.takeIf { it > 0 },
+                        mimeType = result.selectedMimeType,
+                        bitrate = result.selectedBitrate
                             .takeIf { it > 0 }
                             ?.toLong(),
                         loudnessDb = null,
@@ -135,11 +131,20 @@ class NewPipeAudioMediaSourceFactory(
         }
     }
 
+    private val app.vimusic.android.extractor.NewPipeAudioResult.selectedItag: Int
+        get() = audioStream?.itag ?: videoStream?.itag ?: 0
+
+    private val app.vimusic.android.extractor.NewPipeAudioResult.selectedMimeType: String?
+        get() = audioStream?.format?.mimeType ?: videoStream?.format?.mimeType
+
+    private val app.vimusic.android.extractor.NewPipeAudioResult.selectedBitrate: Int
+        get() = audioStream?.averageBitrate ?: videoStream?.bitrate ?: 0
+
     companion object {
         private const val TAG = "NewPipeAudioMediaSourceFactory"
 
         fun resolveDashManifestUri(mediaId: String): Uri =
-            resolveDashManifestUri(resolveAudioResult(mediaId))
+            resolvePlaybackUri(resolveAudioResult(mediaId))
 
         fun createDataSourceFactory(
             context: Context,
@@ -195,34 +200,20 @@ class NewPipeAudioMediaSourceFactory(
             return result
         }
 
-        private fun resolveDashManifestUri(result: app.vimusic.android.extractor.NewPipeAudioResult): Uri {
-            val streamInfo = result.streamInfo
+        private fun resolvePlaybackUri(result: app.vimusic.android.extractor.NewPipeAudioResult): Uri {
+            result.videoStream?.let { return it.content.toUri() }
+
             val audioStream = result.audioStream
-            val itagItem = audioStream.itagItem
-                ?: throw IOException(
-                    "Unsupported audio stream for DASH playback: " +
+                ?: throw IOException("No audio or muxed video stream available")
+
+            if (!audioStream.isUrl || audioStream.deliveryMethod != DeliveryMethod.PROGRESSIVE_HTTP) {
+                throw IOException(
+                    "Unsupported audio stream for direct playback: " +
                         "delivery=${audioStream.deliveryMethod} isUrl=${audioStream.isUrl} itag=${audioStream.itag}"
                 )
-
-            val manifest = when (audioStream.deliveryMethod) {
-                DeliveryMethod.PROGRESSIVE_HTTP -> YoutubeProgressiveDashManifestCreator.fromProgressiveStreamingUrl(
-                    audioStream.content,
-                    itagItem,
-                    streamInfo.duration
-                )
-
-                DeliveryMethod.DASH -> YoutubeOtfDashManifestCreator.fromOtfStreamingUrl(
-                    audioStream.content,
-                    itagItem,
-                    streamInfo.duration
-                )
-
-                else -> throw IOException(
-                    "Unsupported audio stream delivery for DASH playback: ${audioStream.deliveryMethod}"
-                )
             }
-            val encoded = Base64.encodeToString(manifest.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
-            return "data:application/dash+xml;base64,$encoded".toUri()
+
+            return audioStream.content.toUri()
         }
 
         private val Uri.isNetworkStream: Boolean

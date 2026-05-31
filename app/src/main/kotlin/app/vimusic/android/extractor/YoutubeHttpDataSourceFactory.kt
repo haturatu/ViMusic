@@ -1,10 +1,12 @@
 package app.vimusic.android.extractor
 
 import android.net.Uri
+import android.util.Log
 import androidx.media3.common.C
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException
 import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
 import java.util.concurrent.atomic.AtomicLong
 
@@ -23,12 +25,31 @@ class YoutubeHttpDataSourceFactory(
     private inner class Source(
         private val upstream: DataSource
     ) : DataSource by upstream {
-        override fun open(dataSpec: DataSpec): Long = upstream.open(dataSpec.forYoutube())
+        override fun open(dataSpec: DataSpec): Long {
+            val youtubeDataSpec = dataSpec.forYoutube()
+            return runCatching {
+                upstream.open(youtubeDataSpec)
+            }.onFailure { error ->
+                val response = error as? InvalidResponseCodeException
+                    ?: error.cause as? InvalidResponseCodeException
+                if (response != null) {
+                    Log.w(
+                        TAG,
+                        "YouTube stream request failed status=${response.responseCode} " +
+                            "method=${youtubeDataSpec.httpMethodName} " +
+                            "uri=${youtubeDataSpec.uri}"
+                    )
+                }
+            }.getOrThrow()
+        }
     }
 
     private fun DataSpec.forYoutube(): DataSpec {
         val originalUrl = uri.toString()
         val isVideoPlaybackUrl = uri.path?.startsWith("/videoplayback") == true
+        val isMobileStreamingUrl =
+            YoutubeParsingHelper.isAndroidStreamingUrl(originalUrl) ||
+                YoutubeParsingHelper.isIosStreamingUrl(originalUrl)
         var requestUrl = originalUrl
 
         if (isVideoPlaybackUrl && rnParameterEnabled && !requestUrl.contains(RN_PARAMETER)) {
@@ -36,8 +57,6 @@ class YoutubeHttpDataSourceFactory(
         }
 
         val builder = buildUpon()
-            .setHttpMethod(DataSpec.HTTP_METHOD_POST)
-            .setHttpBody(POST_BODY)
 
         if (rangeParameterEnabled && isVideoPlaybackUrl) {
             buildRangeParameter(position, length)?.let { requestUrl += it }
@@ -47,6 +66,10 @@ class YoutubeHttpDataSourceFactory(
                 .setHttpRequestHeaders(youtubeHeaders(requestUrl, httpRequestHeaders, dropRange = true))
         } else {
             builder.setHttpRequestHeaders(youtubeHeaders(requestUrl, httpRequestHeaders, dropRange = false))
+        }
+
+        if (isVideoPlaybackUrl && isMobileStreamingUrl) {
+            builder.setHttpMethod(DataSpec.HTTP_METHOD_POST)
         }
 
         return builder
@@ -102,12 +125,20 @@ class YoutubeHttpDataSourceFactory(
         }
     }
 
+    private val DataSpec.httpMethodName: String
+        get() = when (httpMethod) {
+            DataSpec.HTTP_METHOD_GET -> "GET"
+            DataSpec.HTTP_METHOD_POST -> "POST"
+            DataSpec.HTTP_METHOD_HEAD -> "HEAD"
+            else -> httpMethod.toString()
+        }
+
     companion object {
         private const val DEFAULT_CONNECT_TIMEOUT_MS = 8_000
         private const val DEFAULT_READ_TIMEOUT_MS = 8_000
+        private const val TAG = "YoutubeHttpDataSource"
         private const val RN_PARAMETER = "&rn="
         private const val RANGE_PARAMETER = "&range="
         private const val YOUTUBE_BASE_URL = "https://www.youtube.com"
-        private val POST_BODY = byteArrayOf(0x78, 0)
     }
 }

@@ -587,7 +587,7 @@ class AppContainer(
         DatabaseInitializer(application.applicationContext)
         NewPipePoTokenProvider.initialize(application.applicationContext)
         YoutubeStreamExtractor.setPoTokenProvider(NewPipePoTokenProvider)
-        YoutubeStreamExtractor.setFetchIosClient(true)
+        YoutubeStreamExtractor.setFetchIosClient(false)
         NewPipeExtractorClient.ensureInitialized()
     }
 }

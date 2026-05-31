@@ -7,6 +7,7 @@ import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.localization.ContentCountry
 import org.schabi.newpipe.extractor.localization.Localization
+import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
 import org.schabi.newpipe.extractor.services.youtube.YoutubeService
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.DeliveryMethod
@@ -68,21 +69,37 @@ object NewPipeExtractorClient {
         logStreamInfo(videoId, dnsTarget, streamInfo)
         val audioStreams = getPlayableAudioStreams(streamInfo)
         val audioStream = selectDefaultAudioStream(audioStreams)
-            ?: throw ExtractionException(
+        val videoStream = if (audioStream == null) {
+            selectDefaultMuxedVideoStream(getPlayableMuxedVideoStreams(streamInfo))
+        } else {
+            null
+        }
+
+        if (audioStream == null && videoStream == null) {
+            throw ExtractionException(
                 "No playable audio stream found; " +
                     "audio=${streamInfo.audioStreams?.size ?: 0} " +
                     "video=${streamInfo.videoStreams?.size ?: 0} " +
                     "videoOnly=${streamInfo.videoOnlyStreams?.size ?: 0} " +
                     "errors=${streamInfo.errors?.joinToString { it.message.orEmpty() }.orEmpty()}"
             )
+        }
 
-        Log.i(
-            TAG,
-            "Audio stream resolved videoId=$videoId dnsTarget=${dnsTarget.label} " +
-                "itag=${audioStream.itag} bitrate=${audioStream.averageBitrate}"
-        )
+        if (audioStream != null) {
+            Log.i(
+                TAG,
+                "Audio stream resolved videoId=$videoId dnsTarget=${dnsTarget.label} " +
+                    "itag=${audioStream.itag} bitrate=${audioStream.averageBitrate}"
+            )
+        } else if (videoStream != null) {
+            Log.i(
+                TAG,
+                "Muxed video stream resolved videoId=$videoId dnsTarget=${dnsTarget.label} " +
+                    "itag=${videoStream.itag} bitrate=${videoStream.bitrate}"
+            )
+        }
 
-        return NewPipeAudioResult(streamInfo, audioStreams, audioStream)
+        return NewPipeAudioResult(streamInfo, audioStreams, audioStream, videoStream)
     }
 
     private fun configureDownloader(dnsTarget: NewPipeDnsTarget) {
@@ -96,8 +113,19 @@ object NewPipeExtractorClient {
     private fun getPlayableAudioStreams(streamInfo: StreamInfo): List<AudioStream> =
         streamInfo.audioStreams
             ?.filter { stream ->
-                stream.isPlayable()
+                stream.isUrl &&
+                    stream.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP &&
+                    stream.isPlayable()
             }
+            ?.preferNonIosAudioStreams()
+            .orEmpty()
+
+    private fun getPlayableMuxedVideoStreams(streamInfo: StreamInfo): List<VideoStream> =
+        streamInfo.videoStreams
+            ?.filter { stream ->
+                !stream.isVideoOnly && stream.isUrl && stream.isPlayable()
+            }
+            ?.preferNonIosVideoStreams()
             .orEmpty()
 
     private fun logStreamInfo(videoId: String, dnsTarget: NewPipeDnsTarget, streamInfo: StreamInfo) {
@@ -137,6 +165,22 @@ object NewPipeExtractorClient {
         return true
     }
 
+    private fun List<AudioStream>.preferNonIosAudioStreams(): List<AudioStream> {
+        val nonIosStreams = filterNot { stream ->
+            stream.isUrl && YoutubeParsingHelper.isIosStreamingUrl(stream.content)
+        }
+
+        return nonIosStreams.ifEmpty { this }
+    }
+
+    private fun List<VideoStream>.preferNonIosVideoStreams(): List<VideoStream> {
+        val nonIosStreams = filterNot { stream ->
+            stream.isUrl && YoutubeParsingHelper.isIosStreamingUrl(stream.content)
+        }
+
+        return nonIosStreams.ifEmpty { this }
+    }
+
     private fun selectDefaultAudioStream(streams: List<AudioStream>?): AudioStream? {
         if (streams.isNullOrEmpty()) return null
 
@@ -148,6 +192,15 @@ object NewPipeExtractorClient {
     }.thenBy { stream ->
         stream.averageBitrate
     }
+
+    private fun selectDefaultMuxedVideoStream(streams: List<VideoStream>): VideoStream? =
+        streams.minWithOrNull(
+            compareBy<VideoStream> { stream ->
+                stream.bitrate.takeIf { it > 0 } ?: Int.MAX_VALUE
+            }.thenBy { stream ->
+                stream.itag
+            }
+        )
 
     private fun MediaFormat?.audioQualityRank() = when (this) {
         MediaFormat.MP3 -> 0
@@ -176,5 +229,6 @@ object NewPipeExtractorClient {
 data class NewPipeAudioResult(
     val streamInfo: StreamInfo,
     val audioStreams: List<AudioStream>,
-    val audioStream: AudioStream
+    val audioStream: AudioStream?,
+    val videoStream: VideoStream?
 )
