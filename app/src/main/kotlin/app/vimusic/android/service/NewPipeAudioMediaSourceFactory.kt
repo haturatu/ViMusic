@@ -12,6 +12,7 @@ import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.datasource.cache.Cache
+import androidx.media3.datasource.cache.ContentMetadata
 import androidx.media3.exoplayer.drm.DrmSessionManagerProvider
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
@@ -166,10 +167,14 @@ class NewPipeAudioMediaSourceFactory(
                     upstreamDataSourceFactory = upstreamDataSourceFactory,
                     shouldCache = { dataSpec ->
                         if (dataSpec.uri.scheme == "data") return@ConditionalCacheDataSourceFactory false
+
+                        val mediaId = dataSpec.key
+                            ?.let(PlayerService::extractYouTubeVideoId)
+                            ?: PlayerService.extractYouTubeVideoId(dataSpec.uri.toString())
+
+                        if (cache.isFullyCached(mediaId)) return@ConditionalCacheDataSourceFactory true
                         if (!DataPreferences.cacheFavoritesOnly) return@ConditionalCacheDataSourceFactory true
 
-                        val mediaId = dataSpec.key?.let(PlayerService::extractYouTubeVideoId)
-                            ?: return@ConditionalCacheDataSourceFactory false
                         playerRepository.isFavoriteNow(mediaId)
                     }
                 )
@@ -180,8 +185,23 @@ class NewPipeAudioMediaSourceFactory(
                     ?.let(PlayerService::extractYouTubeVideoId)
                     ?: PlayerService.extractYouTubeVideoId(dataSpec.uri.toString())
 
-                dataSpec.withUri(resolveDashManifestUri(mediaId))
+                val keyedDataSpec = dataSpec.buildUpon()
+                    .setKey(mediaId)
+                    .build()
+
+                if (cache.isFullyCached(mediaId)) return@resolver keyedDataSpec
+
+                keyedDataSpec.buildUpon()
+                    .setUri(resolveDashManifestUri(mediaId))
+                    .setKey(mediaId)
+                    .build()
             }
+        }
+
+        private fun Cache.isFullyCached(mediaId: String): Boolean {
+            val contentLength = ContentMetadata.getContentLength(getContentMetadata(mediaId))
+            if (contentLength <= 0L) return false
+            return isCached(mediaId, 0L, contentLength)
         }
 
         private fun resolveAudioResult(mediaId: String): app.vimusic.android.extractor.NewPipeAudioResult {
