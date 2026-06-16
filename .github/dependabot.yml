@@ -1,0 +1,45 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 10
+    groups:
+      android-gradle:
+        patterns:
+          - "com.android.*"
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin*"
+          - "com.google.devtools.ksp"
+      androidx:
+        patterns:
+          - "androidx.*"
+      ktor:
+        patterns:
+          - "io.ktor*"
+      media3:
+        patterns:
+          - "androidx.media3*"
+      test-and-analysis:
+        patterns:
+          - "io.gitlab.arturbosch.detekt*"
+          - "io.nlopez.compose.rules*"
+          - "com.autonomousapps*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns:
+          - "*"
