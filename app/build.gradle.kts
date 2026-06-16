@@ -174,7 +174,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.newpipe.nanojson)
     implementation(libs.re2j)
-    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.2")
+    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.3")
 
     implementation(projects.providers.github)
     implementation(projects.providers.innertube)
