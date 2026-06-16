@@ -82,7 +82,7 @@ ktor_serialization_json = { module = "io.ktor:ktor-serialization-kotlinx-json", 
 
 rhino = { module = "org.mozilla:rhino", version = "1.8.0" }
 log4j = { module = "org.apache.logging.log4j:log4j-api", version = "2.26.0" }
-slf4j = { module = "org.slf4j:slf4j-api", version = "2.0.16" }
+slf4j = { module = "org.slf4j:slf4j-api", version = "2.0.18" }
 logback = { module = "com.github.tony19:logback-android", version = "3.0.0" }
 
 brotli = { module = "org.brotli:dec", version = "0.1.2" }
