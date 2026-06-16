@@ -1,0 +1,46 @@
+name: Dependabot AGP Wrapper
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    paths:
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle/libs.versions.toml"
+
+permissions:
+  contents: write
+
+jobs:
+  update-wrapper:
+    if: >-
+      ${{
+        github.actor == 'dependabot[bot]' &&
+        startsWith(github.event.pull_request.head.ref, 'dependabot/gradle/android-gradle')
+      }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Dependabot branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Update Gradle wrapper
+        run: |
+          sed -i 's#gradle-[0-9.]*-bin.zip#gradle-9.4.1-bin.zip#' gradle/wrapper/gradle-wrapper.properties
+
+      - name: Commit changes
+        run: |
+          if git diff --quiet -- gradle/wrapper/gradle-wrapper.properties; then
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gradle/wrapper/gradle-wrapper.properties
+          git commit -m "build(deps): update Gradle wrapper"
+          git push
