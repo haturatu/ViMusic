@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.3.10"
-ksp = "2.3.4"
+ksp = "2.3.9"
 
 jvm = "17"
 agp = "8.13.2"
@@ -33,9 +33,9 @@ dependency_analysis = { id = "com.autonomousapps.dependency-analysis", version.r
 [libraries]
 core_ktx = { module = "androidx.core:core-ktx", version = "1.17.0" }
 
-kotlin_coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.10.1" }
-kotlin_datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.7.1-0.6.x-compat" }
-kotlin_immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version = "0.4.0" }
+kotlin_coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.11.0" }
+kotlin_datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.8.0-0.6.x-compat" }
+kotlin_immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version = "0.5.0" }
 
 compose_bom = { module = "androidx.compose:compose-bom", version = "2026.01.01" }
 compose_animation = { module = "androidx.compose.animation:animation" }
