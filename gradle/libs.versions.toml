@@ -13,7 +13,7 @@ detekt = "1.23.8"
 workmanager = "2.10.5"
 credentials = "1.5.0"
 coil = "3.3.0"
-okhttp = "5.3.2"
+okhttp = "5.4.0"
 re2j = "1.8"
 dependency_analysis = "3.5.1"
 
