@@ -1,6 +1,5 @@
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
 }
 
 android {
@@ -11,9 +10,6 @@ android {
         minSdk = 23
     }
 
-    sourceSets.all {
-        kotlin.srcDir("src/$name/kotlin")
-    }
 
 }
 
