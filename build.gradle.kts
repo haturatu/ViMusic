@@ -8,14 +8,13 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.13.2")
+        classpath("com.android.tools.build:gradle:9.2.1")
     }
 }
 
 plugins {
     alias(libs.plugins.dependency.analysis)
     alias(libs.plugins.detekt) apply false
-    id("org.jetbrains.kotlin.android") version "2.4.0" apply false
     id("org.jetbrains.kotlin.jvm") version "2.4.0" apply false
     id("org.jetbrains.kotlin.plugin.compose") version "2.4.0" apply false
     id("org.jetbrains.kotlin.plugin.parcelize") version "2.4.0" apply false
@@ -25,7 +24,10 @@ plugins {
 subprojects {
     apply(plugin = "com.autonomousapps.dependency-analysis")
 
-    pluginManager.withPlugin("org.jetbrains.kotlin.android") {
+    pluginManager.withPlugin("com.android.application") {
+        apply(plugin = "io.gitlab.arturbosch.detekt")
+    }
+    pluginManager.withPlugin("com.android.library") {
         apply(plugin = "io.gitlab.arturbosch.detekt")
     }
     pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
