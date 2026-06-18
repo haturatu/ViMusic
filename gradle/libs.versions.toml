@@ -10,8 +10,8 @@ media3 = "1.10.1"
 teamnewpipe_nanojson = "e9d656ddb49a412a5a0a5d5ef20ca7ef09549996"
 ktor = "3.5.0"
 detekt = "1.23.8"
-workmanager = "2.10.5"
-credentials = "1.5.0"
+workmanager = "2.11.2"
+credentials = "1.6.0"
 coil = "3.5.0"
 okhttp = "5.4.0"
 re2j = "1.8"
@@ -30,13 +30,13 @@ detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 dependency_analysis = { id = "com.autonomousapps.dependency-analysis", version.ref = "dependency_analysis" }
 
 [libraries]
-core_ktx = { module = "androidx.core:core-ktx", version = "1.17.0" }
+core_ktx = { module = "androidx.core:core-ktx", version = "1.19.0" }
 
 kotlin_coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.11.0" }
 kotlin_datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.8.0-0.6.x-compat" }
 kotlin_immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version = "0.5.0" }
 
-compose_bom = { module = "androidx.compose:compose-bom", version = "2026.01.01" }
+compose_bom = { module = "androidx.compose:compose-bom", version = "2026.06.00" }
 compose_animation = { module = "androidx.compose.animation:animation" }
 compose_foundation = { module = "androidx.compose.foundation:foundation" }
 compose_ui = { module = "androidx.compose.ui:ui" }
@@ -44,11 +44,11 @@ compose_ui_util = { module = "androidx.compose.ui:ui-util" }
 compose_ui_fonts = { module = "androidx.compose.ui:ui-text-google-fonts" }
 compose_material3 = { module = "androidx.compose.material3:material3", version = "1.4.0" }
 
-compose_activity = { module = "androidx.activity:activity-compose", version = "1.12.3" }
+compose_activity = { module = "androidx.activity:activity-compose", version = "1.13.0" }
 compose_shimmer = { module = "com.valentinilk.shimmer:compose-shimmer", version = "1.4.0" }
 compose_lottie = { module = "com.airbnb.android:lottie-compose", version = "6.7.1" }
-compose_lifecycle = { module = "androidx.lifecycle:lifecycle-runtime-compose", version = "2.9.0" }
-compose_viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version = "2.9.0" }
+compose_lifecycle = { module = "androidx.lifecycle:lifecycle-runtime-compose", version = "2.11.0" }
+compose_viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version = "2.11.0" }
 
 coil_compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil_ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
