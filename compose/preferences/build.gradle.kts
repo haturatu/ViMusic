@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "app.vimusic.compose.preferences"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 23

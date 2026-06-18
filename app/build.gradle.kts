@@ -17,7 +17,7 @@ android {
     val appId = "app.vimusic.android"
 
     namespace = appId
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = appId
@@ -104,7 +104,6 @@ android {
 kotlin {
     jvmToolchain(libs.versions.jvm.get().toInt())
     compilerOptions {
-        freeCompilerArgs.add("-Xcontext-parameters")
         freeCompilerArgs.add("-Xannotation-default-target=param-property")
     }
 }

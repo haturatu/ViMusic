@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "app.vimusic.core.ui"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 23
@@ -34,8 +34,4 @@ dependencies {
 
 kotlin {
     jvmToolchain(libs.versions.jvm.get().toInt())
-
-    compilerOptions {
-        freeCompilerArgs.add("-Xcontext-parameters")
-    }
 }
