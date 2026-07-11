@@ -31,6 +31,7 @@ import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import androidx.room.Update
 import androidx.room.Upsert
+import androidx.paging.PagingSource
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SimpleSQLiteQuery
@@ -50,6 +51,7 @@ import app.vimusic.android.models.PlaylistWithSongs
 import app.vimusic.android.models.QueuedMediaItem
 import app.vimusic.android.models.SearchQuery
 import app.vimusic.android.models.Song
+import app.vimusic.android.models.SongFts
 import app.vimusic.android.models.SongAlbumMap
 import app.vimusic.android.models.SongArtistMap
 import app.vimusic.android.models.SongPlaylistMap
@@ -164,6 +166,114 @@ interface Database {
             SortOrder.Ascending -> if (isLocal) localSongsByRowIdAsc() else songsByRowIdAsc()
             SortOrder.Descending -> if (isLocal) localSongsByRowIdDesc() else songsByRowIdDesc()
         }
+    }
+
+    @Query(
+        """
+        SELECT * FROM Song
+        WHERE (:isLocal = 1 AND id LIKE '$LOCAL_KEY_PREFIX%' OR :isLocal = 0 AND id NOT LIKE '$LOCAL_KEY_PREFIX%')
+          AND (:onlyPlayed = 0 OR totalPlayTimeMs > 0)
+          AND (:excludeZeroDuration = 0 OR durationText != '0:00')
+        ORDER BY totalPlayTimeMs ASC
+        """
+    )
+    fun pagedSongsByPlayTimeAsc(
+        isLocal: Boolean,
+        onlyPlayed: Boolean,
+        excludeZeroDuration: Boolean
+    ): PagingSource<Int, Song>
+
+    @Query(
+        """
+        SELECT * FROM Song
+        WHERE (:isLocal = 1 AND id LIKE '$LOCAL_KEY_PREFIX%' OR :isLocal = 0 AND id NOT LIKE '$LOCAL_KEY_PREFIX%')
+          AND (:onlyPlayed = 0 OR totalPlayTimeMs > 0)
+          AND (:excludeZeroDuration = 0 OR durationText != '0:00')
+        ORDER BY totalPlayTimeMs DESC
+        """
+    )
+    fun pagedSongsByPlayTimeDesc(
+        isLocal: Boolean,
+        onlyPlayed: Boolean,
+        excludeZeroDuration: Boolean
+    ): PagingSource<Int, Song>
+
+    @Query(
+        """
+        SELECT * FROM Song
+        WHERE (:isLocal = 1 AND id LIKE '$LOCAL_KEY_PREFIX%' OR :isLocal = 0 AND id NOT LIKE '$LOCAL_KEY_PREFIX%')
+          AND (:onlyPlayed = 0 OR totalPlayTimeMs > 0)
+          AND (:excludeZeroDuration = 0 OR durationText != '0:00')
+        ORDER BY title COLLATE NOCASE ASC
+        """
+    )
+    fun pagedSongsByTitleAsc(
+        isLocal: Boolean,
+        onlyPlayed: Boolean,
+        excludeZeroDuration: Boolean
+    ): PagingSource<Int, Song>
+
+    @Query(
+        """
+        SELECT * FROM Song
+        WHERE (:isLocal = 1 AND id LIKE '$LOCAL_KEY_PREFIX%' OR :isLocal = 0 AND id NOT LIKE '$LOCAL_KEY_PREFIX%')
+          AND (:onlyPlayed = 0 OR totalPlayTimeMs > 0)
+          AND (:excludeZeroDuration = 0 OR durationText != '0:00')
+        ORDER BY title COLLATE NOCASE DESC
+        """
+    )
+    fun pagedSongsByTitleDesc(
+        isLocal: Boolean,
+        onlyPlayed: Boolean,
+        excludeZeroDuration: Boolean
+    ): PagingSource<Int, Song>
+
+    @Query(
+        """
+        SELECT * FROM Song
+        WHERE (:isLocal = 1 AND id LIKE '$LOCAL_KEY_PREFIX%' OR :isLocal = 0 AND id NOT LIKE '$LOCAL_KEY_PREFIX%')
+          AND (:onlyPlayed = 0 OR totalPlayTimeMs > 0)
+          AND (:excludeZeroDuration = 0 OR durationText != '0:00')
+        ORDER BY ROWID ASC
+        """
+    )
+    fun pagedSongsByRowIdAsc(
+        isLocal: Boolean,
+        onlyPlayed: Boolean,
+        excludeZeroDuration: Boolean
+    ): PagingSource<Int, Song>
+
+    @Query(
+        """
+        SELECT * FROM Song
+        WHERE (:isLocal = 1 AND id LIKE '$LOCAL_KEY_PREFIX%' OR :isLocal = 0 AND id NOT LIKE '$LOCAL_KEY_PREFIX%')
+          AND (:onlyPlayed = 0 OR totalPlayTimeMs > 0)
+          AND (:excludeZeroDuration = 0 OR durationText != '0:00')
+        ORDER BY ROWID DESC
+        """
+    )
+    fun pagedSongsByRowIdDesc(
+        isLocal: Boolean,
+        onlyPlayed: Boolean,
+        excludeZeroDuration: Boolean
+    ): PagingSource<Int, Song>
+
+    fun pagedSongs(
+        sortBy: SongSortBy,
+        sortOrder: SortOrder,
+        isLocal: Boolean = false,
+        onlyPlayed: Boolean = false,
+        excludeZeroDuration: Boolean = false
+    ): PagingSource<Int, Song> = when (sortBy) {
+        SongSortBy.PlayTime -> if (sortOrder == SortOrder.Ascending) {
+            pagedSongsByPlayTimeAsc(isLocal, onlyPlayed, excludeZeroDuration)
+        } else pagedSongsByPlayTimeDesc(isLocal, onlyPlayed, excludeZeroDuration)
+        SongSortBy.Title -> if (sortOrder == SortOrder.Ascending) {
+            pagedSongsByTitleAsc(isLocal, onlyPlayed, excludeZeroDuration)
+        } else pagedSongsByTitleDesc(isLocal, onlyPlayed, excludeZeroDuration)
+        SongSortBy.DateAdded -> if (sortOrder == SortOrder.Ascending) {
+            pagedSongsByRowIdAsc(isLocal, onlyPlayed, excludeZeroDuration)
+        } else pagedSongsByRowIdDesc(isLocal, onlyPlayed, excludeZeroDuration)
     }
 
     @Transaction
@@ -604,8 +714,23 @@ interface Database {
     @Query("UPDATE Song SET loudnessBoost = :loudnessBoost WHERE id = :songId")
     fun setLoudnessBoost(songId: String, loudnessBoost: Float?)
 
-    @Query("SELECT * FROM Song WHERE title LIKE :query OR artistsText LIKE :query")
-    fun search(query: String): Flow<List<Song>>
+    @Query(
+        """
+        SELECT Song.* FROM Song
+        JOIN SongFts ON Song.rowid = SongFts.rowid
+        WHERE SongFts MATCH :query
+          AND (:isLocal = 1 AND Song.id LIKE '$LOCAL_KEY_PREFIX%' OR :isLocal = 0 AND Song.id NOT LIKE '$LOCAL_KEY_PREFIX%')
+          AND (:onlyPlayed = 0 OR Song.totalPlayTimeMs > 0)
+          AND (:excludeZeroDuration = 0 OR Song.durationText != '0:00')
+        ORDER BY Song.title COLLATE NOCASE
+        """
+    )
+    fun search(
+        query: String,
+        isLocal: Boolean = false,
+        onlyPlayed: Boolean = false,
+        excludeZeroDuration: Boolean = false
+    ): PagingSource<Int, Song>
 
     @Query("SELECT albumId AS id, NULL AS name FROM SongAlbumMap WHERE songId = :songId LIMIT 1")
     suspend fun songAlbumInfo(songId: String): List<Info>
@@ -814,6 +939,7 @@ interface Database {
 @androidx.room.Database(
     entities = [
         Song::class,
+        SongFts::class,
         SongPlaylistMap::class,
         Playlist::class,
         Artist::class,
@@ -828,7 +954,7 @@ interface Database {
         PipedSession::class
     ],
     views = [SortedSongPlaylistMap::class],
-    version = 30,
+    version = 31,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
@@ -877,7 +1003,8 @@ abstract class DatabaseInitializer protected constructor() : RoomDatabase() {
                 From10To11Migration(),
                 From14To15Migration(),
                 From22To23Migration(),
-                From23To24Migration()
+                From23To24Migration(),
+                From30To31Migration()
             )
             .build()
 
@@ -1122,6 +1249,16 @@ abstract class DatabaseInitializer protected constructor() : RoomDatabase() {
     class From23To24Migration : Migration(23, 24) {
         override fun migrate(db: SupportSQLiteDatabase) =
             db.execSQL("ALTER TABLE Song ADD COLUMN loudnessBoost REAL")
+    }
+
+    class From30To31Migration : Migration(30, 31) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE VIRTUAL TABLE IF NOT EXISTS `SongFts` USING FTS4(" +
+                        "`title` TEXT NOT NULL, `artistsText` TEXT, content=`Song`)"
+            )
+            db.execSQL("INSERT INTO `SongFts`(`SongFts`) VALUES('rebuild')")
+        }
     }
 }
 

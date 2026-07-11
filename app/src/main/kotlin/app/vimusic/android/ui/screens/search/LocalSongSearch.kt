@@ -13,9 +13,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -29,6 +29,7 @@ import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
 import app.vimusic.android.models.Song
+import app.vimusic.android.repositories.toFtsPrefixQuery
 import app.vimusic.android.ui.components.LocalMenuState
 import app.vimusic.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import app.vimusic.android.ui.components.themed.Header
@@ -41,11 +42,15 @@ import app.vimusic.android.utils.align
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.forcePlay
 import app.vimusic.android.utils.medium
-import app.vimusic.compose.persist.persistList
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.providers.innertube.models.NavigationEndpoint
-import kotlinx.collections.immutable.toImmutableList
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
+import kotlinx.coroutines.flow.flowOf
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -59,15 +64,13 @@ fun LocalSongSearch(
     val binder = LocalPlayerServiceBinder.current
     val menuState = LocalMenuState.current
 
-    var items by persistList<Song>("search/local/songs")
     var hidingSong by rememberSaveable { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(textFieldValue.text) {
-        if (textFieldValue.text.length > 1)
-            Database
-                .search("%${textFieldValue.text}%")
-                .collect { items = it.toImmutableList() }
-    }
+    val query = textFieldValue.text.trim()
+    val songs = remember(query) {
+        if (query.length > 1) Pager(PagingConfig(pageSize = 50, enablePlaceholders = false)) {
+            Database.search(query.toFtsPrefixQuery())
+        }.flow else flowOf(PagingData.empty())
+    }.collectAsLazyPagingItems()
 
     val lazyListState = rememberLazyListState()
 
@@ -105,9 +108,10 @@ fun LocalSongSearch(
             }
 
             items(
-                items = items,
-                key = Song::id
-            ) { song ->
+                count = songs.itemCount,
+                key = songs.itemKey(Song::id)
+            ) { index ->
+                val song = songs[index] ?: return@items
                 if (hidingSong == song.id) HideSongDialog(
                     song = song,
                     onDismiss = { hidingSong = null },
@@ -135,7 +139,7 @@ fun LocalSongSearch(
                             }
                         )
                         .songSwipeActions(
-                            key = items,
+                            key = songs.itemSnapshotList.items,
                             mediaItem = song.asMediaItem,
                             songToHide = song,
                             onSwipeLeftRequested = { hidingSong = it.id }

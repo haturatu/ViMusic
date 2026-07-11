@@ -164,7 +164,11 @@ dependencies {
     implementation(libs.kotlin.datetime)
 
     implementation(libs.room)
+    implementation(libs.room.paging)
     ksp(libs.room.compiler)
+
+    implementation(libs.paging.runtime)
+    implementation(libs.paging.compose)
 
     implementation(libs.log4j)
     implementation(libs.slf4j)
