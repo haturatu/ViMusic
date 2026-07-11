@@ -158,6 +158,7 @@ const val LOCAL_KEY_PREFIX = "local:"
 private const val TAG = "PlayerService"
 private const val PERSISTENT_QUEUE_MAX_PAST_ITEMS = 50
 private const val PERSISTENT_QUEUE_MAX_FUTURE_ITEMS = 50
+private const val PERSISTENT_QUEUE_SAVE_DEBOUNCE_MS = 500L
 private const val SPONSOR_BLOCK_SEEK_POLL_DELAY_MS = 1_000L
 
 @get:OptIn(UnstableApi::class)
@@ -192,6 +193,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private var preferenceUpdaterJob: Job? = null
     private var volumeNormalizationJob: Job? = null
     private var sponsorBlockJob: Job? = null
+    private var queuePersistenceJob: Job? = null
     private var nextTrackPreloadJob: Job? = null
 
     override var isInvincibilityEnabled by mutableStateOf(false)
@@ -542,7 +544,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
     override fun onDestroy() {
         runCatching {
-            maybeSavePlayerQueue()
+            maybeSavePlayerQueue(immediately = true)
 
             player.removeListener(this)
             player.stop()
@@ -695,31 +697,35 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         }
     }
 
-    private fun maybeSavePlayerQueue() {
+    private fun maybeSavePlayerQueue(immediately: Boolean = false) {
         if (!PlayerPreferences.persistentQueue) return
 
-        val mediaItems = player.currentTimeline.mediaItems
-        val mediaItemIndex = player.currentMediaItemIndex
-        val mediaItemPosition = player.currentPosition
-        if (mediaItems.isEmpty() || mediaItemIndex !in mediaItems.indices) return
+        queuePersistenceJob?.cancel()
+        queuePersistenceJob = coroutineScope.launch {
+            if (!immediately) delay(PERSISTENT_QUEUE_SAVE_DEBOUNCE_MS)
 
-        val startIndex = (mediaItemIndex - PERSISTENT_QUEUE_MAX_PAST_ITEMS).coerceAtLeast(0)
-        val endExclusive = (mediaItemIndex + PERSISTENT_QUEUE_MAX_FUTURE_ITEMS + 1)
-            .coerceAtMost(mediaItems.size)
-        val persistedItems = mediaItems.subList(startIndex, endExclusive)
-        val persistedCurrentIndex = mediaItemIndex - startIndex
+            val queue = withContext(Dispatchers.Main) {
+                val mediaItems = player.currentTimeline.mediaItems
+                val mediaItemIndex = player.currentMediaItemIndex
+                val mediaItemPosition = player.currentPosition
+                if (mediaItems.isEmpty() || mediaItemIndex !in mediaItems.indices) return@withContext null
 
-        coroutineScope.launch(Dispatchers.IO) {
+                val startIndex = (mediaItemIndex - PERSISTENT_QUEUE_MAX_PAST_ITEMS).coerceAtLeast(0)
+                val endExclusive = (mediaItemIndex + PERSISTENT_QUEUE_MAX_FUTURE_ITEMS + 1)
+                    .coerceAtMost(mediaItems.size)
+                val persistedCurrentIndex = mediaItemIndex - startIndex
+
+                mediaItems.subList(startIndex, endExclusive).mapIndexed { index, mediaItem ->
+                    QueuedMediaItem(
+                        id = index.toLong() + 1L,
+                        mediaItem = mediaItem,
+                        position = if (index == persistedCurrentIndex) mediaItemPosition else null
+                    )
+                }
+            } ?: return@launch
+
             runCatching {
-                playerRepository.saveQueue(
-                    persistedItems.mapIndexed { index, mediaItem ->
-                        QueuedMediaItem(
-                            id = index.toLong() + 1L,
-                            mediaItem = mediaItem,
-                            position = if (index == persistedCurrentIndex) mediaItemPosition else null
-                        )
-                    }
-                )
+                playerRepository.saveQueue(queue)
             }
         }
     }
