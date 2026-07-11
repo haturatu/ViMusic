@@ -6,19 +6,18 @@ import androidx.media3.common.C
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException
 import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
 import java.util.concurrent.atomic.AtomicLong
 
 class YoutubeHttpDataSourceFactory(
     private val rangeParameterEnabled: Boolean,
-    private val rnParameterEnabled: Boolean
+    private val rnParameterEnabled: Boolean,
+    upstreamFactory: HttpDataSource.Factory = DefaultHttpDataSource.Factory()
 ) : DataSource.Factory {
     private val requestNumber = AtomicLong()
-    private val upstream = DefaultHttpDataSource.Factory()
-        .setConnectTimeoutMs(DEFAULT_CONNECT_TIMEOUT_MS)
-        .setReadTimeoutMs(DEFAULT_READ_TIMEOUT_MS)
-        .setUserAgent(NewPipeDownloader.USER_AGENT)
+    private val upstream = upstreamFactory
 
     override fun createDataSource(): DataSource = Source(upstream.createDataSource())
 
@@ -134,8 +133,6 @@ class YoutubeHttpDataSourceFactory(
         }
 
     companion object {
-        private const val DEFAULT_CONNECT_TIMEOUT_MS = 8_000
-        private const val DEFAULT_READ_TIMEOUT_MS = 8_000
         private const val TAG = "YoutubeHttpDataSource"
         private const val RN_PARAMETER = "&rn="
         private const val RANGE_PARAMETER = "&range="
