@@ -1,6 +1,8 @@
 package app.vimusic.android.extractor
 
+import android.content.Context
 import android.util.Log
+import app.vimusic.android.utils.HttpEngineProvider
 import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
@@ -14,12 +16,20 @@ import org.schabi.newpipe.extractor.stream.DeliveryMethod
 import org.schabi.newpipe.extractor.stream.Stream
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.VideoStream
+import org.schabi.newpipe.extractor.downloader.Downloader
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicReference
 
 object NewPipeExtractorClient {
     private var initialized = false
     private val lock = Any()
+    private val appContextRef = AtomicReference<Context?>()
     private var lastSuccessfulDnsIndex: Int? = null
+
+    fun ensureInitialized(context: Context) {
+        appContextRef.set(context.applicationContext)
+        ensureInitialized()
+    }
 
     fun ensureInitialized() {
         if (initialized) return
@@ -104,10 +114,18 @@ object NewPipeExtractorClient {
 
     private fun configureDownloader(dnsTarget: NewPipeDnsTarget) {
         NewPipe.init(
-            NewPipeDownloader(NewPipeDownloader.client(dnsTarget)),
+            createDownloader(dnsTarget),
             Localization.DEFAULT,
             ContentCountry.DEFAULT
         )
+    }
+
+    private fun createDownloader(dnsTarget: NewPipeDnsTarget): Downloader {
+        val context = appContextRef.get()
+        if (dnsTarget == NewPipeDnsTarget.System && context != null) {
+            HttpEngineProvider.downloader(context)?.let { return it }
+        }
+        return NewPipeDownloader(NewPipeDownloader.client(dnsTarget))
     }
 
     private fun getPlayableAudioStreams(streamInfo: StreamInfo): List<AudioStream> =
