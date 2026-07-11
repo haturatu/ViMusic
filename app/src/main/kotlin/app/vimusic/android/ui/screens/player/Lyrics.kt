@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
 import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.R
@@ -78,6 +80,7 @@ import app.vimusic.android.ui.modifiers.verticalFadingEdge
 import app.vimusic.android.ui.viewmodels.PlayerLyricsViewModel
 import app.vimusic.android.utils.SynchronizedLyrics
 import app.vimusic.android.utils.SynchronizedLyricsState
+import app.vimusic.android.utils.DisposableListener
 import app.vimusic.android.utils.center
 import app.vimusic.android.utils.color
 import app.vimusic.android.utils.isInPip
@@ -94,7 +97,6 @@ import app.vimusic.providers.lrclib.models.Track
 import app.vimusic.providers.lrclib.toLrcFile
 import com.valentinilk.shimmer.shimmer
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -104,8 +106,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-
-private const val UPDATE_DELAY = 50L
 
 @Composable
 fun Lyrics(
@@ -529,11 +529,28 @@ fun Lyrics(
         val synchronizedLyrics = remember(lyricsState) {
             invalidLrc = lyricsState.sentences == null
             lyricsState.sentences?.let {
-                SynchronizedLyrics(it.toImmutableMap()) {
+                SynchronizedLyrics(it) {
                     binder?.player?.let { player ->
-                        player.currentPosition + UPDATE_DELAY + lyricsState.offset -
+                        player.currentPosition + lyricsState.offset -
                                 (lyrics?.startTime ?: 0L)
                     } ?: 0L
+                }
+            }
+        }
+
+        var playbackClockVersion by remember(synchronizedLyrics) { mutableIntStateOf(0) }
+        binder?.player.DisposableListener(key = synchronizedLyrics) {
+            object : Player.Listener {
+                override fun onPositionDiscontinuity(
+                    oldPosition: Player.PositionInfo,
+                    newPosition: Player.PositionInfo,
+                    reason: Int
+                ) {
+                    playbackClockVersion++
+                }
+
+                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                    playbackClockVersion++
                 }
             }
         }
@@ -545,23 +562,20 @@ fun Lyrics(
         ) { synchronized ->
             val lazyListState = rememberLazyListState()
             if (synchronized) {
-                LaunchedEffect(synchronizedLyrics, density, animatedHeight) {
+                LaunchedEffect(synchronizedLyrics, density, animatedHeight, playbackClockVersion) {
                     val currentSynchronizedLyrics = synchronizedLyrics ?: return@LaunchedEffect
                     val centerOffset = with(density) { (-animatedHeight / 3).roundToPx() }
 
-                    lazyListState.animateScrollToItem(
-                        index = currentSynchronizedLyrics.index + 1,
-                        scrollOffset = centerOffset
-                    )
-
                     while (true) {
-                        delay(UPDATE_DELAY)
-                        if (!currentSynchronizedLyrics.update()) continue
-
                         lazyListState.animateScrollToItem(
                             index = currentSynchronizedLyrics.index + 1,
                             scrollOffset = centerOffset
                         )
+
+                        val delayMillis = currentSynchronizedLyrics.delayUntilNextLine()
+                            ?: break
+                        delay(delayMillis)
+                        currentSynchronizedLyrics.update()
                     }
                 }
 
@@ -578,7 +592,7 @@ fun Lyrics(
                         Spacer(modifier = Modifier.height(maxHeight))
                     }
                     itemsIndexed(
-                        items = synchronizedLyrics.sentences.values.toImmutableList()
+                        items = synchronizedLyrics.sentences
                     ) { index, sentence ->
                         val color by animateColorAsState(
                             if (index == synchronizedLyrics.index) Color.White
