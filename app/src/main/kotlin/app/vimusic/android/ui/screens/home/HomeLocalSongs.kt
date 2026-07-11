@@ -77,12 +77,22 @@ fun HomeLocalSongs(onSearchClick: () -> Unit) = with(OrderPreferences) {
 
     if (hasPermission) HomeSongs(
         onSearchClick = onSearchClick,
-        songProvider = {
-            songsRepository.observeSongs(
+        songProvider = { query ->
+            songsRepository.pagedSongs(
                 sortBy = localSongSortBy,
                 sortOrder = localSongSortOrder,
-                isLocal = true
-            ).map { songs -> songs.filter { it.durationText != "0:00" } }
+                isLocal = true,
+                excludeZeroDuration = true,
+                searchQuery = query
+            )
+        },
+        allSongsProvider = {
+            songsRepository.songs(
+                sortBy = localSongSortBy,
+                sortOrder = localSongSortOrder,
+                isLocal = true,
+                excludeZeroDuration = true
+            )
         },
         onHideSong = songsRepository::deleteSong,
         sortBy = localSongSortBy,

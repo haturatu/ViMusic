@@ -28,10 +28,10 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,7 +44,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -71,18 +70,19 @@ import app.vimusic.android.utils.center
 import app.vimusic.android.utils.color
 import app.vimusic.android.utils.forcePlayAtIndex
 import app.vimusic.android.utils.formatted
-import app.vimusic.android.utils.secondary
 import app.vimusic.android.utils.semiBold
-import app.vimusic.compose.persist.persistList
 import app.vimusic.core.data.enums.SongSortBy
 import app.vimusic.core.data.enums.SortOrder
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.onOverlay
 import app.vimusic.core.ui.overlay
-import kotlinx.collections.immutable.toPersistentList
+import androidx.paging.PagingData
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 private val Song.formattedTotalPlayTime @Composable get() = totalPlayTimeMs.milliseconds.formatted
@@ -95,9 +95,20 @@ fun HomeSongs(
 
     HomeSongs(
         onSearchClick = onSearchClick,
-        songProvider = {
-            songsRepository.observeSongs(songSortBy, songSortOrder)
-                .map { songs -> songs.filter { it.totalPlayTimeMs > 0L } }
+        songProvider = { query ->
+            songsRepository.pagedSongs(
+                sortBy = songSortBy,
+                sortOrder = songSortOrder,
+                onlyPlayed = true,
+                searchQuery = query
+            )
+        },
+        allSongsProvider = {
+            songsRepository.songs(
+                sortBy = songSortBy,
+                sortOrder = songSortOrder,
+                onlyPlayed = true
+            )
         },
         onHideSong = songsRepository::deleteSong,
         sortBy = songSortBy,
@@ -114,7 +125,8 @@ fun HomeSongs(
 @Composable
 fun HomeSongs(
     onSearchClick: () -> Unit,
-    songProvider: () -> Flow<List<Song>>,
+    songProvider: (String?) -> Flow<PagingData<Song>>,
+    allSongsProvider: suspend () -> List<Song>,
     onHideSong: (Song) -> Unit,
     sortBy: SongSortBy,
     setSortBy: (SongSortBy) -> Unit,
@@ -128,31 +140,18 @@ fun HomeSongs(
     val menuState = LocalMenuState.current
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val coroutineScope = rememberCoroutineScope()
 
     var filter: String? by rememberSaveable { mutableStateOf(null) }
-    var items by persistList<Song>("home/songs")
-    val filteredItems by remember {
-        derivedStateOf {
-            filter?.lowercase()?.ifBlank { null }?.let { f ->
-                items.filter {
-                    f in it.title.lowercase() || f in it.artistsText?.lowercase().orEmpty()
-                }.sortedBy { it.title }
-            } ?: items
-        }
-    }
-    val mediaItems by remember { derivedStateOf { items.map(Song::asMediaItem) } }
-    val itemIndexById by remember {
-        derivedStateOf {
-            HashMap<String, Int>(items.size).apply {
-                items.forEachIndexed { index, song -> this[song.id] = index }
-            }
-        }
-    }
+    var searchQuery: String? by rememberSaveable { mutableStateOf(null) }
     var hidingSong: String? by rememberSaveable { mutableStateOf(null) }
-
-    LaunchedEffect(sortBy, sortOrder, songProvider) {
-        songProvider().collect { items = it.toPersistentList() }
+    LaunchedEffect(filter) {
+        delay(200)
+        searchQuery = filter?.trim()?.takeIf(String::isNotEmpty)
     }
+    val songs = remember(sortBy, sortOrder, searchQuery) {
+        songProvider(searchQuery)
+    }.collectAsLazyPagingItems()
 
     val lazyListState = rememberLazyListState()
 
@@ -214,18 +213,7 @@ fun HomeSongs(
                                 color = colorPalette.text
                             )
 
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            if (items.isNotEmpty()) BasicText(
-                                text = pluralStringResource(
-                                    R.plurals.song_count_plural,
-                                    items.size,
-                                    items.size
-                                ),
-                                style = typography.xs.secondary.semiBold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            // The former count required retaining every Song in memory. Paging loads on demand.
                         }
                     }
 
@@ -236,9 +224,10 @@ fun HomeSongs(
             }
 
             items(
-                items = filteredItems,
-                key = { song -> song.id }
-            ) { song ->
+                count = songs.itemCount,
+                key = songs.itemKey(Song::id)
+            ) { index ->
+                val song = songs[index] ?: return@items
                 if (hidingSong == song.id) HideSongDialog(
                     song = song,
                     onDismiss = { hidingSong = null },
@@ -264,17 +253,20 @@ fun HomeSongs(
                             },
                             onClick = {
                                 keyboardController?.hide()
-                                binder?.stopRadio()
-                                val targetIndex = itemIndexById[song.id] ?: return@combinedClickable
-                                binder?.player?.forcePlayAtIndex(
-                                    mediaItems,
-                                    targetIndex
-                                )
+                                coroutineScope.launch {
+                                    binder?.stopRadio()
+                                    val queue = allSongsProvider()
+                                    val targetIndex = queue.indexOfFirst { it.id == song.id }
+                                    if (targetIndex >= 0) binder?.player?.forcePlayAtIndex(
+                                        queue.map(Song::asMediaItem),
+                                        targetIndex
+                                    )
+                                }
                             }
                         )
                         .animateItem()
                         .songSwipeActions(
-                            key = filteredItems,
+                            key = songs.itemSnapshotList.items,
                             mediaItem = song.asMediaItem,
                             songToHide = song,
                             onSwipeLeftRequested = { hidingSong = it.id },

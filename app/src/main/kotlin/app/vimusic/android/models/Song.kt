@@ -3,6 +3,7 @@ package app.vimusic.android.models
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Fts4
 import androidx.room.PrimaryKey
 
 @Immutable
@@ -23,3 +24,14 @@ data class Song(
 ) {
     fun toggleLike() = copy(likedAt = if (likedAt == null) System.currentTimeMillis() else null)
 }
+
+/**
+ * External-content FTS index for library search. Keeping the song payload in Song avoids
+ * duplicating it in the index while allowing prefix searches to be answered by SQLite.
+ */
+@Fts4(contentEntity = Song::class)
+@Entity(tableName = "SongFts")
+data class SongFts(
+    val title: String,
+    val artistsText: String?
+)
