@@ -192,6 +192,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private var preferenceUpdaterJob: Job? = null
     private var volumeNormalizationJob: Job? = null
     private var sponsorBlockJob: Job? = null
+    private var nextTrackPreloadJob: Job? = null
 
     override var isInvincibilityEnabled by mutableStateOf(false)
 
@@ -620,6 +621,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         maybeRecoverPlaybackError()
         maybeNormalizeVolume()
         maybeProcessRadio()
+        prefetchNextMediaItem()
 
         with(bitmapProvider) {
             when {
@@ -1594,8 +1596,28 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     }.let { }
 
     private fun prefetchMediaItems(mediaItems: List<MediaItem>) {
-        // NewPipe-style playback resolves streams while building the media source. The old
-        // URL-prefetch path bypasses that resolver and can reject valid non-URL adaptive streams.
+        mediaItems.firstOrNull()?.let(::prefetchMediaItem)
+    }
+
+    private fun prefetchNextMediaItem() {
+        player.currentMediaItemIndex
+            .plus(1)
+            .takeIf { it in 0 until player.mediaItemCount }
+            ?.let(player::getMediaItemAt)
+            ?.let(::prefetchMediaItem)
+    }
+
+    private fun prefetchMediaItem(mediaItem: MediaItem) {
+        if (mediaItem.isLocal) return
+
+        nextTrackPreloadJob?.cancel()
+        nextTrackPreloadJob = coroutineScope.launch {
+            runCatching {
+                NewPipeAudioMediaSourceFactory.preloadAudioResult(mediaItem.mediaId)
+            }.onFailure { error ->
+                Log.d(TAG, "Failed to preload next track ${mediaItem.mediaId}", error)
+            }
+        }
     }
 
     private fun syncCurrentMediaItemRadioState(radio: YouTubeRadio) {
