@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.stream.DeliveryMethod
 import java.io.IOException
+import java.util.LinkedHashMap
 
 class NewPipeAudioMediaSourceFactory(
     private val context: Context,
@@ -143,6 +144,35 @@ class NewPipeAudioMediaSourceFactory(
 
     companion object {
         private const val TAG = "NewPipeAudioMediaSourceFactory"
+        private const val PRELOADED_RESULT_TTL_MS = 5 * 60 * 1000L
+        private const val MAX_PRELOADED_RESULTS = 3
+
+        private data class PreloadedAudioResult(
+            val result: app.vimusic.android.extractor.NewPipeAudioResult,
+            val createdAtMs: Long
+        )
+
+        private val preloadedAudioResults = object : LinkedHashMap<String, PreloadedAudioResult>(
+            MAX_PRELOADED_RESULTS,
+            0.75f,
+            true
+        ) {
+            override fun removeEldestEntry(
+                eldest: MutableMap.MutableEntry<String, PreloadedAudioResult>?
+            ) = size > MAX_PRELOADED_RESULTS
+        }
+
+        /** Resolves the next stream early without downloading audio data. */
+        fun preloadAudioResult(mediaId: String) {
+            synchronized(preloadedAudioResults) {
+                preloadedAudioResults[mediaId]?.takeIf { it.isFresh() }?.let { return }
+            }
+
+            val result = resolveAudioResultUncached(mediaId)
+            synchronized(preloadedAudioResults) {
+                preloadedAudioResults[mediaId] = PreloadedAudioResult(result, System.currentTimeMillis())
+            }
+        }
 
         fun resolveDashManifestUri(mediaId: String): Uri =
             resolvePlaybackUri(resolveAudioResult(mediaId))
@@ -204,7 +234,15 @@ class NewPipeAudioMediaSourceFactory(
             return isCached(mediaId, 0L, contentLength)
         }
 
-        private fun resolveAudioResult(mediaId: String): app.vimusic.android.extractor.NewPipeAudioResult {
+        private fun resolveAudioResult(mediaId: String): app.vimusic.android.extractor.NewPipeAudioResult =
+            synchronized(preloadedAudioResults) {
+                preloadedAudioResults.remove(mediaId)?.takeIf { it.isFresh() }?.result
+            } ?: resolveAudioResultUncached(mediaId)
+
+        private fun PreloadedAudioResult.isFresh() =
+            System.currentTimeMillis() - createdAtMs <= PRELOADED_RESULT_TTL_MS
+
+        private fun resolveAudioResultUncached(mediaId: String): app.vimusic.android.extractor.NewPipeAudioResult {
             val result = try {
                 NewPipeExtractorClient.resolveAudioStream(mediaId)
             } catch (error: IOException) {
