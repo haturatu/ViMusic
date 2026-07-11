@@ -65,7 +65,6 @@ exoplayer_dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref
 exoplayer_workmanager = { module = "androidx.media3:media3-exoplayer-workmanager", version.ref = "media3" }
 media3_session = { module = "androidx.media3:media3-session", version.ref = "media3" }
 
-
 workmanager = { module = "androidx.work:work-runtime", version.ref = "workmanager" }
 workmanager_ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workmanager" }
 
