@@ -158,6 +158,7 @@ const val LOCAL_KEY_PREFIX = "local:"
 private const val TAG = "PlayerService"
 private const val PERSISTENT_QUEUE_MAX_PAST_ITEMS = 50
 private const val PERSISTENT_QUEUE_MAX_FUTURE_ITEMS = 50
+private const val SPONSOR_BLOCK_SEEK_POLL_DELAY_MS = 1_000L
 
 @get:OptIn(UnstableApi::class)
 val DataSpec.isLocal get() = key?.startsWith(LOCAL_KEY_PREFIX) == true
@@ -873,12 +874,15 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
         @Suppress("LoopWithTooManyJumpStatements")
         do {
-            if (lastSegmentEnd < posMillis()) {
-                yield()
+            if (lastSegmentEnd <= posMillis()) {
+                // Keep the loop available for a user seeking backwards, without spinning after
+                // the final segment has been passed.
+                delay(SPONSOR_BLOCK_SEEK_POLL_DELAY_MS)
                 continue
             }
 
-            val nextSegment = segments.firstOrNull { posMillis() < it.end.inWholeMilliseconds } ?: continue
+            val nextSegment = segments.firstOrNull { posMillis() < it.end.inWholeMilliseconds }
+                ?: return
 
             // Wait for next segment
             if (nextSegment.start.inWholeMilliseconds > posMillis()) delay(
