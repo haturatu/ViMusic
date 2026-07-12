@@ -88,9 +88,13 @@ private class HttpEngineKtorEngine(
             }
             val headers = Headers.build {
                 // HttpEngine may transparently decompress a response while retaining the original
-                // Content-Length header. Passing that stale length makes Ktor reject the body.
+                // Content-Length/Content-Encoding headers. Passing them makes Ktor reject the
+                // body or attempt a second decompression.
                 info.headers.asList
-                    .filterNot { (name, _) -> name.equals(HttpHeaders.ContentLength, ignoreCase = true) }
+                    .filterNot { (name, _) ->
+                        name.equals(HttpHeaders.ContentLength, ignoreCase = true) ||
+                            name.equals(HttpHeaders.ContentEncoding, ignoreCase = true)
+                    }
                     .forEach { (name, value) -> append(name, value) }
             }
             continuation.resume(
