@@ -7,6 +7,7 @@ import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngineBase
 import io.ktor.client.engine.HttpClientEngineCapability
 import io.ktor.client.engine.HttpClientEngineConfig
+import io.ktor.client.call.ResponseAdapterAttributeKey
 import io.ktor.client.plugins.HttpTimeoutCapability
 import io.ktor.client.plugins.convertLongTimeoutToIntWithInfiniteAsZero
 import io.ktor.client.request.HttpRequestData
@@ -21,6 +22,10 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.InternalAPI
 import io.ktor.utils.io.jvm.javaio.copyTo
 import io.ktor.utils.io.jvm.javaio.toByteReadChannel
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.io.OutputStream
 import java.net.HttpURLConnection
@@ -38,8 +43,11 @@ private class HttpEngineKtorEngine(
 ) : HttpClientEngineBase("HttpEngine") {
     override val supportedCapabilities: Set<HttpClientEngineCapability<*>> = setOf(HttpTimeoutCapability)
 
-    override suspend fun execute(data: HttpRequestData): HttpResponseData {
-        val callContext = coroutineContext
+    override suspend fun execute(data: HttpRequestData): HttpResponseData = withContext(Dispatchers.IO) {
+        // Do not bind the response body to HttpRequestData.executionContext. Ktor consumes the
+        // returned channel after execute() completes (notably in Coil), and cancelling that job
+        // here closes HttpURLConnection before the decoder has read the image.
+        val callContext: CoroutineContext = this@HttpEngineKtorEngine.coroutineContext + Dispatchers.IO
         val requestTime = GMTDate()
         val content = data.body
         val contentLength = data.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: content.contentLength
@@ -48,21 +56,19 @@ private class HttpEngineKtorEngine(
             useCaches = false
             instanceFollowRedirects = false
             data.headers.forEach { name, values -> values.forEach { addRequestProperty(name, it) } }
-            content.headers.forEach { name, values ->
-                if (getRequestProperty(name) == null) values.forEach { addRequestProperty(name, it) }
-            }
+            content.headers.forEach { name, values -> values.forEach { addRequestProperty(name, it) } }
             data.getCapabilityOrNull(HttpTimeoutCapability)?.let { timeout ->
                 timeout.connectTimeoutMillis?.let { connectTimeout = convertLongTimeoutToIntWithInfiniteAsZero(it) }
                 timeout.socketTimeoutMillis?.let { readTimeout = convertLongTimeoutToIntWithInfiniteAsZero(it) }
             }
-            if (content !is OutgoingContent.NoContent) {
+            if (data.method.value != "GET" && data.method.value != "HEAD" && content !is OutgoingContent.NoContent) {
                 contentLength?.let(::setFixedLengthStreamingMode) ?: setChunkedStreamingMode(0)
                 doOutput = true
                 content.writeTo(outputStream, callContext)
             }
         }
 
-        return try {
+        try {
             val code = connection.responseCode
             val message = connection.responseMessage
             val status = message?.let { HttpStatusCode(code, it) } ?: HttpStatusCode.fromValue(code)
@@ -71,25 +77,31 @@ private class HttpEngineKtorEngine(
                     .mapKeys { it.key?.lowercase(Locale.getDefault()) ?: "" }
                     .filterKeys(String::isNotBlank)
             )
+            val responseBody = data.attributes.getOrNull(ResponseAdapterAttributeKey)
+                ?.adapt(data, status, headers, connection.content(code, callContext), content, callContext)
+                ?: connection.content(code, callContext)
             HttpResponseData(
                 status,
                 requestTime,
                 headers,
                 HttpProtocolVersion.HTTP_1_1,
-                connection.content(code, callContext),
+                responseBody,
                 callContext,
             )
         } catch (error: Throwable) { throw error }
     }
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 private suspend fun OutgoingContent.writeTo(stream: OutputStream, callContext: CoroutineContext) = stream.use { output ->
     when (this) {
         is OutgoingContent.ByteArrayContent -> output.write(bytes())
         is OutgoingContent.ReadChannelContent -> readFrom().copyTo(output)
-        is OutgoingContent.WriteChannelContent -> error("WriteChannelContent is unsupported by HttpEngine")
+        is OutgoingContent.WriteChannelContent -> GlobalScope.writer(callContext) {
+            writeTo(channel)
+        }.channel.copyTo(output)
         is OutgoingContent.NoContent -> Unit
-        is OutgoingContent.ContentWrapper -> error("Content wrappers are unsupported by HttpEngine")
+        is OutgoingContent.ContentWrapper -> delegate().writeTo(output, callContext)
         is OutgoingContent.ProtocolUpgrade -> error("Protocol upgrades are unsupported by HttpEngine")
     }
 }
@@ -105,6 +117,12 @@ private fun HttpURLConnection.content(status: Int, context: CoroutineContext): B
 
 fun installHttpEngineKtorClient(httpEngine: HttpEngine) {
     ProviderHttpClient.install { block: HttpClientConfig<*>.() -> Unit ->
-        HttpClient(HttpEngineKtorEngine(HttpEngineKtorConfig(), httpEngine), block)
+        newHttpEngineKtorClient(httpEngine, block)
     }
 }
+
+/** Creates an independent Ktor client for Coil while retaining its normal streaming/cancellation contract. */
+fun newHttpEngineKtorClient(
+    httpEngine: HttpEngine,
+    block: HttpClientConfig<*>.() -> Unit = {},
+): HttpClient = HttpClient(HttpEngineKtorEngine(HttpEngineKtorConfig(), httpEngine), block)
