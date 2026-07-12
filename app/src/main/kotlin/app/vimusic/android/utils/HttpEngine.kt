@@ -74,6 +74,15 @@ object HttpEngineProvider {
         }
 
         fun resolvedDownloader(context: Context, dnsTarget: NewPipeDnsTarget.Resolved): Downloader? = runCatching {
+            // Host resolver rules are not part of this device's public HttpEngine API. Returning
+            // null here lets the caller use its established OkHttp fixed-DNS fallback instead of
+            // failing every resolved address before a request is attempted.
+            if (HttpEngine.Builder::class.java.methods.none { method ->
+                    method.name == "setExperimentalOptions" && method.parameterTypes.contentEquals(arrayOf(String::class.java))
+                }
+            ) {
+                return null
+            }
             HttpEngineDownloader(context, dnsTarget)
         }.getOrElse { error ->
             Log.w(TAG, "Resolved HttpEngine downloader unavailable; using default HTTP stack", error)
