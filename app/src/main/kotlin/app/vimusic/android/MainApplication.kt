@@ -615,6 +615,7 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         super.onCreate()
 
         MainApplicationProvider.application = this
+        HttpEngineProvider.engine(this)?.let(::installHttpEngineKtorClient)
         appContainer = AppContainer(this).also(AppContainer::initialize)
         MonetCompat.enablePaletteCompat()
         ServiceNotifications.createAll(this)

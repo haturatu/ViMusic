@@ -7,9 +7,8 @@ import app.vimusic.providers.piped.models.PlaylistPreview
 import app.vimusic.providers.piped.models.Session
 import app.vimusic.providers.piped.models.authenticatedWith
 import app.vimusic.providers.utils.runCatchingCancellable
-import io.ktor.client.HttpClient
+import app.vimusic.providers.utils.ProviderHttpClient
 import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.compression.ContentEncoding
@@ -45,7 +44,7 @@ operator fun JsonElement.div(key: String) = jsonObject[key]!!
 
 object Piped {
     private val client by lazy {
-        HttpClient(CIO) {
+        ProviderHttpClient.create {
             install(ContentNegotiation) {
                 json(
                     Json {

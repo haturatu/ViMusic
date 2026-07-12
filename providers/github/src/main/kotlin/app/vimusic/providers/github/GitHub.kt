@@ -1,7 +1,6 @@
 package app.vimusic.providers.github
 
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
+import app.vimusic.providers.utils.ProviderHttpClient
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.compression.brotli
@@ -23,7 +22,7 @@ private const val CONTENT_SUBTYPE = "vnd.github+json"
 
 object GitHub {
     internal val httpClient by lazy {
-        HttpClient(CIO) {
+        ProviderHttpClient.create {
             val contentType = ContentType(CONTENT_TYPE, CONTENT_SUBTYPE)
 
             install(ContentNegotiation) {

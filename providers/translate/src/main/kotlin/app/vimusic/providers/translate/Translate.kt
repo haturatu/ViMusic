@@ -1,7 +1,6 @@
 package app.vimusic.providers.translate
 
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
+import app.vimusic.providers.utils.ProviderHttpClient
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.UserAgent
@@ -19,7 +18,7 @@ import java.io.IOException
 
 object Translate {
     internal val client by lazy {
-        HttpClient(CIO) {
+        ProviderHttpClient.create {
             install(ContentNegotiation) {
                 json(
                     Json {

@@ -11,6 +11,8 @@ dependencies {
     api(libs.brotli)
 
     implementation(libs.ktor.http)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
     implementation(libs.ktor.serialization.json)
 
 }

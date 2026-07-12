@@ -7,8 +7,7 @@ import app.vimusic.providers.innertube.models.Thumbnail
 import app.vimusic.providers.innertube.models.Context
 import app.vimusic.providers.innertube.models.UserAgents
 import app.vimusic.providers.utils.runCatchingCancellable
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
+import app.vimusic.providers.utils.ProviderHttpClient
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.api.createClientPlugin
@@ -32,7 +31,6 @@ import io.ktor.http.parseQueryString
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import okhttp3.Protocol
 import org.slf4j.LoggerFactory
 import java.io.IOException
 
@@ -41,13 +39,7 @@ object Innertube {
     @Volatile
     private var latestVisitorData: String? = null
 
-    private val javascriptClient = HttpClient(OkHttp) {
-        engine {
-            config {
-                protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
-                retryOnConnectionFailure(true)
-            }
-        }
+    private val javascriptClient = ProviderHttpClient.create {
 
         expectSuccess = true
 
@@ -96,13 +88,7 @@ object Innertube {
     }
 
     val logger = LoggerFactory.getLogger(Innertube::class.java)
-    val client = HttpClient(OkHttp) {
-        engine {
-            config {
-                protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
-                retryOnConnectionFailure(true)
-            }
-        }
+    val client = ProviderHttpClient.create {
 
         expectSuccess = true
 
