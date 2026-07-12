@@ -9,6 +9,7 @@ import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.HttpEngineDataSource
 import app.vimusic.android.extractor.HttpEngineDownloader
+import app.vimusic.android.extractor.NewPipeDnsTarget
 import org.schabi.newpipe.extractor.downloader.Downloader
 import java.util.concurrent.Executor
 
@@ -44,6 +45,15 @@ object HttpEngineProvider {
         return Api34.downloader(context)
     }
 
+    /**
+     * HTTP/3 downloader for NewPipe's fixed-address retry. The URL host remains unchanged for
+     * TLS/SNI while HttpEngine receives a per-request hostname-to-address mapping.
+     */
+    fun resolvedDownloader(context: Context, dnsTarget: NewPipeDnsTarget.Resolved): Downloader? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return null
+        return Api34.resolvedDownloader(context, dnsTarget)
+    }
+
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     private object Api34 {
         @Volatile private var engine: HttpEngine? = null
@@ -60,6 +70,13 @@ object HttpEngineProvider {
             HttpEngineDownloader(engine(context))
         }.getOrElse { error ->
             Log.w(TAG, "HttpEngine downloader unavailable; using default HTTP stack", error)
+            null
+        }
+
+        fun resolvedDownloader(context: Context, dnsTarget: NewPipeDnsTarget.Resolved): Downloader? = runCatching {
+            HttpEngineDownloader(context, dnsTarget)
+        }.getOrElse { error ->
+            Log.w(TAG, "Resolved HttpEngine downloader unavailable; using default HTTP stack", error)
             null
         }
     }

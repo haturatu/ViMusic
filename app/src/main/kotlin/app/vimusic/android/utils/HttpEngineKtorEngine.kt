@@ -7,7 +7,6 @@ import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngineBase
 import io.ktor.client.engine.HttpClientEngineCapability
 import io.ktor.client.engine.HttpClientEngineConfig
-import io.ktor.client.call.ResponseAdapterAttributeKey
 import io.ktor.client.plugins.HttpTimeoutCapability
 import io.ktor.client.plugins.convertLongTimeoutToIntWithInfiniteAsZero
 import io.ktor.client.request.HttpRequestData
@@ -22,9 +21,7 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.InternalAPI
 import io.ktor.utils.io.jvm.javaio.copyTo
 import io.ktor.utils.io.jvm.javaio.toByteReadChannel
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.io.OutputStream
@@ -50,13 +47,24 @@ private class HttpEngineKtorEngine(
         val callContext: CoroutineContext = this@HttpEngineKtorEngine.coroutineContext + Dispatchers.IO
         val requestTime = GMTDate()
         val content = data.body
-        val contentLength = data.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: content.contentLength
+        // HttpEngine validates Content-Length against the bytes written to its output stream.
+        // Ktor request attributes can still contain the pre-serialization length, so always use
+        // the final OutgoingContent length and never forward a stale header.
+        val contentLength = content.contentLength
         val connection = (httpEngine.openConnection(URL(data.url.toString())) as HttpURLConnection).apply {
             requestMethod = data.method.value
             useCaches = false
             instanceFollowRedirects = false
-            data.headers.forEach { name, values -> values.forEach { addRequestProperty(name, it) } }
-            content.headers.forEach { name, values -> values.forEach { addRequestProperty(name, it) } }
+            data.headers.forEach { name, values ->
+                if (!name.equals(HttpHeaders.ContentLength, ignoreCase = true)) {
+                    values.forEach { addRequestProperty(name, it) }
+                }
+            }
+            content.headers.forEach { name, values ->
+                if (!name.equals(HttpHeaders.ContentLength, ignoreCase = true)) {
+                    values.forEach { addRequestProperty(name, it) }
+                }
+            }
             data.getCapabilityOrNull(HttpTimeoutCapability)?.let { timeout ->
                 timeout.connectTimeoutMillis?.let { connectTimeout = convertLongTimeoutToIntWithInfiniteAsZero(it) }
                 timeout.socketTimeoutMillis?.let { readTimeout = convertLongTimeoutToIntWithInfiniteAsZero(it) }
@@ -77,31 +85,35 @@ private class HttpEngineKtorEngine(
                     .mapKeys { it.key?.lowercase(Locale.getDefault()) ?: "" }
                     .filterKeys(String::isNotBlank)
             )
-            val responseBody = data.attributes.getOrNull(ResponseAdapterAttributeKey)
-                ?.adapt(data, status, headers, connection.content(code, callContext), content, callContext)
-                ?: connection.content(code, callContext)
             HttpResponseData(
                 status,
                 requestTime,
                 headers,
                 HttpProtocolVersion.HTTP_1_1,
-                responseBody,
+                connection.content(code, callContext),
                 callContext,
             )
         } catch (error: Throwable) { throw error }
     }
 }
 
-@OptIn(DelicateCoroutinesApi::class)
-private suspend fun OutgoingContent.writeTo(stream: OutputStream, callContext: CoroutineContext) = stream.use { output ->
+private suspend fun OutgoingContent.writeTo(stream: OutputStream, callContext: CoroutineContext): Unit = stream.use { output ->
+    writeContentTo(output, callContext)
+}
+
+private suspend fun OutgoingContent.writeContentTo(output: OutputStream, callContext: CoroutineContext): Unit {
     when (this) {
         is OutgoingContent.ByteArrayContent -> output.write(bytes())
         is OutgoingContent.ReadChannelContent -> readFrom().copyTo(output)
-        is OutgoingContent.WriteChannelContent -> GlobalScope.writer(callContext) {
-            writeTo(channel)
-        }.channel.copyTo(output)
+        // The provider requests use byte-array and read-channel bodies. Ktor's Android engine
+        // also cannot upgrade a URLConnection request, so unsupported streaming/protocol bodies
+        // fail explicitly instead of silently truncating a request.
+        is OutgoingContent.WriteChannelContent -> error("WriteChannelContent is unsupported by HttpEngine")
         is OutgoingContent.NoContent -> Unit
-        is OutgoingContent.ContentWrapper -> delegate().writeTo(output, callContext)
+        is OutgoingContent.ContentWrapper -> {
+            val delegated: OutgoingContent = delegate()
+            delegated.writeContentTo(output, callContext)
+        }
         is OutgoingContent.ProtocolUpgrade -> error("Protocol upgrades are unsupported by HttpEngine")
     }
 }

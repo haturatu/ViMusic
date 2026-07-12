@@ -140,7 +140,6 @@ import app.vimusic.android.utils.collectProvidedBitmapAsState
 import app.vimusic.android.utils.forcePlay
 import app.vimusic.android.utils.intent
 import app.vimusic.android.utils.installHttpEngineKtorClient
-import app.vimusic.android.utils.newHttpEngineKtorClient
 import app.vimusic.android.utils.invokeOnReady
 import app.vimusic.android.utils.isInPip
 import app.vimusic.android.utils.maybeEnterPip
@@ -176,6 +175,7 @@ import coil3.memory.MemoryCache
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.crossfade
 import coil3.util.DebugLogger
+import io.ktor.client.engine.android.createHttpEngineAndroidClient
 import com.kieronquinn.monetcompat.core.MonetActivityAccessException
 import com.kieronquinn.monetcompat.core.MonetCompat
 import com.kieronquinn.monetcompat.interfaces.MonetColorsChangedListener
@@ -628,10 +628,8 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
 
     override fun newImageLoader(context: PlatformContext) = ImageLoader.Builder(this)
         .components {
-            // Ktor's standard fetcher owns cancellation and body consumption. Only the
-            // connection factory is replaced, so Coil retains its normal cache/decoder flow.
             HttpEngineProvider.engine(this@MainApplication)?.let { httpEngine ->
-                add(KtorNetworkFetcherFactory(newHttpEngineKtorClient(httpEngine)))
+                add(KtorNetworkFetcherFactory(createHttpEngineAndroidClient(httpEngine)))
             }
         }
         .crossfade(true)

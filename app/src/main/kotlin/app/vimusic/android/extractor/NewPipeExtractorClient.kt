@@ -125,6 +125,9 @@ object NewPipeExtractorClient {
         if (dnsTarget == NewPipeDnsTarget.System && context != null) {
             HttpEngineProvider.downloader(context)?.let { return it }
         }
+        if (dnsTarget is NewPipeDnsTarget.Resolved && context != null) {
+            HttpEngineProvider.resolvedDownloader(context, dnsTarget)?.let { return it }
+        }
         return NewPipeDownloader(NewPipeDownloader.client(dnsTarget))
     }
 

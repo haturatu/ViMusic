@@ -15,6 +15,7 @@ import org.schabi.newpipe.extractor.downloader.Response
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.net.URI
 import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -25,17 +26,25 @@ import java.util.concurrent.atomic.AtomicReference
  * [Downloader] implementation backed by Android's [HttpEngine] so NewPipe extractor
  * requests can use HTTP/2 and HTTP/3-over-QUIC on Android 14 and newer.
  *
- * Note: [HttpEngine] resolves names via the system resolver, so it cannot pin a specific IP
- * address the way [NewPipeDownloader]'s [NewPipeDnsTarget.Resolved] mode does. Use this only for
- * the system DNS path and keep [NewPipeDownloader] for resolved-address fallbacks.
+ * The resolved-address constructor creates a short-lived engine with a hostname mapping. This
+ * preserves the URL hostname for TLS/SNI and QUIC while retaining NewPipe's DNS fallback policy.
  */
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-class HttpEngineDownloader(
-    private val httpEngine: HttpEngine
+class HttpEngineDownloader private constructor(
+    private val engineForUrl: (String) -> HttpEngine,
+    private val shutdownAfterRequest: Boolean,
 ) : Downloader() {
+    constructor(httpEngine: HttpEngine) : this({ httpEngine }, false)
+
+    constructor(context: android.content.Context, dnsTarget: NewPipeDnsTarget.Resolved) : this(
+        engineForUrl = { url -> resolvedAddressEngine(context.applicationContext, url, dnsTarget) },
+        shutdownAfterRequest = true,
+    )
+
     private val executor = Executors.newCachedThreadPool()
 
     override fun execute(request: Request): Response {
+        val httpEngine = engineForUrl(request.url())
         val resultRef = AtomicReference<Response>()
         val errorRef = AtomicReference<Throwable>()
         val latch = CountDownLatch(1)
@@ -59,16 +68,20 @@ class HttpEngineDownloader(
             }
         }.build()
 
-        urlRequest.start()
+        try {
+            urlRequest.start()
 
-        if (!latch.await(REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-            runCatching { urlRequest.cancel() }
-            throw IOException("HttpEngine request timed out for ${request.url()}")
+            if (!latch.await(REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                runCatching { urlRequest.cancel() }
+                throw IOException("HttpEngine request timed out for ${request.url()}")
+            }
+
+            errorRef.get()?.let { throw it }
+            return resultRef.get()
+                ?: throw IOException("HttpEngine request produced no response for ${request.url()}")
+        } finally {
+            if (shutdownAfterRequest) httpEngine.shutdown()
         }
-
-        errorRef.get()?.let { throw it }
-        return resultRef.get()
-            ?: throw IOException("HttpEngine request produced no response for ${request.url()}")
     }
 
     private class Callback(
@@ -146,5 +159,31 @@ class HttpEngineDownloader(
         const val TAG = "HttpEngineDownloader"
         const val REQUEST_TIMEOUT_SECONDS = 30L
         const val READ_BUFFER_BYTES = 32 * 1024
+
+        @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+        fun resolvedAddressEngine(
+            context: android.content.Context,
+            requestUrl: String,
+            dnsTarget: NewPipeDnsTarget.Resolved,
+        ): HttpEngine {
+            val host = URI(requestUrl).host ?: throw IOException("Request URL has no host: $requestUrl")
+            val address = NewPipeDownloader.resolveAddress(host, dnsTarget.index)
+            val rules = "MAP $host ${address.hostAddress}"
+            Log.i(TAG, "Using QUIC hostname mapping hostname=$host address=${address.hostAddress}")
+            val builder = HttpEngine.Builder(context)
+                .setEnableHttp2(true)
+                .setEnableQuic(true)
+            val options = "{\"HostResolverRules\":{\"host_resolver_rules\":\"$rules\"}}"
+            // setExperimentalOptions is supplied by newer HttpEngine extension releases but is
+            // absent from the compile SDK stub. Resolve it at runtime without a Cronet dependency.
+            runCatching {
+                builder.javaClass
+                    .getMethod("setExperimentalOptions", String::class.java)
+                    .invoke(builder, options)
+            }.getOrElse { error ->
+                throw IOException("HttpEngine does not support hostname mapping", error)
+            }
+            return builder.build()
+        }
     }
 }

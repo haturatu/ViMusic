@@ -62,6 +62,11 @@ class NewPipeDownloader(
             }
             .build()
 
+        /** Resolves the same IPv4 address selected by the legacy OkHttp DNS fallback. */
+        fun resolveAddress(hostname: String, index: Int): InetAddress =
+            resolveAddresses(hostname, index).firstOrNull()
+                ?: throw java.net.UnknownHostException("No IPv4 address for $hostname")
+
         private fun resolveAddresses(hostname: String, index: Int): List<InetAddress> {
             val addresses = InetAddress.getAllByName(hostname).toList()
             val ordered = addresses
