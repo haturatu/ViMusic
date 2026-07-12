@@ -12,7 +12,7 @@ import app.vimusic.android.extractor.HttpEngineDownloader
 import org.schabi.newpipe.extractor.downloader.Downloader
 import java.util.concurrent.Executor
 
-/** Shared Android platform HTTP/3-over-QUIC (Cronet) stack for Android 14 and newer. */
+/** Shared Android platform HTTP/3-over-QUIC stack for Android 14 and newer. */
 object HttpEngineProvider {
     private const val TAG = "HttpEngine"
     private val executor = Executor(Runnable::run)

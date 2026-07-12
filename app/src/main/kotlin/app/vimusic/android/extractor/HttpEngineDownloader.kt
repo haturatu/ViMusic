@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * [Downloader] implementation backed by Android's [HttpEngine] (Cronet) so NewPipe extractor
+ * [Downloader] implementation backed by Android's [HttpEngine] so NewPipe extractor
  * requests can use HTTP/2 and HTTP/3-over-QUIC on Android 14 and newer.
  *
  * Note: [HttpEngine] resolves names via the system resolver, so it cannot pin a specific IP
