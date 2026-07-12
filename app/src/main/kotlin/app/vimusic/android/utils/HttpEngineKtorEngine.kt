@@ -1,10 +1,6 @@
 package app.vimusic.android.utils
 
 import android.net.http.HttpEngine
-import android.net.http.UploadDataProvider
-import android.net.http.UploadDataSink
-import android.net.http.UrlRequest
-import android.net.http.UrlResponseInfo
 import app.vimusic.providers.utils.ProviderHttpClient
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
@@ -12,9 +8,10 @@ import io.ktor.client.engine.HttpClientEngineBase
 import io.ktor.client.engine.HttpClientEngineCapability
 import io.ktor.client.engine.HttpClientEngineConfig
 import io.ktor.client.plugins.HttpTimeoutCapability
+import io.ktor.client.plugins.convertLongTimeoutToIntWithInfiniteAsZero
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
-import io.ktor.http.Headers
+import io.ktor.http.HeadersImpl
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpProtocolVersion
 import io.ktor.http.HttpStatusCode
@@ -22,15 +19,18 @@ import io.ktor.http.content.OutgoingContent
 import io.ktor.util.date.GMTDate
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.InternalAPI
-import kotlinx.coroutines.suspendCancellableCoroutine
-import java.nio.ByteBuffer
-import java.util.concurrent.Executors
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
+import io.ktor.utils.io.jvm.javaio.copyTo
+import io.ktor.utils.io.jvm.javaio.toByteReadChannel
+import java.io.IOException
+import java.io.OutputStream
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.Locale
+import kotlin.coroutines.CoroutineContext
 
 private class HttpEngineKtorConfig : HttpClientEngineConfig()
 
-/** Minimal Ktor transport using Android's platform HTTP stack with QUIC enabled. */
+/** Ktor-compatible Android transport that delegates connections to HTTP/3-capable [HttpEngine]. */
 @OptIn(InternalAPI::class)
 private class HttpEngineKtorEngine(
     override val config: HttpEngineKtorConfig,
@@ -38,121 +38,73 @@ private class HttpEngineKtorEngine(
 ) : HttpClientEngineBase("HttpEngine") {
     override val supportedCapabilities: Set<HttpClientEngineCapability<*>> = setOf(HttpTimeoutCapability)
 
-    override suspend fun execute(data: HttpRequestData): HttpResponseData =
-        suspendCancellableCoroutine { continuation ->
-            val request = httpEngine.newUrlRequestBuilder(data.url.toString(), HTTP_ENGINE_EXECUTOR, Callback(continuation))
-                .setHttpMethod(data.method.value)
-            data.headers.forEach { name, values -> values.forEach { request.addHeader(name, it) } }
-            data.body.headers.forEach { name, values ->
-                name?.takeIf { data.headers[it].isNullOrEmpty() }
-                    ?.let { headerName -> values.forEach { request.addHeader(headerName, it) } }
+    override suspend fun execute(data: HttpRequestData): HttpResponseData {
+        val callContext = coroutineContext
+        val requestTime = GMTDate()
+        val content = data.body
+        val contentLength = data.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: content.contentLength
+        val connection = (httpEngine.openConnection(URL(data.url.toString())) as HttpURLConnection).apply {
+            requestMethod = data.method.value
+            useCaches = false
+            instanceFollowRedirects = false
+            data.headers.forEach { name, values -> values.forEach { addRequestProperty(name, it) } }
+            content.headers.forEach { name, values ->
+                if (getRequestProperty(name) == null) values.forEach { addRequestProperty(name, it) }
             }
-            if (data.headers[HttpHeaders.ContentType].isNullOrEmpty()) {
-                data.body.contentType?.let { request.addHeader(HttpHeaders.ContentType, it.toString()) }
+            data.getCapabilityOrNull(HttpTimeoutCapability)?.let { timeout ->
+                timeout.connectTimeoutMillis?.let { connectTimeout = convertLongTimeoutToIntWithInfiniteAsZero(it) }
+                timeout.socketTimeoutMillis?.let { readTimeout = convertLongTimeoutToIntWithInfiniteAsZero(it) }
             }
-            (data.body as? OutgoingContent.ByteArrayContent)?.bytes()?.let {
-                request.setUploadDataProvider(ByteArrayUploadDataProvider(it), HTTP_ENGINE_EXECUTOR)
+            if (content !is OutgoingContent.NoContent) {
+                contentLength?.let(::setFixedLengthStreamingMode) ?: setChunkedStreamingMode(0)
+                doOutput = true
+                content.writeTo(outputStream, callContext)
             }
-            val urlRequest = request.build()
-            continuation.invokeOnCancellation { urlRequest.cancel() }
-            urlRequest.start()
         }
 
-    private class Callback(
-        private val continuation: kotlinx.coroutines.CancellableContinuation<HttpResponseData>,
-    ) : UrlRequest.Callback {
-        private val chunks = ArrayList<ByteArray>()
-        private var size = 0
-
-        override fun onResponseStarted(request: UrlRequest, info: UrlResponseInfo) {
-            request.read(ByteBuffer.allocateDirect(BUFFER_SIZE))
-        }
-
-        override fun onReadCompleted(request: UrlRequest, info: UrlResponseInfo, buffer: ByteBuffer) {
-            buffer.flip()
-            ByteArray(buffer.remaining()).also {
-                buffer.get(it)
-                chunks += it
-                size += it.size
-            }
-            buffer.clear()
-            request.read(buffer)
-        }
-
-        override fun onSucceeded(request: UrlRequest, info: UrlResponseInfo) {
-            val bytes = ByteArray(size)
-            var offset = 0
-            chunks.forEach { chunk ->
-                chunk.copyInto(bytes, offset)
-                offset += chunk.size
-            }
-            val headers = Headers.build {
-                // HttpEngine may transparently decompress a response while retaining the original
-                // Content-Length/Content-Encoding headers. Passing them makes Ktor reject the
-                // body or attempt a second decompression.
-                info.headers.asList
-                    .filterNot { (name, _) ->
-                        name.equals(HttpHeaders.ContentLength, ignoreCase = true) ||
-                            name.equals(HttpHeaders.ContentEncoding, ignoreCase = true)
-                    }
-                    .forEach { (name, value) -> append(name, value) }
-            }
-            continuation.resume(
-                HttpResponseData(
-                    HttpStatusCode(info.httpStatusCode, info.httpStatusText),
-                    GMTDate(),
-                    headers,
-                    HttpProtocolVersion.HTTP_1_1,
-                    ByteReadChannel(bytes),
-                    continuation.context,
-                )
+        return try {
+            val code = connection.responseCode
+            val message = connection.responseMessage
+            val status = message?.let { HttpStatusCode(code, it) } ?: HttpStatusCode.fromValue(code)
+            val headers = HeadersImpl(
+                connection.headerFields
+                    .mapKeys { it.key?.lowercase(Locale.getDefault()) ?: "" }
+                    .filterKeys(String::isNotBlank)
             )
-        }
-
-        override fun onFailed(request: UrlRequest, info: UrlResponseInfo?, error: android.net.http.HttpException) {
-            continuation.resumeWithException(error)
-        }
-
-        override fun onRedirectReceived(request: UrlRequest, info: UrlResponseInfo, newLocationUrl: String) {
-            request.followRedirect()
-        }
-
-        override fun onCanceled(request: UrlRequest, info: UrlResponseInfo?) {
-            continuation.cancel()
-        }
+            HttpResponseData(
+                status,
+                requestTime,
+                headers,
+                HttpProtocolVersion.HTTP_1_1,
+                connection.content(code, callContext),
+                callContext,
+            )
+        } catch (error: Throwable) { throw error }
     }
 }
 
-private class ByteArrayUploadDataProvider(private val bytes: ByteArray) : UploadDataProvider() {
-    private var offset = 0
-
-    override fun getLength() = bytes.size.toLong()
-
-    override fun read(sink: UploadDataSink, buffer: ByteBuffer) {
-        val count = minOf(buffer.remaining(), bytes.size - offset)
-        if (count > 0) {
-            buffer.put(bytes, offset, count)
-            offset += count
-        }
-        // HttpEngine knows the exact length, so this is a non-chunked upload. Its callback must
-        // never mark a final chunk; completion is inferred from [getLength].
-        sink.onReadSucceeded(false)
-    }
-
-    override fun rewind(sink: UploadDataSink) {
-        offset = 0
-        sink.onRewindSucceeded()
+private suspend fun OutgoingContent.writeTo(stream: OutputStream, callContext: CoroutineContext) = stream.use { output ->
+    when (this) {
+        is OutgoingContent.ByteArrayContent -> output.write(bytes())
+        is OutgoingContent.ReadChannelContent -> readFrom().copyTo(output)
+        is OutgoingContent.WriteChannelContent -> error("WriteChannelContent is unsupported by HttpEngine")
+        is OutgoingContent.NoContent -> Unit
+        is OutgoingContent.ContentWrapper -> error("Content wrappers are unsupported by HttpEngine")
+        is OutgoingContent.ProtocolUpgrade -> error("Protocol upgrades are unsupported by HttpEngine")
     }
 }
 
-/** Installs the HTTP/3-capable engine before any provider creates its lazy Ktor client. */
+private fun HttpURLConnection.content(status: Int, context: CoroutineContext): ByteReadChannel {
+    if (status == HttpStatusCode.NoContent.value || status == HttpStatusCode.NotModified.value) return ByteReadChannel.Empty
+    return try {
+        inputStream?.buffered()
+    } catch (_: IOException) {
+        errorStream?.buffered()
+    }?.toByteReadChannel(context = context) ?: ByteReadChannel.Empty
+}
+
 fun installHttpEngineKtorClient(httpEngine: HttpEngine) {
     ProviderHttpClient.install { block: HttpClientConfig<*>.() -> Unit ->
         HttpClient(HttpEngineKtorEngine(HttpEngineKtorConfig(), httpEngine), block)
     }
-}
-
-private const val BUFFER_SIZE = 32 * 1024
-private val HTTP_ENGINE_EXECUTOR = Executors.newCachedThreadPool { runnable ->
-    Thread(runnable, "HttpEngineKtor").apply { isDaemon = true }
 }

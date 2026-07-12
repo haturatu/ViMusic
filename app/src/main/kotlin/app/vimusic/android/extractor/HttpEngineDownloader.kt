@@ -7,6 +7,7 @@ import android.net.http.UploadDataSink
 import android.net.http.UrlRequest
 import android.net.http.UrlResponseInfo
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
@@ -95,6 +96,7 @@ class HttpEngineDownloader(
         }
 
         override fun onSucceeded(request: UrlRequest, info: UrlResponseInfo) {
+            Log.i(TAG, "${info.url} negotiated ${info.negotiatedProtocol.ifBlank { "HTTP/1.1" }}")
             val statusCode = info.httpStatusCode
             val headers = info.headers.asMap
             val responseBody = body.toString(Charsets.UTF_8)
@@ -141,6 +143,7 @@ class HttpEngineDownloader(
     }
 
     private companion object {
+        const val TAG = "HttpEngineDownloader"
         const val REQUEST_TIMEOUT_SECONDS = 30L
         const val READ_BUFFER_BYTES = 32 * 1024
     }
