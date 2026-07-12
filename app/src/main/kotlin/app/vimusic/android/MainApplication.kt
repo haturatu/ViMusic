@@ -132,12 +132,14 @@ import app.vimusic.android.ui.screens.playlistRoute
 import app.vimusic.android.ui.screens.searchResultRoute
 import app.vimusic.android.ui.screens.settingsRoute
 import app.vimusic.android.utils.DisposableListener
+import app.vimusic.android.utils.HttpEngineProvider
 import app.vimusic.android.utils.KeyedCrossfade
 import app.vimusic.android.utils.LocalMonetCompat
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.collectProvidedBitmapAsState
 import app.vimusic.android.utils.forcePlay
 import app.vimusic.android.utils.intent
+import app.vimusic.android.utils.installHttpEngineKtorClient
 import app.vimusic.android.utils.invokeOnReady
 import app.vimusic.android.utils.isInPip
 import app.vimusic.android.utils.maybeEnterPip

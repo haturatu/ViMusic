@@ -185,6 +185,7 @@ dependencies {
     implementation(projects.providers.piped)
     implementation(projects.providers.sponsorblock)
     implementation(projects.providers.translate)
+    implementation(projects.providers.common)
     implementation(projects.core.data)
     implementation(projects.core.ui)
 

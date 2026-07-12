@@ -1,7 +1,8 @@
 package app.vimusic.android.utils
 
 import android.net.http.HttpEngine
-import android.net.http.UploadDataProviders
+import android.net.http.UploadDataProvider
+import android.net.http.UploadDataSink
 import android.net.http.UrlRequest
 import android.net.http.UrlResponseInfo
 import app.vimusic.providers.utils.ProviderHttpClient
@@ -17,6 +18,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.util.date.GMTDate
 import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.InternalAPI
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.nio.ByteBuffer
 import java.util.concurrent.Executor
@@ -26,25 +28,27 @@ import kotlin.coroutines.resumeWithException
 private class HttpEngineKtorConfig : HttpClientEngineConfig()
 
 /** Minimal Ktor transport using Android's platform HTTP stack with QUIC enabled. */
+@OptIn(InternalAPI::class)
 private class HttpEngineKtorEngine(
     override val config: HttpEngineKtorConfig,
     private val httpEngine: HttpEngine,
 ) : HttpClientEngineBase("HttpEngine") {
     override suspend fun execute(data: HttpRequestData): HttpResponseData =
         suspendCancellableCoroutine { continuation ->
-            val request = httpEngine.newUrlRequestBuilder(data.url.toString(), Callback(continuation), DIRECT_EXECUTOR)
+            val request = httpEngine.newUrlRequestBuilder(data.url.toString(), DIRECT_EXECUTOR, Callback(continuation))
                 .setHttpMethod(data.method.value)
             data.headers.forEach { name, values -> values.forEach { request.addHeader(name, it) } }
             (data.body as? OutgoingContent.ByteArrayContent)?.bytes()?.let {
-                request.setUploadDataProvider(UploadDataProviders.create(it), DIRECT_EXECUTOR)
+                request.setUploadDataProvider(ByteArrayUploadDataProvider(it), DIRECT_EXECUTOR)
             }
-            continuation.invokeOnCancellation { request.cancel() }
-            request.start()
+            val urlRequest = request.build()
+            continuation.invokeOnCancellation { urlRequest.cancel() }
+            urlRequest.start()
         }
 
     private class Callback(
         private val continuation: kotlinx.coroutines.CancellableContinuation<HttpResponseData>,
-    ) : UrlRequest.Callback() {
+    ) : UrlRequest.Callback {
         private val chunks = ArrayList<ByteArray>()
         private var size = 0
 
@@ -71,11 +75,11 @@ private class HttpEngineKtorEngine(
                 offset += chunk.size
             }
             val headers = Headers.build {
-                info.allHeaders.forEach { (name, values) -> values.forEach { append(name, it) } }
+                info.headers.asList.forEach { (name, value) -> append(name, value) }
             }
             continuation.resume(
                 HttpResponseData(
-                    HttpStatusCode(info.httpStatusCode),
+                    HttpStatusCode(info.httpStatusCode, info.httpStatusText),
                     GMTDate(),
                     headers,
                     HttpProtocolVersion.HTTP_1_1,
@@ -88,6 +92,34 @@ private class HttpEngineKtorEngine(
         override fun onFailed(request: UrlRequest, info: UrlResponseInfo?, error: android.net.http.HttpException) {
             continuation.resumeWithException(error)
         }
+
+        override fun onRedirectReceived(request: UrlRequest, info: UrlResponseInfo, newLocationUrl: String) {
+            request.followRedirect()
+        }
+
+        override fun onCanceled(request: UrlRequest, info: UrlResponseInfo?) {
+            continuation.cancel()
+        }
+    }
+}
+
+private class ByteArrayUploadDataProvider(private val bytes: ByteArray) : UploadDataProvider() {
+    private var offset = 0
+
+    override fun getLength() = bytes.size.toLong()
+
+    override fun read(sink: UploadDataSink, buffer: ByteBuffer) {
+        val count = minOf(buffer.remaining(), bytes.size - offset)
+        if (count > 0) {
+            buffer.put(bytes, offset, count)
+            offset += count
+        }
+        sink.onReadSucceeded(offset == bytes.size)
+    }
+
+    override fun rewind(sink: UploadDataSink) {
+        offset = 0
+        sink.onRewindSucceeded()
     }
 }
 
