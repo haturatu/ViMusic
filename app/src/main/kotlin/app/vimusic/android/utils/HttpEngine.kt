@@ -7,7 +7,6 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
-import androidx.media3.datasource.HttpEngineDataSource
 import app.vimusic.android.extractor.HttpEngineDownloader
 import app.vimusic.android.extractor.NewPipeDnsTarget
 import org.schabi.newpipe.extractor.downloader.Downloader
@@ -29,7 +28,7 @@ object HttpEngineProvider {
     /** media3 [HttpDataSource.Factory] backed by [HttpEngine] (falls back to [DefaultHttpDataSource]). */
     fun dataSourceFactory(context: Context): HttpDataSource.Factory {
         val httpEngine = engine(context) ?: return DefaultHttpDataSource.Factory()
-        return runCatching { HttpEngineDataSource.Factory(httpEngine, executor) }
+        return runCatching { HttpEngineUrlRequestDataSource.Factory(httpEngine) }
             .getOrElse { error ->
                 Log.w(TAG, "HttpEngine data source unavailable; using default HTTP stack", error)
                 DefaultHttpDataSource.Factory()
