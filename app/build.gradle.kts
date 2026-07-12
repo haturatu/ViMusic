@@ -144,6 +144,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.ktor)
     implementation(projects.ktorClientHttpengineAndroid)
+    implementation(projects.ktorClientKathttp)
 
     implementation(libs.palette)
     implementation(libs.monet)

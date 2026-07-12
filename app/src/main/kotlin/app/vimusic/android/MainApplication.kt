@@ -140,6 +140,7 @@ import app.vimusic.android.utils.collectProvidedBitmapAsState
 import app.vimusic.android.utils.forcePlay
 import app.vimusic.android.utils.intent
 import app.vimusic.android.utils.installHttpEngineKtorClient
+import app.vimusic.android.utils.installKatHttpKtorClientIfSupported
 import app.vimusic.android.utils.invokeOnReady
 import app.vimusic.android.utils.isInPip
 import app.vimusic.android.utils.maybeEnterPip
@@ -620,6 +621,7 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
 
         MainApplicationProvider.application = this
         HttpEngineProvider.engine(this)?.let(::installHttpEngineKtorClient)
+            ?: installKatHttpKtorClientIfSupported()
         appContainer = AppContainer(this).also(AppContainer::initialize)
         MonetCompat.enablePaletteCompat()
         ServiceNotifications.createAll(this)
