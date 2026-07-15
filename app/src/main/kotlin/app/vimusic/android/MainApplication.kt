@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.os.StrictMode
@@ -139,8 +140,9 @@ import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.collectProvidedBitmapAsState
 import app.vimusic.android.utils.forcePlay
 import app.vimusic.android.utils.intent
-import app.vimusic.android.utils.installHttpEngineKtorClient
-import app.vimusic.android.utils.installKatHttpKtorClientIfSupported
+import app.vimusic.android.utils.installKatHttp3KtorClientIfSupported
+import app.vimusic.android.utils.KatHttp3CoilNetworkClient
+import app.vimusic.android.utils.KatHttp3CoilConcurrentRequestStrategy
 import app.vimusic.android.utils.invokeOnReady
 import app.vimusic.android.utils.isInPip
 import app.vimusic.android.utils.maybeEnterPip
@@ -173,10 +175,9 @@ import coil3.decode.ExifOrientationStrategy
 import coil3.disk.DiskCache
 import coil3.disk.directory
 import coil3.memory.MemoryCache
-import coil3.network.ktor3.KtorNetworkFetcherFactory
+import coil3.network.NetworkFetcher
 import coil3.request.crossfade
 import coil3.util.DebugLogger
-import io.ktor.client.engine.android.createHttpEngineAndroidClient
 import com.kieronquinn.monetcompat.core.MonetActivityAccessException
 import com.kieronquinn.monetcompat.core.MonetCompat
 import com.kieronquinn.monetcompat.interfaces.MonetColorsChangedListener
@@ -620,8 +621,7 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         super.onCreate()
 
         MainApplicationProvider.application = this
-        HttpEngineProvider.engine(this)?.let(::installHttpEngineKtorClient)
-            ?: installKatHttpKtorClientIfSupported()
+        installKatHttp3KtorClientIfSupported()
         appContainer = AppContainer(this).also(AppContainer::initialize)
         MonetCompat.enablePaletteCompat()
         ServiceNotifications.createAll(this)
@@ -630,8 +630,13 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
 
     override fun newImageLoader(context: PlatformContext) = ImageLoader.Builder(this)
         .components {
-            HttpEngineProvider.engine(this@MainApplication)?.let { httpEngine ->
-                add(KtorNetworkFetcherFactory(createHttpEngineAndroidClient(httpEngine)))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                add(
+                    NetworkFetcher.Factory(
+                        networkClient = { KatHttp3CoilNetworkClient(applicationContext) },
+                        concurrentRequestStrategy = { KatHttp3CoilConcurrentRequestStrategy },
+                    ),
+                )
             }
         }
         .crossfade(true)

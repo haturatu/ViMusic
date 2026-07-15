@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- kathttp (HTTP/3) requires API 26+; it is only activated at runtime on supported devices. -->
-    <uses-sdk tools:overrideLibrary="app.vimusic.ktor.kathttp, dev.kathttp" />
+    <!-- kathttp3 (HTTP/3) requires API 26+; it is only activated at runtime on supported devices. -->
+    <uses-sdk tools:overrideLibrary="app.vimusic.ktor.kathttp3, dev.kathttp3" />
 
     <uses-feature
         android:name="android.software.leanback"
