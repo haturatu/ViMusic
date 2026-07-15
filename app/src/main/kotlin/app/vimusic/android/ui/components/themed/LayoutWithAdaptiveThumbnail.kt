@@ -19,7 +19,7 @@ import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.shimmer
 import app.vimusic.core.ui.utils.isLandscape
 import app.vimusic.core.ui.utils.px
-import coil3.compose.AsyncImage
+import app.vimusic.android.ui.components.RetryingAsyncImage as AsyncImage
 import com.valentinilk.shimmer.shimmer
 
 @Composable

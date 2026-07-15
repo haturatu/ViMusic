@@ -66,7 +66,7 @@ import app.vimusic.android.utils.windowState
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.px
-import coil3.compose.AsyncImage
+import app.vimusic.android.ui.components.RetryingAsyncImage as AsyncImage
 import kotlinx.coroutines.launch
 import java.net.UnknownHostException
 import java.nio.channels.UnresolvedAddressException

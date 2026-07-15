@@ -102,7 +102,7 @@ import app.vimusic.core.ui.utils.px
 import app.vimusic.core.ui.utils.roundedShape
 import app.vimusic.core.ui.utils.songBundle
 import app.vimusic.providers.innertube.models.NavigationEndpoint
-import coil3.compose.AsyncImage
+import app.vimusic.android.ui.components.RetryingAsyncImage as AsyncImage
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.absoluteValue
 

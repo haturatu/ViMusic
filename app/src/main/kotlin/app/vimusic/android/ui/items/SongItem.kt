@@ -37,7 +37,7 @@ import app.vimusic.core.ui.shimmer
 import app.vimusic.core.ui.utils.px
 import app.vimusic.core.ui.utils.songBundle
 import app.vimusic.providers.innertube.Innertube
-import coil3.compose.AsyncImage
+import app.vimusic.android.ui.components.RetryingAsyncImage as AsyncImage
 
 @Composable
 fun SongItem(
