@@ -22,9 +22,9 @@ pluginManagement {
         }
     }
     plugins {
-        id("com.android.application") version "9.2.1"
-        id("com.android.library") version "9.2.1"
-        id("com.android.lint") version "9.2.1"
+        id("com.android.application") version "9.3.0"
+        id("com.android.library") version "9.3.0"
+        id("com.android.lint") version "9.3.0"
         id("org.jetbrains.kotlin.jvm") version kotlinVersion
         id("org.jetbrains.kotlin.plugin.compose") version kotlinVersion
         id("org.jetbrains.kotlin.plugin.parcelize") version kotlinVersion
