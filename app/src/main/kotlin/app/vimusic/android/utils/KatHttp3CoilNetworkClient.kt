@@ -59,13 +59,14 @@ class KatHttp3CoilNetworkClient(
             callTimeoutMillis = 120_000,
             enable0Rtt = true,
             qlogEnabled = false,
+            insecureCert = false,
             // This is the sole HTTP/3 retry policy. Keep its two total
             // attempts aligned with the previous Coil-specific behaviour.
             interceptors = listOf(
                 PolicyRetryInterceptor(
                     KatHttp3RetryPolicy(
-                        maxAttempts = 2, // 2
-                        initialBackoffMillis = 125, // 250
+                        maxAttempts = 5, // 2
+                        initialBackoffMillis = 300, // 250
                         maxBackoffMillis = 5_00, // 1_000
                     ),
                 ),

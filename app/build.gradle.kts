@@ -150,7 +150,6 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.coil.ktor)
-    implementation(projects.ktorClientHttpengineAndroid)
     implementation(projects.ktorClientKathttp3)
 
     implementation(libs.palette)

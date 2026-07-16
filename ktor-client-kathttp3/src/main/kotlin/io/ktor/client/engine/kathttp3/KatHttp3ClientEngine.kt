@@ -4,6 +4,7 @@ import android.util.Log
 import dev.kathttp3.KatHttp3Client
 import dev.kathttp3.KatHttp3Header
 import dev.kathttp3.KatHttp3Request
+import dev.kathttp3.decodeContent
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngineBase
@@ -63,7 +64,11 @@ public class KatHttp3ClientEngine(
             // flow-control, but its stream window can stall on image-heavy
             // Coil screens. These clients fetch bounded image/JSON responses;
             // use the stable buffered API (16 MiB default limit) instead.
-            val response = client.execute(request)
+            // Ktor's ContentEncoding plugin cannot safely decode a body that
+            // has crossed the native boundary with an Android Brotli decoder
+            // available. Decode once here and remove content-encoding so Ktor
+            // receives the same JSON bytes as the direct kathttp3 downloader.
+            val response = client.execute(request).decodeContent()
             Log.i(TAG, "$url negotiated ${response.protocol} status ${response.status}")
             val channel = ByteChannel(autoFlush = true)
             channel.writeFully(response.body)
@@ -100,14 +105,30 @@ private fun HttpRequestData.buildKatHeaders(): List<KatHttp3Header> {
     fun add(name: String, value: String) {
         if (name.equals(HttpHeaders.ContentLength, ignoreCase = true)) return
         val normalized = name.lowercase()
+        if (normalized in HTTP3_FORBIDDEN_REQUEST_HEADERS) return
+        // The native response boundary is buffered. Request an uncompressed
+        // body so Ktor sees the same JSON bytes as the direct HTTP/3 client
+        // and never has to decode Brotli after crossing that boundary.
+        if (normalized == "accept-encoding") return
         if (normalized.any { it <= ' ' || it == ':' }) return
         if (value.any { it == '\r' || it == '\n' }) return
         result += KatHttp3Header(normalized, value)
     }
     headers.forEach { name, values -> values.forEach { add(name, it) } }
     body.headers.forEach { name, values -> values.forEach { add(name, it) } }
+    result += KatHttp3Header("accept-encoding", "identity")
     return result
 }
+
+/** HTTP/3 carries authority and connection management in pseudo headers/QUIC. */
+private val HTTP3_FORBIDDEN_REQUEST_HEADERS = setOf(
+    "connection",
+    "keep-alive",
+    "proxy-connection",
+    "transfer-encoding",
+    "upgrade",
+    "host",
+)
 
 private fun List<KatHttp3Header>.toKtorHeaders(): HeadersBuilder {
     val builder = HeadersBuilder()

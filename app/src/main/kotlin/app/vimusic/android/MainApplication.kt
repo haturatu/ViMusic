@@ -621,7 +621,7 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         super.onCreate()
 
         MainApplicationProvider.application = this
-        installKatHttp3KtorClientIfSupported()
+        installKatHttp3KtorClientIfSupported(this)
         appContainer = AppContainer(this).also(AppContainer::initialize)
         MonetCompat.enablePaletteCompat()
         ServiceNotifications.createAll(this)

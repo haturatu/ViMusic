@@ -24,10 +24,10 @@ import java.util.concurrent.atomic.AtomicReference
 
 /**
  * [Downloader] implementation backed by Android's [HttpEngine] so NewPipe extractor
- * requests can use HTTP/2 and HTTP/3-over-QUIC on Android 14 and newer.
+ * requests use HTTP/2 on Android 14 and newer.
  *
  * The resolved-address constructor creates a short-lived engine with a hostname mapping. This
- * preserves the URL hostname for TLS/SNI and QUIC while retaining NewPipe's DNS fallback policy.
+ * preserves the URL hostname for TLS/SNI while retaining NewPipe's DNS fallback policy.
  */
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 class HttpEngineDownloader private constructor(
@@ -169,10 +169,9 @@ class HttpEngineDownloader private constructor(
             val host = URI(requestUrl).host ?: throw IOException("Request URL has no host: $requestUrl")
             val address = NewPipeDownloader.resolveAddress(host, dnsTarget.index)
             val rules = "MAP $host ${address.hostAddress}"
-            Log.i(TAG, "Using QUIC hostname mapping hostname=$host address=${address.hostAddress}")
+            Log.i(TAG, "Using HTTP/2 hostname mapping hostname=$host address=${address.hostAddress}")
             val builder = HttpEngine.Builder(context)
                 .setEnableHttp2(true)
-                .setEnableQuic(true)
             val options = "{\"HostResolverRules\":{\"host_resolver_rules\":\"$rules\"}}"
             // setExperimentalOptions is supplied by newer HttpEngine extension releases but is
             // absent from the compile SDK stub. Resolve it at runtime without a Cronet dependency.
