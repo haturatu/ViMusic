@@ -64,6 +64,7 @@ class KatHttp3MediaDataSource(
     private var responseHeaders: Map<String, List<String>> = emptyMap()
     private var responseUri: Uri? = null
     private var opened = false
+    private var bytesRemaining = C.LENGTH_UNSET.toLong()
     private val h3Active = AtomicBoolean(false)
 
     /**
@@ -166,6 +167,7 @@ class KatHttp3MediaDataSource(
                     activeAttempt = h3Attempt
                     responseCode = headers.status
                     responseHeaders = headers.headers.groupBy(KatHttp3Header::name, KatHttp3Header::value)
+                    bytesRemaining = requestedLength(dataSpec)
                     opened = true
                     transferStarted(dataSpec)
                     markH3TransportActive()
@@ -220,14 +222,24 @@ class KatHttp3MediaDataSource(
     override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
         if (length == 0) return 0
         fallback?.let { return it.read(buffer, offset, length) }
+        if (bytesRemaining == 0L) {
+            stopStreaming()
+            return C.RESULT_END_OF_INPUT
+        }
         val spec = dataSpec ?: throw IOException("DataSource is not open")
         val state = stream ?: return C.RESULT_END_OF_INPUT
         while (true) {
             val chunk = currentChunk
             if (chunk != null && currentChunkOffset < chunk.size) {
-                val count = minOf(length, chunk.size - currentChunkOffset)
+                val requestedLength = if (bytesRemaining == C.LENGTH_UNSET.toLong()) {
+                    length
+                } else {
+                    minOf(length.toLong(), bytesRemaining).toInt()
+                }
+                val count = minOf(requestedLength, chunk.size - currentChunkOffset)
                 chunk.copyInto(buffer, offset, currentChunkOffset, currentChunkOffset + count)
                 currentChunkOffset += count
+                if (bytesRemaining != C.LENGTH_UNSET.toLong()) bytesRemaining -= count
                 bytesTransferred(count)
                 return count
             }
@@ -238,7 +250,16 @@ class KatHttp3MediaDataSource(
                     currentChunk = next.bytes
                     continue
                 }
-                StreamItem.End -> return C.RESULT_END_OF_INPUT
+                StreamItem.End -> {
+                    if (bytesRemaining > 0L) {
+                        throw HttpDataSource.HttpDataSourceException.createForIOException(
+                            IOException("HTTP/3 response ended with $bytesRemaining bytes remaining"),
+                            spec,
+                            HttpDataSource.HttpDataSourceException.TYPE_READ,
+                        )
+                    }
+                    return C.RESULT_END_OF_INPUT
+                }
                 is StreamItem.Failure -> throw HttpDataSource.HttpDataSourceException.createForIOException(
                     next.error,
                     spec,
@@ -260,6 +281,7 @@ class KatHttp3MediaDataSource(
         responseHeaders = emptyMap()
         responseUri = null
         dataSpec = null
+        bytesRemaining = C.LENGTH_UNSET.toLong()
         if (opened) {
             opened = false
             transferEnded()
@@ -302,6 +324,7 @@ class KatHttp3MediaDataSource(
         releaseH3Transport("close")
         currentChunk = null
         currentChunkOffset = 0
+        bytesRemaining = C.LENGTH_UNSET.toLong()
     }
 
     private fun markH3TransportActive() {
@@ -338,21 +361,26 @@ class KatHttp3MediaDataSource(
         } else {
             null
         }
-        if (dataSpec.position == 0L) return null
-        if (headers.status != HTTP_PARTIAL_CONTENT) {
+        if (headers.status == HTTP_PARTIAL_CONTENT) {
+            val responseStart = CONTENT_RANGE_PATTERN.matchEntire(checkNotNull(contentRange))
+                ?.groupValues
+                ?.get(1)
+                ?.toLongOrNull()
+                ?: return IOException("Invalid HTTP/3 Content-Range: $contentRange")
+            return if (responseStart == dataSpec.position) {
+                null
+            } else {
+                IOException(
+                    "HTTP/3 Content-Range starts at $responseStart, expected ${dataSpec.position}",
+                )
+            }
+        }
+        if (dataSpec.position != 0L) {
             return IOException(
                 "HTTP/3 ignored Range position=${dataSpec.position}: status=${headers.status}",
             )
         }
-        val responseStart = CONTENT_RANGE_PATTERN.matchEntire(checkNotNull(contentRange))?.groupValues?.get(1)?.toLongOrNull()
-            ?: return IOException("Invalid HTTP/3 Content-Range: $contentRange")
-        return if (responseStart == dataSpec.position) {
-            null
-        } else {
-            IOException(
-                "HTTP/3 Content-Range starts at $responseStart, expected ${dataSpec.position}",
-            )
-        }
+        return null
     }
 
     private fun requestHeaders(dataSpec: DataSpec): List<KatHttp3Header> = sanitizeHttp3Headers(
@@ -360,7 +388,9 @@ class KatHttp3MediaDataSource(
         defaultAcceptEncoding = "identity",
         contentLength = dataSpec.httpBody?.size?.toLong(),
     ).toMutableList().apply {
-        if (dataSpec.position > 0L && none { it.name == "range" }) {
+        if ((dataSpec.position > 0L || dataSpec.length != C.LENGTH_UNSET.toLong()) &&
+            none { it.name == "range" }
+        ) {
             val rangeEnd = dataSpec.length
                 .takeIf { it != C.LENGTH_UNSET.toLong() }
                 ?.let { dataSpec.position + it - 1 }
@@ -373,6 +403,9 @@ class KatHttp3MediaDataSource(
         return responseHeaders.entries.firstOrNull { it.key.equals("content-length", ignoreCase = true) }
             ?.value?.firstOrNull()?.toLongOrNull() ?: C.LENGTH_UNSET.toLong()
     }
+
+    private fun requestedLength(dataSpec: DataSpec): Long =
+        dataSpec.length.takeIf { it != C.LENGTH_UNSET.toLong() } ?: contentLength(dataSpec)
 
     class Factory(context: Context) : HttpDataSource.Factory {
         private val applicationContext = context.applicationContext
@@ -521,9 +554,11 @@ class KatHttp3MediaDataSource(
         const val H3_OPEN_INITIAL_RETRY_BACKOFF_MILLIS = 100L
         const val H3_OPEN_MAX_RETRY_BACKOFF_MILLIS = 100L
         const val H3_ATTEMPT_DEADLINE_MILLIS = 7_000L
-        const val HEADERS_WAIT_MILLIS = 4_000L
-        const val FIRST_BODY_WAIT_MILLIS = 3_000L
-        const val STREAM_DELIVERY_STALL_MILLIS = 30_000L
+        const val HEADERS_WAIT_MILLIS = 3_500L
+        const val FIRST_BODY_WAIT_MILLIS = 2_500L
+        // kathttp3 owns the primary 30s consumer-stall timeout. Keep this
+        // bridge guard slightly later so native reports retain their type.
+        const val STREAM_DELIVERY_STALL_MILLIS = 35_000L
         const val LOG_EVERY_BYTES = 1_048_576L
         const val HTTP_PARTIAL_CONTENT = 206
         const val CONTENT_RANGE_HEADER = "content-range"
