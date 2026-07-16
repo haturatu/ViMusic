@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicLong
  */
 class KatHttp3MediaDataSource(
     private val clientFactory: () -> KatHttp3Client,
+    private val clientInvalidator: ((KatHttp3Client) -> Unit)? = null,
     private val fallbackFactory: HttpDataSource.Factory = DefaultHttpDataSource.Factory(),
 ) : BaseDataSource(true), HttpDataSource {
     private val sourceId = NEXT_SOURCE_ID.incrementAndGet()
@@ -97,7 +98,9 @@ class KatHttp3MediaDataSource(
                 val completion = CompletableDeferred<H3Attempt>()
                 h3Attempt.openJob = STREAM_SCOPE.launch {
                     try {
-                        val activeCall = client().executeStreaming(
+                        val activeClient = client()
+                        h3Attempt.client = activeClient
+                        val activeCall = activeClient.executeStreaming(
                             KatHttp3Request(
                                 method = dataSpec.httpMethodString,
                                 url = dataSpec.uri.toString(),
@@ -179,7 +182,11 @@ class KatHttp3MediaDataSource(
                 }
                 h3Attempt.cancel()
                 if (attempt + 1 < H3_OPEN_ATTEMPTS) {
-                    Log.w(TAG, "HTTP/3 media open attempt ${attempt + 1} failed; retrying", lastError)
+                    // The second and final try must not reuse a suspect QUIC
+                    // connection. The holder invalidates only if this attempt
+                    // still owns the current shared generation.
+                    clientInvalidator?.let { invalidator -> h3Attempt.client?.let(invalidator) }
+                    Log.w(TAG, "HTTP/3 media open attempt ${attempt + 1} failed; retrying with a fresh client", lastError)
                     Thread.sleep(h3OpenRetryBackoffMillis(attempt))
                 }
             }
@@ -354,6 +361,7 @@ class KatHttp3MediaDataSource(
 
         override fun createDataSource(): HttpDataSource = KatHttp3MediaDataSource(
             clientFactory = { KatHttp3PlaybackClient.get(applicationContext) },
+            clientInvalidator = KatHttp3PlaybackClient::invalidate,
         ).also { source -> defaultRequestProperties.forEach(source::setRequestProperty) }
 
         override fun setDefaultRequestProperties(defaultRequestProperties: Map<String, String>): Factory = apply {
@@ -453,6 +461,7 @@ class KatHttp3MediaDataSource(
     /** Resources belonging to exactly one open attempt. */
     private class H3Attempt(val state: StreamState) {
         @Volatile var call: KatHttp3Call? = null
+        @Volatile var client: KatHttp3Client? = null
         @Volatile var collector: Job? = null
         @Volatile var openJob: Job? = null
         @Volatile var headers: Headers? = null
@@ -476,15 +485,14 @@ class KatHttp3MediaDataSource(
 
     private companion object {
         const val TAG = "KatHttp3Media"
-        // A stalled QUIC request must not leave Media3 buffering for 12 seconds
-        // per attempt. Healthy Googlevideo HTTP/3 responses send headers well
-        // below this threshold; retry once on a fresh QUIC connection instead.
-        const val H3_OPEN_ATTEMPTS = 5
-        const val H3_OPEN_INITIAL_RETRY_BACKOFF_MILLIS = 50L
-        const val H3_OPEN_MAX_RETRY_BACKOFF_MILLIS = 400L
-        const val H3_ATTEMPT_DEADLINE_MILLIS = 12_500L
-        const val HEADERS_WAIT_MILLIS = 6_000L
-        const val FIRST_BODY_WAIT_MILLIS = 6_000L
+        // Playback must reach the standard HTTP fallback promptly. Attempt 1
+        // uses the shared connection; attempt 2 gets a fresh generation.
+        const val H3_OPEN_ATTEMPTS = 2
+        const val H3_OPEN_INITIAL_RETRY_BACKOFF_MILLIS = 100L
+        const val H3_OPEN_MAX_RETRY_BACKOFF_MILLIS = 100L
+        const val H3_ATTEMPT_DEADLINE_MILLIS = 7_000L
+        const val HEADERS_WAIT_MILLIS = 4_000L
+        const val FIRST_BODY_WAIT_MILLIS = 3_000L
         const val STREAM_DELIVERY_STALL_MILLIS = 30_000L
         const val LOG_EVERY_BYTES = 1_048_576L
         const val HTTP_PARTIAL_CONTENT = 206
@@ -502,6 +510,19 @@ object KatHttp3PlaybackClient {
 
     fun get(context: Context): KatHttp3Client = client ?: synchronized(this) {
         client ?: create(context.applicationContext).also { client = it }
+    }
+
+    /**
+     * Drops only the failed generation. The next request obtains a new client;
+     * an already-rotated client is left untouched by a late failed attempt.
+     */
+    fun invalidate(expected: KatHttp3Client) {
+        synchronized(this) {
+            if (client !== expected) return
+            client = null
+            runCatching { expected.close() }
+                .onFailure { Log.w("KatHttp3Media", "Failed to close invalidated HTTP/3 client", it) }
+        }
     }
 
     /** Call when the owning process is deliberately torn down in tests/tools. */
