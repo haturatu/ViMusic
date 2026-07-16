@@ -1,3 +1,4 @@
+@file:OptIn(androidx.media3.common.util.UnstableApi::class)
 @file:Suppress("TooGenericExceptionCaught") // HTTP/3 callbacks surface arbitrary native failures.
 
 package app.vimusic.android.utils
@@ -17,6 +18,7 @@ import dev.kathttp3.KatHttp3Header
 import dev.kathttp3.KatHttp3Request
 import dev.kathttp3.KatHttp3StreamEvent
 import dev.kathttp3.PlatformDnsResolver
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,7 +30,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import java.io.IOException
 import java.util.Collections
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -88,7 +89,7 @@ class KatHttp3MediaDataSource(
                 // attempt may otherwise resume later and overwrite the stream
                 // belonging to a newer playback request.
                 val h3Attempt = H3Attempt(StreamState())
-                val completion = CompletableFuture<H3Attempt>()
+                val completion = CompletableDeferred<H3Attempt>()
                 h3Attempt.openJob = STREAM_SCOPE.launch {
                     try {
                         val activeCall = client().executeStreaming(
@@ -136,7 +137,9 @@ class KatHttp3MediaDataSource(
                 }
 
                 val result = try {
-                    completion.get(H3_ATTEMPT_DEADLINE_MILLIS, TimeUnit.MILLISECONDS)
+                    runBlocking {
+                        withTimeout(H3_ATTEMPT_DEADLINE_MILLIS) { completion.await() }
+                    }
                 } catch (error: Exception) {
                     lastError = IOException("HTTP/3 media open watchdog timed out", error)
                     h3Attempt.cancel()
@@ -331,8 +334,8 @@ class KatHttp3MediaDataSource(
     }
 
     private class StreamState {
-        private val headers = java.util.concurrent.CompletableFuture<Headers>()
-        private val firstBody = java.util.concurrent.CompletableFuture<Unit>()
+        private val headers = CompletableDeferred<Headers>()
+        private val firstBody = CompletableDeferred<Unit>()
         // Keep exactly one delivered chunk between the Flow collector and
         // Media3. With a rendezvous channel the collector could block before
         // open() returned, coupling stream adoption to Media3's first read().
@@ -387,14 +390,14 @@ class KatHttp3MediaDataSource(
         }
 
         fun awaitHeaders(timeoutMillis: Long): Headers? = try {
-            headers.get(timeoutMillis, TimeUnit.MILLISECONDS)
+            runBlocking { withTimeout(timeoutMillis) { headers.await() } }
         } catch (error: Exception) {
             failure = failure ?: IOException("HTTP/3 headers unavailable", error)
             null
         }
 
         fun awaitFirstBody(timeoutMillis: Long): Boolean = try {
-            firstBody.get(timeoutMillis, TimeUnit.MILLISECONDS)
+            runBlocking { withTimeout(timeoutMillis) { firstBody.await() } }
             failure == null
         } catch (error: Exception) {
             failure = failure ?: IOException("HTTP/3 body unavailable", error)

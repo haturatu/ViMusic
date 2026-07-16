@@ -183,8 +183,9 @@ private fun Throwable.isKatHttp3ConnectivityFailure(): Boolean =
 object KatHttp3CoilConcurrentRequestStrategy : ConcurrentRequestStrategy {
     private val permits = Semaphore(32)
 
+    @OptIn(coil3.annotation.ExperimentalCoilApi::class)
     override suspend fun apply(
-        url: String,
+        key: String,
         block: suspend () -> FetchResult,
     ): FetchResult = permits.withPermit { block() }
 }

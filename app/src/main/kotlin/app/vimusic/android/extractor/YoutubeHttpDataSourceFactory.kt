@@ -1,3 +1,5 @@
+@file:OptIn(androidx.media3.common.util.UnstableApi::class)
+
 package app.vimusic.android.extractor
 
 import android.net.Uri
