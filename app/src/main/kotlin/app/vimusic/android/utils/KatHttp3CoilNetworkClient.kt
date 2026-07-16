@@ -49,7 +49,7 @@ class KatHttp3CoilNetworkClient(
     private val client = KatHttp3Client(
         config = KatHttp3ClientConfig(
             // YouTube's image CDNs expose a large number of small resources
-            // at one origin. Serialize each origin until kathttp3's native
+            // at one origin. Bound concurrent streams until kathttp3's native
             // HTTP/3 multiplexing path is fully stable under Coil churn.
             maxActiveStreamsPerOrigin = 8,
             // The response body is currently materialized before Coil starts
@@ -69,9 +69,9 @@ class KatHttp3CoilNetworkClient(
             interceptors = listOf(
                 PolicyRetryInterceptor(
                     KatHttp3RetryPolicy(
-                        maxAttempts = 5, // 2
-                        initialBackoffMillis = 300, // 250
-                        maxBackoffMillis = 5_00, // 1_000
+                        maxAttempts = 2,
+                        initialBackoffMillis = 250,
+                        maxBackoffMillis = 1_000,
                     ),
                 ),
             ),

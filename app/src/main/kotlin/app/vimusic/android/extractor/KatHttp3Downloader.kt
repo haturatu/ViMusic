@@ -46,14 +46,14 @@ class KatHttp3Downloader(
             interceptors = listOf(
                 PolicyRetryInterceptor(
                     KatHttp3RetryPolicy(
-                        // The policy only retries idempotent methods. POST is
-                        // deliberately one HTTP/3 attempt, then one HTTP/2
-                        // fallback below; it must never be multiplied by an
-                        // outer retry loop.
-                        maxAttempts = 2,
+                        // The outer five-second watchdog owns the single H3
+                        // attempt for extraction. Fall back immediately after
+                        // it, rather than spending its budget on a retry that
+                        // cannot complete before the watchdog expires.
+                        maxAttempts = 1,
                         retryIdempotentMethods = true,
-                        initialBackoffMillis = 125,
-                        maxBackoffMillis = 500,
+                        initialBackoffMillis = 250,
+                        maxBackoffMillis = 1_000,
                     ),
                 ),
             ),
@@ -97,8 +97,8 @@ class KatHttp3Downloader(
     private fun executeHttp3(request: KatHttp3Request): KatHttp3Response {
         return runBlocking {
             // Cancelling this watchdog cancels the native request. The
-            // idempotent-only interceptor above may make one safe retry; POST
-            // receives exactly this one H3 attempt before HTTP/2 fallback.
+            // The retry policy above has one attempt, so every method gets
+            // exactly one HTTP/3 chance before the HTTP/2 fallback.
             withTimeout(HTTP3_WATCHDOG_MILLIS) { client.execute(request) }
         }
     }
