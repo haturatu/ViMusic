@@ -28,7 +28,9 @@ class ConditionalReadOnlyCache(
     }
 
     override fun releaseHoleSpan(holeSpan: CacheSpan) {
-        stub()
+        // Releasing an already acquired hole is cleanup, not a cache write.
+        // Throwing here leaves SimpleCache's per-key lock held forever after
+        // CacheDataSink.startFile() is rejected in read-only mode.
         cache.releaseHoleSpan(holeSpan)
     }
 }

@@ -120,6 +120,16 @@ class ConditionalCacheDataSourceFactory(
             transferListeners.forEach { addTransferListener(it) }
         }
 
+        private fun replaceSource(factory: DataSource.Factory) {
+            // A failed CacheDataSource or ranged reopen can still own an
+            // upstream HTTP/3 call. Close it before publishing its replacement
+            // so an abandoned stream cannot keep native resources or a cache
+            // hole lock alive.
+            runCatching { source?.close() }
+            selectedFactory = factory
+            source = createSource(factory)
+        }
+
         private fun currentSource(): DataSource = source ?: createSource(selectedFactory).also { source = it }
 
         override fun read(buffer: ByteArray, offset: Int, length: Int): Int = runCatching {
@@ -131,8 +141,7 @@ class ConditionalCacheDataSourceFactory(
                         error.findCause<FileNotFoundException>() != null)
             ) {
                 // Cache file disappeared; fall back to upstream and retry once.
-                selectedFactory = upstreamDataSourceFactory
-                source = createSource(upstreamDataSourceFactory)
+                replaceSource(upstreamDataSourceFactory)
                 currentSource().read(buffer, offset, length)
             } else {
                 throw error
@@ -145,9 +154,9 @@ class ConditionalCacheDataSourceFactory(
         }
 
         override fun open(dataSpec: DataSpec): Long {
-            selectedFactory =
+            val factory =
                 if (shouldCache(dataSpec)) cacheDataSourceFactory else upstreamDataSourceFactory
-            source = createSource(selectedFactory)
+            replaceSource(factory)
 
             return runCatching {
                 currentSource().open(dataSpec)
@@ -158,8 +167,7 @@ class ConditionalCacheDataSourceFactory(
                     it is FileDataSource.FileDataSourceException ||
                     it.findCause<FileNotFoundException>() != null
                 ) {
-                    selectedFactory = upstreamDataSourceFactory
-                    source = createSource(upstreamDataSourceFactory)
+                    replaceSource(upstreamDataSourceFactory)
                     currentSource().open(dataSpec)
                 } else throw it
             }

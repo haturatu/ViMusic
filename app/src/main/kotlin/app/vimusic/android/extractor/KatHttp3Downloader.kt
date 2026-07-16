@@ -5,10 +5,12 @@ import dev.kathttp3.KatHttp3Client
 import dev.kathttp3.KatHttp3ClientConfig
 import dev.kathttp3.KatHttp3Header
 import dev.kathttp3.KatHttp3Request
+import dev.kathttp3.KatHttp3Response
 import dev.kathttp3.KatHttp3RetryPolicy
 import dev.kathttp3.PolicyRetryInterceptor
 import dev.kathttp3.decodeContent
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
@@ -55,16 +57,13 @@ class KatHttp3Downloader(
         return try {
             Log.d(TAG, "HTTP/3 request ${request.httpMethod()} ${request.url()}")
             val headers = requestHeaders(request)
-            val response = runBlocking {
-                client.execute(
-                    KatHttp3Request(
-                        method = request.httpMethod(),
-                        url = request.url(),
-                        headers = headers,
-                        body = request.dataToSend(),
-                    )
-                )
-            }.decodeContent()
+            val katRequest = KatHttp3Request(
+                method = request.httpMethod(),
+                url = request.url(),
+                headers = headers,
+                body = request.dataToSend(),
+            )
+            val response = executeHttp3(katRequest).decodeContent()
             if (response.status !in 200..299) {
                 Log.w(TAG, "HTTP/3 returned ${response.status}; falling back to the standard downloader: ${request.url()}")
                 return fallback.execute(request)
@@ -77,6 +76,38 @@ class KatHttp3Downloader(
             Log.w(TAG, "HTTP/3 request failed; falling back to the standard downloader: ${request.url()}", error)
             fallback.execute(request)
         }
+    }
+
+    private fun executeHttp3(request: KatHttp3Request): KatHttp3Response {
+        val timeouts = if (request.method == "POST") {
+            POST_ATTEMPT_TIMEOUT_MILLIS
+        } else {
+            longArrayOf(HTTP3_WATCHDOG_MILLIS)
+        }
+        var lastError: Exception? = null
+
+        timeouts.forEachIndexed { index, timeoutMillis ->
+            try {
+                return runBlocking {
+                    // This watchdog also cancels a native request if the
+                    // policy retry path itself stops producing callbacks.
+                    withTimeout(timeoutMillis) { client.execute(request) }
+                }
+            } catch (error: Exception) {
+                lastError = error
+                if (index + 1 < timeouts.size) {
+                    Log.w(
+                        TAG,
+                        "HTTP/3 POST attempt ${index + 1}/${timeouts.size} failed after " +
+                            "${timeoutMillis}ms; retrying on a fresh request: ${request.url}",
+                        error,
+                    )
+                    Thread.sleep(POST_RETRY_BACKOFF_MILLIS)
+                }
+            }
+        }
+
+        throw checkNotNull(lastError)
     }
 
     private fun requestHeaders(request: Request): List<KatHttp3Header> {
@@ -120,6 +151,9 @@ class KatHttp3Downloader(
 
     private companion object {
         const val TAG = "KatHttp3Downloader"
+        const val HTTP3_WATCHDOG_MILLIS = 15_000L
+        const val POST_RETRY_BACKOFF_MILLIS = 250L
+        val POST_ATTEMPT_TIMEOUT_MILLIS = longArrayOf(4_000L, 6_000L)
 
         /** HTTP/3 forbids these hop-by-hop headers; :authority is generated natively. */
         val HTTP3_FORBIDDEN_REQUEST_HEADERS = setOf(

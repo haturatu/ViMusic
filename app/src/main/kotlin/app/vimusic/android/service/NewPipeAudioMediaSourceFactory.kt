@@ -25,6 +25,7 @@ import app.vimusic.android.models.Format
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.preferences.PlayerPreferences
 import app.vimusic.android.utils.ConditionalCacheDataSourceFactory
+import app.vimusic.android.utils.KatHttp3MediaDataSource
 import app.vimusic.android.utils.asDataSource
 import app.vimusic.android.utils.readOnlyWhen
 import app.vimusic.core.ui.utils.songBundle
@@ -163,15 +164,16 @@ class NewPipeAudioMediaSourceFactory(
         }
 
         /** Resolves the next stream early without downloading audio data. */
-        fun preloadAudioResult(mediaId: String) {
+        fun preloadAudioResult(mediaId: String): Boolean {
             synchronized(preloadedAudioResults) {
-                preloadedAudioResults[mediaId]?.takeIf { it.isFresh() }?.let { return }
+                preloadedAudioResults[mediaId]?.takeIf { it.isFresh() }?.let { return true }
             }
 
-            val result = resolveAudioResultUncached(mediaId)
+            val result = NewPipeExtractorClient.preloadAudioStream(mediaId) ?: return false
             synchronized(preloadedAudioResults) {
                 preloadedAudioResults[mediaId] = PreloadedAudioResult(result, System.currentTimeMillis())
             }
+            return true
         }
 
         fun resolveDashManifestUri(mediaId: String): Uri =
@@ -187,7 +189,8 @@ class NewPipeAudioMediaSourceFactory(
                 context,
                 YoutubeHttpDataSourceFactory(
                     rangeParameterEnabled = true,
-                    rnParameterEnabled = true
+                    rnParameterEnabled = true,
+                    upstreamFactory = KatHttp3MediaDataSource.Factory(context)
                 )
             )
 
@@ -202,7 +205,13 @@ class NewPipeAudioMediaSourceFactory(
                             ?.let(PlayerService::extractYouTubeVideoId)
                             ?: PlayerService.extractYouTubeVideoId(dataSpec.uri.toString())
 
-                        if (cache.isFullyCached(mediaId)) return@ConditionalCacheDataSourceFactory true
+                        val fullyCached = cache.isFullyCached(mediaId)
+                        if (fullyCached) return@ConditionalCacheDataSourceFactory true
+                        // A partial CacheDataSource must acquire a hole and open
+                        // its upstream before it discovers that the sink is
+                        // read-only. Bypass it up front to avoid opening every
+                        // HTTP/3 request twice while cache writes are paused.
+                        if (PlayerPreferences.pauseCache) return@ConditionalCacheDataSourceFactory false
                         if (!DataPreferences.cacheFavoritesOnly) return@ConditionalCacheDataSourceFactory true
 
                         playerRepository.isFavoriteNow(mediaId)
