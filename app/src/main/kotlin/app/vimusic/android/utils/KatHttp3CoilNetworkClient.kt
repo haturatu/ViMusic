@@ -180,10 +180,10 @@ private fun Throwable.isKatHttp3ConnectivityFailure(): Boolean =
         this is QuicTransportException
 
 /** kathttp3 currently uses one HTTP/3 connection per origin; keep its streams bounded. */
+@OptIn(coil3.annotation.ExperimentalCoilApi::class)
 object KatHttp3CoilConcurrentRequestStrategy : ConcurrentRequestStrategy {
     private val permits = Semaphore(32)
 
-    @OptIn(coil3.annotation.ExperimentalCoilApi::class)
     override suspend fun apply(
         key: String,
         block: suspend () -> FetchResult,

@@ -1,4 +1,4 @@
-@file:OptIn(androidx.media3.common.util.UnstableApi::class)
+@file:androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 @file:Suppress("TooGenericExceptionCaught") // HTTP/3 callbacks surface arbitrary native failures.
 
 package app.vimusic.android.utils
