@@ -6,12 +6,16 @@ import android.util.Log
 import app.vimusic.android.utils.sanitizeHttp3Headers
 import dev.kathttp3.KatHttp3Client
 import dev.kathttp3.KatHttp3ClientConfig
+import dev.kathttp3.KatHttp3Exception
 import dev.kathttp3.KatHttp3Header
 import dev.kathttp3.KatHttp3Request
 import dev.kathttp3.KatHttp3Response
 import dev.kathttp3.KatHttp3RetryPolicy
 import dev.kathttp3.PolicyRetryInterceptor
+import dev.kathttp3.QuicTransportException
+import dev.kathttp3.TlsHandshakeException
 import dev.kathttp3.decodeContent
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.schabi.newpipe.extractor.downloader.Downloader
@@ -45,8 +49,13 @@ class KatHttp3Downloader(
             interceptors = listOf(
                 PolicyRetryInterceptor(
                     KatHttp3RetryPolicy(
-                        maxAttempts = 5,
-                        initialBackoffMillis = 300,
+                        // The policy only retries idempotent methods. POST is
+                        // deliberately one HTTP/3 attempt, then one HTTP/2
+                        // fallback below; it must never be multiplied by an
+                        // outer retry loop.
+                        maxAttempts = 2,
+                        retryIdempotentMethods = true,
+                        initialBackoffMillis = 125,
                         maxBackoffMillis = 500,
                     ),
                 ),
@@ -65,51 +74,35 @@ class KatHttp3Downloader(
                 headers = headers,
                 body = request.dataToSend(),
             )
-            val response = executeHttp3(katRequest).decodeContent()
-            if (response.status !in 200..299) {
-                Log.w(TAG, "HTTP/3 returned ${response.status}; falling back to the standard downloader: ${request.url()}")
-                return fallback.execute(request)
+            val rawResponse = executeHttp3(katRequest)
+            // Do not repeat a rate-limited request over HTTP/2. NewPipe needs
+            // this exact exception to handle its ReCaptcha flow.
+            if (rawResponse.status == HTTP_TOO_MANY_REQUESTS) {
+                throw ReCaptchaException("reCaptcha Challenge requested", request.url())
             }
+            val response = rawResponse.decodeContent()
+            // A server response (including 401/404/5xx) proves that HTTP/3
+            // reached the endpoint. Preserve it for NewPipe rather than
+            // submitting the same POST through a second transport.
+            if (response.status !in 200..299) Log.w(TAG, "HTTP/3 ${response.status} ${request.url()}")
             Log.d(TAG, "HTTP/3 ${response.status} ${request.url()}")
             response.toNewPipeResponse(request.url())
         } catch (error: ReCaptchaException) {
             throw error
         } catch (error: Exception) {
+            if (!error.isKatHttp3ConnectivityFailure()) throw error
             Log.w(TAG, "HTTP/3 request failed; falling back to the standard downloader: ${request.url()}", error)
             fallback.execute(request)
         }
     }
 
     private fun executeHttp3(request: KatHttp3Request): KatHttp3Response {
-        val timeouts = if (request.method == "POST") {
-            POST_ATTEMPT_TIMEOUT_MILLIS
-        } else {
-            longArrayOf(HTTP3_WATCHDOG_MILLIS)
+        return runBlocking {
+            // Cancelling this watchdog cancels the native request. The
+            // idempotent-only interceptor above may make one safe retry; POST
+            // receives exactly this one H3 attempt before HTTP/2 fallback.
+            withTimeout(HTTP3_WATCHDOG_MILLIS) { client.execute(request) }
         }
-        var lastError: Exception? = null
-
-        timeouts.forEachIndexed { index, timeoutMillis ->
-            try {
-                return runBlocking {
-                    // This watchdog also cancels a native request if the
-                    // policy retry path itself stops producing callbacks.
-                    withTimeout(timeoutMillis) { client.execute(request) }
-                }
-            } catch (error: Exception) {
-                lastError = error
-                if (index + 1 < timeouts.size) {
-                    Log.w(
-                        TAG,
-                        "HTTP/3 POST attempt ${index + 1}/${timeouts.size} failed after " +
-                            "${timeoutMillis}ms; retrying on a fresh request: ${request.url}",
-                        error,
-                    )
-                    Thread.sleep(POST_RETRY_BACKOFF_MILLIS)
-                }
-            }
-        }
-
-        throw checkNotNull(lastError)
     }
 
     private fun requestHeaders(request: Request): List<KatHttp3Header> {
@@ -141,7 +134,6 @@ class KatHttp3Downloader(
     }
 
     private fun dev.kathttp3.KatHttp3Response.toNewPipeResponse(requestUrl: String): Response {
-        if (status == 429) throw ReCaptchaException("reCaptcha Challenge requested", requestUrl)
         return Response(
             status,
             "",
@@ -153,9 +145,14 @@ class KatHttp3Downloader(
 
     private companion object {
         const val TAG = "KatHttp3Downloader"
-        const val HTTP3_WATCHDOG_MILLIS = 15_000L
-        const val POST_RETRY_BACKOFF_MILLIS = 250L
-        val POST_ATTEMPT_TIMEOUT_MILLIS = longArrayOf(4_000L, 6_000L)
-
+        const val HTTP3_WATCHDOG_MILLIS = 5_000L
+        const val HTTP_TOO_MANY_REQUESTS = 429
     }
 }
+
+private fun Throwable.isKatHttp3ConnectivityFailure(): Boolean =
+    this is TimeoutCancellationException ||
+        this is KatHttp3Exception.Dns ||
+        this is KatHttp3Exception.Timeout ||
+        this is QuicTransportException ||
+        this is TlsHandshakeException
