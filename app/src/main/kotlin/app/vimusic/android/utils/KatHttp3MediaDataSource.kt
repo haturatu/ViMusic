@@ -253,10 +253,18 @@ class KatHttp3MediaDataSource(
         val source = fallbackFactory.createDataSource().also { fallback ->
             requestProperties.forEach(fallback::setRequestProperty)
         }
-        fallback = source
-        return source.open(dataSpec).also {
+        return try {
+            val length = source.open(dataSpec)
+            fallback = source
             opened = true
             transferStarted(dataSpec)
+            length
+        } catch (failure: Throwable) {
+            // Do not retain a half-open fallback source. Media3 may reuse this
+            // DataSource after the open error, and an unclosed source can keep
+            // a socket and its transfer listener alive.
+            runCatching { source.close() }
+            throw failure
         }
     }
 
