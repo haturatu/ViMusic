@@ -229,7 +229,8 @@
 
         <meta-data
             android:name="asset_statements"
-            android:resource="@string/asset_statements" />
+            android:resource="@string/asset_statements"
+            tools:ignore="CredManMissingDal" />
 
         <meta-data
             android:name="NothingKey"

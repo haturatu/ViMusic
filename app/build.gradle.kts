@@ -103,6 +103,12 @@ android {
         @Suppress("UnstableApiUsage")
         generateLocaleConfig = true
     }
+
+    lint {
+        // Translations are maintained independently from source changes; missing
+        // locales must not block verification of Android/API correctness.
+        disable += "MissingTranslation"
+    }
 }
 
 kotlin {
