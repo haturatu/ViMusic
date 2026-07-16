@@ -1,3 +1,5 @@
+@file:Suppress("TooGenericExceptionCaught") // HTTP/3 callbacks surface arbitrary native failures.
+
 package app.vimusic.android.utils
 
 import android.content.Context
@@ -68,6 +70,7 @@ class KatHttp3MediaDataSource(
     override fun getResponseHeaders(): Map<String, List<String>> = fallback?.responseHeaders ?: responseHeaders
     override fun getUri(): Uri? = fallback?.uri ?: responseUri
 
+    @Suppress("CyclomaticComplexMethod") // Attempts must be adopted/cancelled atomically for Media3.
     override fun open(dataSpec: DataSpec): Long {
         this.dataSpec = dataSpec
         transferInitializing(dataSpec)

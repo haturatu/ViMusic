@@ -1,3 +1,5 @@
+@file:Suppress("TooGenericExceptionCaught") // Downloader fallback must handle every kathttp3 failure type.
+
 package app.vimusic.android.extractor
 
 import android.util.Log

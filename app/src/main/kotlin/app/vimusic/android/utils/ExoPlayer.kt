@@ -64,6 +64,7 @@ private fun parseContentRange(value: String?): ByteRange? {
     return ByteRange(start = start, end = end)
 }
 
+@Suppress("CyclomaticComplexMethod") // Each protocol/range invariant needs an independent check.
 private fun validateResponse(
     dataSpec: DataSpec,
     headers: Map<String, List<String>>,

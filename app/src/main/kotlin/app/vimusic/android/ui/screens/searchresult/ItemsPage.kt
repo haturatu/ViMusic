@@ -1,3 +1,5 @@
+@file:Suppress("TooGenericExceptionCaught") // Provider implementations may throw library-specific failures.
+
 package app.vimusic.android.ui.screens.searchresult
 
 import androidx.compose.foundation.layout.Box

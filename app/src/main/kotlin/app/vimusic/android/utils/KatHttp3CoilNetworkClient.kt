@@ -1,3 +1,5 @@
+@file:Suppress("TooGenericExceptionCaught") // Preserve the original native failure across HTTP/3 fallback.
+
 package app.vimusic.android.utils
 
 import android.util.Log

@@ -211,6 +211,7 @@ private class WebViewPoTokenGenerator private constructor(
     }
 
     @JavascriptInterface
+    @Suppress("UnusedParameter") // Required by the JavaScript bridge callback signature.
     fun onObtainPoTokenResult(identifier: String, poTokenU8: String) {
         synchronized(tokenLock) {
             tokenResult = u8ToBase64(poTokenU8)
@@ -219,6 +220,7 @@ private class WebViewPoTokenGenerator private constructor(
     }
 
     @JavascriptInterface
+    @Suppress("UnusedParameter") // Required by the JavaScript bridge callback signature.
     fun onObtainPoTokenError(identifier: String, error: String) {
         synchronized(tokenLock) {
             tokenError = PoTokenException(error)
