@@ -6,6 +6,8 @@ plugins {
 
 dependencies {
     implementation(projects.providers.common)
+    implementation(libs.kotlin.coroutines)
+    implementation(libs.slf4j)
 
     // Requests made by this provider go through the extractor's globally configured
     // Downloader. On Android this is KatHttp3Downloader with its HTTP/3 to HTTP/2 fallback.

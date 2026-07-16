@@ -139,7 +139,6 @@ import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.collectProvidedBitmapAsState
 import app.vimusic.android.utils.forcePlay
 import app.vimusic.android.utils.intent
-import app.vimusic.android.utils.installKatHttp3KtorClientIfSupported
 import app.vimusic.android.utils.KatHttp3CoilNetworkClient
 import app.vimusic.android.utils.KatHttp3CoilConcurrentRequestStrategy
 import app.vimusic.android.utils.invokeOnReady
@@ -620,7 +619,6 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         super.onCreate()
 
         MainApplicationProvider.application = this
-        installKatHttp3KtorClientIfSupported(this)
         appContainer = AppContainer(this).also(AppContainer::initialize)
         MonetCompat.enablePaletteCompat()
         ServiceNotifications.createAll(this)

@@ -149,9 +149,7 @@ dependencies {
     implementation(libs.compose.viewmodel)
 
     implementation(libs.coil.compose)
-    implementation(libs.coil.ktor)
-    implementation(projects.ktorClientKathttp3)
-
+    implementation(libs.coil.network.core)
     implementation(libs.palette)
     implementation(libs.monet)
     runtimeOnly(projects.core.materialCompat)
@@ -160,6 +158,7 @@ dependencies {
     implementation(libs.exoplayer.dash)
     implementation(libs.exoplayer.workmanager)
     implementation(libs.media3.session)
+    implementation(libs.media3.datasource.okhttp)
 
     implementation(libs.workmanager)
     implementation(libs.workmanager.ktx)
@@ -182,6 +181,8 @@ dependencies {
     implementation(libs.slf4j)
     implementation(libs.logback)
     implementation(libs.okhttp)
+    implementation(libs.okhttp.brotli)
+    implementation("com.github.haturatu:kathttp3:v0.1.26")
     implementation(libs.newpipe.nanojson)
     implementation(libs.re2j)
     implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.3")

@@ -2,7 +2,6 @@ package app.vimusic.android.extractor
 
 import android.content.Context
 import android.util.Log
-import app.vimusic.android.utils.HttpEngineProvider
 import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
@@ -173,19 +172,10 @@ object NewPipeExtractorClient {
 
     private fun createDownloader(dnsTarget: NewPipeDnsTarget): Downloader {
         val context = appContextRef.get()
-        val fallback = when {
-            dnsTarget == NewPipeDnsTarget.System && context != null ->
-                HttpEngineProvider.downloader(context) ?: NewPipeDownloader(NewPipeDownloader.client(dnsTarget))
-
-            dnsTarget is NewPipeDnsTarget.Resolved && context != null ->
-                HttpEngineProvider.resolvedDownloader(context, dnsTarget)
-                    ?: NewPipeDownloader(NewPipeDownloader.client(dnsTarget))
-
-            else -> NewPipeDownloader(NewPipeDownloader.client(dnsTarget))
-        }
+        val fallback = NewPipeDownloader(NewPipeDownloader.client(dnsTarget))
 
         // kathttp3 resolves the URL hostname itself, so it is used for NewPipe's normal resolver
-        // path. Fixed-address retry needs the existing HTTP-engine/OkHttp DNS override fallback.
+        // path. Fixed-address retry uses the OkHttp DNS override fallback.
         return if (dnsTarget == NewPipeDnsTarget.System && android.os.Build.VERSION.SDK_INT >= 26) {
             synchronized(downloaderLock) {
                 sharedSystemDownloader ?: KatHttp3Downloader(fallback, context)

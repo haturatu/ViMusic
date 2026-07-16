@@ -11,8 +11,6 @@ import app.vimusic.providers.utils.ProviderHttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.compression.ContentEncoding
-import io.ktor.client.plugins.compression.brotli
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.HttpRequestBuilder
@@ -70,12 +68,6 @@ object Piped {
             install(HttpTimeout) {
                 connectTimeoutMillis = 1000L
                 requestTimeoutMillis = 5000L
-            }
-
-            install(ContentEncoding) {
-                brotli()
-                gzip()
-                deflate()
             }
 
             expectSuccess = true

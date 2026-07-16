@@ -11,11 +11,13 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.okhttp.OkHttpDataSource
+import okhttp3.OkHttpClient
+import okhttp3.brotli.BrotliInterceptor
 import java.io.EOFException
 import java.io.IOException
 
@@ -205,6 +207,12 @@ private fun Throwable.playbackDebugMessage(dataSpec: DataSpec): String {
 
 private const val EXO_PLAYER_DATA_SOURCE_TAG = "ExoPlayerDataSource"
 
+private val mediaOkHttpClient by lazy {
+    OkHttpClient.Builder()
+        .addInterceptor(BrotliInterceptor)
+        .build()
+}
+
 val Cache.asDataSource
     get() = CacheDataSource.Factory()
         .setCache(this)
@@ -214,6 +222,6 @@ val Context.defaultDataSource
     get() = DefaultDataSource.Factory(
         this,
         ValidatingHttpDataSourceFactory(
-            HttpEngineProvider.dataSourceFactory(this)
+            OkHttpDataSource.Factory(mediaOkHttpClient)
         )
     )

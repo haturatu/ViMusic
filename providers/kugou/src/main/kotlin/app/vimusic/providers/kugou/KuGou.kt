@@ -9,8 +9,6 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.BrowserUserAgent
-import io.ktor.client.plugins.compression.ContentEncoding
-import io.ktor.client.plugins.compression.brotli
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.get
@@ -43,12 +41,6 @@ object KuGou {
                 json(feature)
                 json(feature, ContentType.Text.Html)
                 json(feature, ContentType.Text.Plain)
-            }
-
-            install(ContentEncoding) {
-                brotli()
-                gzip()
-                deflate()
             }
 
             install(HttpRequestRetry) {

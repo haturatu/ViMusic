@@ -26,8 +26,9 @@ import okio.BufferedSink
 import okio.FileSystem
 import okio.Path
 import okio.buffer
-import java.net.HttpURLConnection
-import java.net.URL
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.brotli.BrotliInterceptor
 
 /**
  * Coil network client backed directly by kathttp3's HTTP/3 API.
@@ -75,6 +76,10 @@ class KatHttp3CoilNetworkClient(
         applicationContext = applicationContext,
     )
 
+    private val fallbackClient = OkHttpClient.Builder()
+        .addInterceptor(BrotliInterceptor)
+        .build()
+
     override suspend fun <T> executeRequest(
         request: NetworkRequest,
         block: suspend (NetworkResponse) -> T,
@@ -89,14 +94,14 @@ class KatHttp3CoilNetworkClient(
                 return executeBufferedRequest(request, block)
             } catch (failure: Throwable) {
                 if (!failure.isKatHttp3ConnectivityFailure()) throw failure
-                Log.w(LOG_TAG, "HTTP/3 retry budget exhausted; using HTTPS fallback: ${request.url}", failure)
-                return executeRequestWithHttpsFallback(request, block, failure)
+                Log.w(LOG_TAG, "HTTP/3 retry budget exhausted; using OkHttp fallback: ${request.url}", failure)
+                return executeRequestWithOkHttpFallback(request, block, failure)
             }
         }
         return executeBufferedRequest(request, block)
     }
 
-    private suspend fun <T> executeRequestWithHttpsFallback(
+    private suspend fun <T> executeRequestWithOkHttpFallback(
         request: NetworkRequest,
         block: suspend (NetworkResponse) -> T,
         originalFailure: Throwable,
@@ -104,38 +109,27 @@ class KatHttp3CoilNetworkClient(
         val response = try {
             withContext(Dispatchers.IO) {
                 val requestMillis = System.currentTimeMillis()
-                val connection = (URL(request.url).openConnection() as HttpURLConnection).apply {
-                    requestMethod = request.method.uppercase()
-                    connectTimeout = 15_000
-                    readTimeout = 90_000
-                    instanceFollowRedirects = true
-                    request.headers.asMap().forEach { (name, values) ->
-                        values.forEach { value -> addRequestProperty(name, value) }
+                val httpRequest = Request.Builder()
+                    .url(request.url)
+                    .apply {
+                        request.headers.asMap().forEach { (name, values) ->
+                            values.forEach { value -> addHeader(name, value) }
+                        }
+                        method(request.method.uppercase(), null)
                     }
-                }
-                try {
-                    val code = connection.responseCode
-                    val bytes = (if (code >= 400) connection.errorStream else connection.inputStream)
-                        ?.use { it.readBytes() }
-                        ?: ByteArray(0)
+                    .build()
+                fallbackClient.newCall(httpRequest).execute().use { httpResponse ->
                     NetworkResponse(
-                        code = code,
+                        code = httpResponse.code,
                         requestMillis = requestMillis,
                         responseMillis = System.currentTimeMillis(),
                         headers = NetworkHeaders.Builder().apply {
-                            connection.headerFields.forEach { (name, values) ->
-                                if (name != null) values.orEmpty().forEach { add(name, it) }
-                            }
+                            httpResponse.headers.forEach { (name, value) -> add(name, value) }
                         }.build(),
-                        body = ByteArrayNetworkResponseBody(bytes),
+                        body = ByteArrayNetworkResponseBody(httpResponse.body.bytes()),
                     ).also {
-                        // HttpURLConnection does not expose the TLS ALPN
-                        // result. This is a non-HTTP/3 fallback, but Android
-                        // may choose HTTP/2 or HTTP/1.1 internally.
-                        Log.i(LOG_TAG, "HTTPS fallback (HTTP/2 or HTTP/1.1; ALPN unavailable): $code ${request.url}")
+                        Log.i(LOG_TAG, "OkHttp ${httpResponse.protocol}: ${httpResponse.code} ${request.url}")
                     }
-                } finally {
-                    connection.disconnect()
                 }
             }
         } catch (fallbackError: Throwable) {

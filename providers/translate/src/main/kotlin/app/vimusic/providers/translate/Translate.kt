@@ -4,8 +4,6 @@ import app.vimusic.providers.utils.ProviderHttpClient
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.UserAgent
-import io.ktor.client.plugins.compression.ContentEncoding
-import io.ktor.client.plugins.compression.brotli
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.accept
@@ -53,12 +51,6 @@ object Translate {
                 contentType(ContentType.Application.Json)
                 header("Connection", "close")
                 header("Cache-Control", "no-cache")
-            }
-
-            install(ContentEncoding) {
-                brotli()
-                gzip()
-                deflate()
             }
 
             install(UserAgent) {

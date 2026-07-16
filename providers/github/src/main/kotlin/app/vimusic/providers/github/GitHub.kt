@@ -2,8 +2,6 @@ package app.vimusic.providers.github
 
 import app.vimusic.providers.utils.ProviderHttpClient
 import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.plugins.compression.ContentEncoding
-import io.ktor.client.plugins.compression.brotli
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.HttpRequestBuilder
@@ -58,12 +56,6 @@ object GitHub {
                     it.headers.append("Connection", "close")
                     it.headers.append("Cache-Control", "no-cache")
                 }
-            }
-
-            install(ContentEncoding) {
-                brotli()
-                gzip()
-                deflate()
             }
 
             expectSuccess = true
