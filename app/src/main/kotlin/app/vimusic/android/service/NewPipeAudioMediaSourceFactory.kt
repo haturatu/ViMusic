@@ -190,7 +190,6 @@ class NewPipeAudioMediaSourceFactory(
             val upstreamDataSourceFactory = DefaultDataSource.Factory(
                 context,
                 YoutubeHttpDataSourceFactory(
-                    rangeParameterEnabled = true,
                     rnParameterEnabled = true,
                     upstreamFactory = KatHttp3MediaDataSource.Factory(context)
                 )

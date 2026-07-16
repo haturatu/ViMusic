@@ -4,7 +4,6 @@ package app.vimusic.android.extractor
 
 import android.net.Uri
 import android.util.Log
-import androidx.media3.common.C
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultHttpDataSource
@@ -14,7 +13,6 @@ import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
 import java.util.concurrent.atomic.AtomicLong
 
 class YoutubeHttpDataSourceFactory(
-    private val rangeParameterEnabled: Boolean,
     private val rnParameterEnabled: Boolean,
     upstreamFactory: HttpDataSource.Factory = DefaultHttpDataSource.Factory()
 ) : DataSource.Factory {
@@ -59,15 +57,10 @@ class YoutubeHttpDataSourceFactory(
 
         val builder = buildUpon()
 
-        if (rangeParameterEnabled && isVideoPlaybackUrl) {
-            // Googlevideo accepts regular HTTP Range for both GET and the
-            // Android POST playback request. Keep Media3's requested position
-            // intact so the upstream can require 206 + Content-Range instead
-            // of treating a `range=` URL query as a zero-based response.
-            builder.setHttpRequestHeaders(youtubeHeaders(requestUrl, httpRequestHeaders, dropRange = false))
-        } else {
-            builder.setHttpRequestHeaders(youtubeHeaders(requestUrl, httpRequestHeaders, dropRange = false))
-        }
+        // Googlevideo accepts regular HTTP Range for both GET and the Android
+        // POST playback request. Keep Media3's requested position intact so
+        // the upstream can require 206 + Content-Range.
+        builder.setHttpRequestHeaders(youtubeHeaders(requestUrl, httpRequestHeaders))
 
         if (isVideoPlaybackUrl && isMobileStreamingUrl) {
             builder.setHttpMethod(DataSpec.HTTP_METHOD_POST)
@@ -81,13 +74,8 @@ class YoutubeHttpDataSourceFactory(
     private fun youtubeHeaders(
         requestUrl: String,
         originalHeaders: Map<String, String>,
-        dropRange: Boolean
     ): Map<String, String> = buildMap {
-        originalHeaders.forEach { (key, value) ->
-            if (!dropRange || !key.equals("Range", ignoreCase = true)) {
-                put(key, value)
-            }
-        }
+        putAll(originalHeaders)
 
         if (
             YoutubeParsingHelper.isWebStreamingUrl(requestUrl) ||
