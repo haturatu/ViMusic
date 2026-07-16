@@ -59,10 +59,15 @@ class KatHttp3MediaDataSource(
     private var responseHeaders: Map<String, List<String>> = emptyMap()
     private var responseUri: Uri? = null
     private var opened = false
-    private var client: KatHttp3Client? = null
     private val h3Active = AtomicBoolean(false)
 
-    private fun client(): KatHttp3Client = client ?: clientFactory().also { client = it }
+    /**
+     * The factory deliberately returns an application-scoped client. A Media3
+     * DataSource is short lived (usually one cache/range read), whereas a QUIC
+     * connection must survive those reads to retain its congestion state and
+     * make session resumption/0-RTT useful.
+     */
+    private fun client(): KatHttp3Client = clientFactory()
 
     override fun setRequestProperty(name: String, value: String) { requestProperties[name] = value }
     override fun clearRequestProperty(name: String) { requestProperties.remove(name) }
@@ -115,14 +120,10 @@ class KatHttp3MediaDataSource(
                                     h3Attempt.state.onFailure(IOException("HTTP/3 media stream failed", error))
                                 }
                             } finally {
-                                // kathttp3 has reached a terminal response after all
-                                // delivered chunks have crossed the one-slot Media3
-                                // bridge. Media3 may retain this DataSource without
-                                // calling close(), so do not retain its native client
-                                // or count it as an active transport until then.
+                                // The request is terminal. The shared client remains
+                                // alive for later Media3 range requests.
                                 if (stream === h3Attempt.state) {
                                     releaseH3Transport("terminal")
-                                    closeClient()
                                 }
                             }
                         }
@@ -161,7 +162,6 @@ class KatHttp3MediaDataSource(
                     // gate and adoption. Cover that race explicitly.
                     if (h3Attempt.state.isTerminal) {
                         releaseH3Transport("terminal-before-adoption")
-                        closeClient()
                     }
                     Log.i(
                         TAG,
@@ -188,7 +188,6 @@ class KatHttp3MediaDataSource(
             )
         } catch (error: Throwable) {
             stopStreaming()
-            closeClient()
             val ioError = error as? IOException ?: IOException("Unable to open HTTP/3 media stream", error)
             throw HttpDataSource.HttpDataSourceException.createForIOException(
                 ioError,
@@ -237,7 +236,6 @@ class KatHttp3MediaDataSource(
         stopStreaming()
         fallback?.close()
         fallback = null
-        closeClient()
         responseCode = -1
         responseHeaders = emptyMap()
         responseUri = null
@@ -251,7 +249,6 @@ class KatHttp3MediaDataSource(
     private fun openFallback(dataSpec: DataSpec, error: IOException): Long {
         Log.w(TAG, "HTTP/3 media unavailable; using standard HTTP fallback: ${dataSpec.uri}", error)
         stopStreaming()
-        closeClient()
         val source = fallbackFactory.createDataSource().also { fallback ->
             requestProperties.forEach(fallback::setRequestProperty)
         }
@@ -290,13 +287,6 @@ class KatHttp3MediaDataSource(
         )
     }
 
-    private fun closeClient() {
-        val activeClient = client ?: return
-        client = null
-        runCatching { activeClient.close() }
-            .onFailure { Log.w(TAG, "source=$sourceId failed to close HTTP/3 client", it) }
-    }
-
     private fun h3OpenRetryBackoffMillis(failedAttemptIndex: Int): Long =
         (H3_OPEN_INITIAL_RETRY_BACKOFF_MILLIS shl failedAttemptIndex)
             .coerceAtMost(H3_OPEN_MAX_RETRY_BACKOFF_MILLIS)
@@ -325,7 +315,7 @@ class KatHttp3MediaDataSource(
         private var defaultRequestProperties: Map<String, String> = emptyMap()
 
         override fun createDataSource(): HttpDataSource = KatHttp3MediaDataSource(
-            clientFactory = { KatHttp3PlaybackClient.create(applicationContext) },
+            clientFactory = { KatHttp3PlaybackClient.get(applicationContext) },
         ).also { source -> defaultRequestProperties.forEach(source::setRequestProperty) }
 
         override fun setDefaultRequestProperties(defaultRequestProperties: Map<String, String>): Factory = apply {
@@ -465,8 +455,21 @@ class KatHttp3MediaDataSource(
     }
 }
 
-private object KatHttp3PlaybackClient {
-    fun create(context: Context): KatHttp3Client = KatHttp3Client(
+/** One native HTTP/3 client for all playback range DataSources in this process. */
+object KatHttp3PlaybackClient {
+    @Volatile private var client: KatHttp3Client? = null
+
+    fun get(context: Context): KatHttp3Client = client ?: synchronized(this) {
+        client ?: create(context.applicationContext).also { client = it }
+    }
+
+    /** Call when the owning process is deliberately torn down in tests/tools. */
+    fun close() = synchronized(this) {
+        client?.close()
+        client = null
+    }
+
+    private fun create(context: Context): KatHttp3Client = KatHttp3Client(
             config = KatHttp3ClientConfig(
                 connectTimeoutMillis = 4_000,
                 requestTimeoutMillis = 2 * 60 * 60 * 1_000L,
