@@ -129,8 +129,9 @@ class KatHttp3MediaDataSource(
                         }
                         val headers = h3Attempt.state.awaitHeaders(HEADERS_WAIT_MILLIS)
                         h3Attempt.headers = headers
-                        h3Attempt.hasFirstBody = headers != null &&
-                            headers.status in 200..299 && h3Attempt.state.awaitFirstBody(FIRST_BODY_WAIT_MILLIS)
+                        h3Attempt.responseError = headers?.let { validateRangeResponse(dataSpec, it) }
+                        h3Attempt.hasFirstBody = headers != null && h3Attempt.responseError == null &&
+                            h3Attempt.state.awaitFirstBody(FIRST_BODY_WAIT_MILLIS)
                         completion.complete(h3Attempt)
                     } catch (error: Throwable) {
                         completion.completeExceptionally(error)
@@ -147,7 +148,7 @@ class KatHttp3MediaDataSource(
                     null
                 }
                 val headers = result?.headers
-                if (headers != null && headers.status in 200..299 && result.hasFirstBody) {
+                if (headers != null && result.responseError == null && result.hasFirstBody) {
                     // This is now the sole live HTTP/3 attempt owned by this
                     // DataSource. Older attempts were cancelled before retry.
                     stream = h3Attempt.state
@@ -171,7 +172,7 @@ class KatHttp3MediaDataSource(
                     return contentLength(dataSpec)
                 }
 
-                lastError = h3Attempt.state.failure ?: lastError ?: when {
+                lastError = h3Attempt.responseError ?: h3Attempt.state.failure ?: lastError ?: when {
                     headers == null -> IOException("HTTP/3 headers timed out")
                     headers.status !in 200..299 -> IOException("HTTP/3 returned ${headers.status}")
                     else -> IOException("HTTP/3 response body timed out")
@@ -291,6 +292,35 @@ class KatHttp3MediaDataSource(
         (H3_OPEN_INITIAL_RETRY_BACKOFF_MILLIS shl failedAttemptIndex)
             .coerceAtMost(H3_OPEN_MAX_RETRY_BACKOFF_MILLIS)
 
+    /**
+     * A non-zero Media3 position is only valid when the response begins at
+     * exactly that byte. Googlevideo honours a standard Range header for both
+     * GET and its Android-client POST playback requests; accepting a 200 here
+     * would silently feed file byte zero to a later cache/playback position.
+     */
+    private fun validateRangeResponse(dataSpec: DataSpec, headers: Headers): IOException? {
+        if (headers.status !in 200..299) return IOException("HTTP/3 returned ${headers.status}")
+        if (dataSpec.position == 0L) return null
+        if (headers.status != HTTP_PARTIAL_CONTENT) {
+            return IOException(
+                "HTTP/3 ignored Range position=${dataSpec.position}: status=${headers.status}",
+            )
+        }
+        val contentRange = headers.headers
+            .firstOrNull { it.name.equals(CONTENT_RANGE_HEADER, ignoreCase = true) }
+            ?.value
+            ?: return IOException("HTTP/3 206 response has no Content-Range")
+        val responseStart = CONTENT_RANGE_PATTERN.matchEntire(contentRange)?.groupValues?.get(1)?.toLongOrNull()
+            ?: return IOException("Invalid HTTP/3 Content-Range: $contentRange")
+        return if (responseStart == dataSpec.position) {
+            null
+        } else {
+            IOException(
+                "HTTP/3 Content-Range starts at $responseStart, expected ${dataSpec.position}",
+            )
+        }
+    }
+
     private fun requestHeaders(dataSpec: DataSpec): List<KatHttp3Header> = buildList {
         (requestProperties + dataSpec.httpRequestHeaders).forEach { (name, value) ->
             val normalized = name.lowercase()
@@ -301,6 +331,12 @@ class KatHttp3MediaDataSource(
             }
         }
         if (none { it.name == "accept-encoding" }) add(KatHttp3Header("accept-encoding", "identity"))
+        if (dataSpec.position > 0L && none { it.name == "range" }) {
+            val rangeEnd = dataSpec.length
+                .takeIf { it != C.LENGTH_UNSET.toLong() }
+                ?.let { dataSpec.position + it - 1 }
+            add(KatHttp3Header("range", "bytes=${dataSpec.position}-${rangeEnd ?: ""}"))
+        }
         dataSpec.httpBody?.let { add(KatHttp3Header("content-length", it.size.toString())) }
     }
 
@@ -419,6 +455,7 @@ class KatHttp3MediaDataSource(
         @Volatile var openJob: Job? = null
         @Volatile var headers: Headers? = null
         @Volatile var hasFirstBody: Boolean = false
+        @Volatile var responseError: IOException? = null
 
         fun cancel() {
             // Closing the channel releases a collector currently blocked
@@ -448,6 +485,9 @@ class KatHttp3MediaDataSource(
         const val FIRST_BODY_WAIT_MILLIS = 6_000L
         const val STREAM_DELIVERY_STALL_MILLIS = 30_000L
         const val LOG_EVERY_BYTES = 1_048_576L
+        const val HTTP_PARTIAL_CONTENT = 206
+        const val CONTENT_RANGE_HEADER = "content-range"
+        val CONTENT_RANGE_PATTERN = Regex("bytes\\s+(\\d+)-\\d+/(?:\\d+|\\*)", RegexOption.IGNORE_CASE)
         val NEXT_SOURCE_ID = AtomicLong()
         val ACTIVE_H3_SOURCES = AtomicLong()
         val STREAM_SCOPE = CoroutineScope(SupervisorJob() + Dispatchers.IO)
