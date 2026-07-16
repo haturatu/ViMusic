@@ -99,7 +99,8 @@ class KatHttp3CoilNetworkClient(
                 return executeBufferedRequest(request, block)
             } catch (failure: Throwable) {
                 if (!failure.isKatHttp3ConnectivityFailure()) throw failure
-                Log.w(LOG_TAG, "HTTP/3 retry budget exhausted; using OkHttp fallback: ${request.url}", failure)
+                Log.i(LOG_TAG, "HTTP/3 unavailable; using OkHttp fallback: ${request.url}")
+                Log.d(LOG_TAG, "HTTP/3 image fallback cause", failure)
                 return executeRequestWithOkHttpFallback(request, block, failure)
             }
         }

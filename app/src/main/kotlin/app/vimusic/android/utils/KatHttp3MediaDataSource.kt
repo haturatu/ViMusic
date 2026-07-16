@@ -255,7 +255,8 @@ class KatHttp3MediaDataSource(
     }
 
     private fun openFallback(dataSpec: DataSpec, error: IOException): Long {
-        Log.w(TAG, "HTTP/3 media unavailable; using standard HTTP fallback: ${dataSpec.uri}", error)
+        Log.i(TAG, "HTTP/3 media unavailable; using standard HTTP fallback: ${dataSpec.uri}")
+        Log.d(TAG, "HTTP/3 media fallback cause", error)
         stopStreaming()
         val source = fallbackFactory.createDataSource().also { fallback ->
             requestProperties.forEach(fallback::setRequestProperty)

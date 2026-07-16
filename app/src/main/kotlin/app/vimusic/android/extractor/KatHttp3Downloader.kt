@@ -91,7 +91,8 @@ class KatHttp3Downloader(
             throw error
         } catch (error: Exception) {
             if (!error.isKatHttp3ConnectivityFailure()) throw error
-            Log.w(TAG, "HTTP/3 request failed; falling back to the standard downloader: ${request.url()}", error)
+            Log.i(TAG, "HTTP/3 unavailable; using the standard downloader: ${request.url()}")
+            Log.d(TAG, "HTTP/3 fallback cause", error)
             fallback.execute(request)
         }
     }
