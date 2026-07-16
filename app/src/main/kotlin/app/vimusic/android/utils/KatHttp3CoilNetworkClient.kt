@@ -14,7 +14,6 @@ import coil3.fetch.FetchResult
 import dev.kathttp3.KatHttp3Client
 import dev.kathttp3.KatHttp3ClientConfig
 import dev.kathttp3.KatHttp3Exception
-import dev.kathttp3.KatHttp3Header
 import dev.kathttp3.KatHttp3Request
 import dev.kathttp3.KatHttp3RetryPolicy
 import dev.kathttp3.PolicyRetryInterceptor
@@ -150,7 +149,9 @@ class KatHttp3CoilNetworkClient(
             KatHttp3Request(
                 method = request.method.uppercase(),
                 url = request.url,
-                headers = request.headers.toKatHttp3Headers(),
+                headers = sanitizeHttp3Headers(
+                    headers = request.headers.asMap().flatMap { (name, values) -> values.map { name to it } },
+                ),
                 body = request.body?.toByteArray(),
             ),
         )
@@ -202,14 +203,4 @@ private class ByteArrayNetworkResponseBody(
     }
 
     override fun close() = Unit
-}
-
-private fun NetworkHeaders.toKatHttp3Headers(): List<KatHttp3Header> = buildList {
-    asMap().forEach { (name, values) ->
-        val normalized = name.lowercase()
-        if (normalized.any { it <= ' ' || it == ':' }) return@forEach
-        values.forEach { value ->
-            if (value.none { it == '\r' || it == '\n' }) add(KatHttp3Header(normalized, value))
-        }
-    }
 }

@@ -329,23 +329,17 @@ class KatHttp3MediaDataSource(
         }
     }
 
-    private fun requestHeaders(dataSpec: DataSpec): List<KatHttp3Header> = buildList {
-        (requestProperties + dataSpec.httpRequestHeaders).forEach { (name, value) ->
-            val normalized = name.lowercase()
-            if (normalized !in FORBIDDEN_HEADERS && normalized != "content-length" &&
-                normalized.none { it <= ' ' || it == ':' } && value.none { it == '\r' || it == '\n' }
-            ) {
-                add(KatHttp3Header(normalized, value))
-            }
-        }
-        if (none { it.name == "accept-encoding" }) add(KatHttp3Header("accept-encoding", "identity"))
+    private fun requestHeaders(dataSpec: DataSpec): List<KatHttp3Header> = sanitizeHttp3Headers(
+        headers = (requestProperties + dataSpec.httpRequestHeaders).asSequence().map { it.key to it.value }.asIterable(),
+        defaultAcceptEncoding = "identity",
+        contentLength = dataSpec.httpBody?.size?.toLong(),
+    ).toMutableList().apply {
         if (dataSpec.position > 0L && none { it.name == "range" }) {
             val rangeEnd = dataSpec.length
                 .takeIf { it != C.LENGTH_UNSET.toLong() }
                 ?.let { dataSpec.position + it - 1 }
             add(KatHttp3Header("range", "bytes=${dataSpec.position}-${rangeEnd ?: ""}"))
         }
-        dataSpec.httpBody?.let { add(KatHttp3Header("content-length", it.size.toString())) }
     }
 
     private fun contentLength(dataSpec: DataSpec): Long {
@@ -499,7 +493,6 @@ class KatHttp3MediaDataSource(
         val NEXT_SOURCE_ID = AtomicLong()
         val ACTIVE_H3_SOURCES = AtomicLong()
         val STREAM_SCOPE = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-        val FORBIDDEN_HEADERS = setOf("connection", "keep-alive", "proxy-connection", "transfer-encoding", "upgrade", "host")
     }
 }
 

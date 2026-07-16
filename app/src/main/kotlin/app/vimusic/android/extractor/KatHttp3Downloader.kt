@@ -3,6 +3,7 @@
 package app.vimusic.android.extractor
 
 import android.util.Log
+import app.vimusic.android.utils.sanitizeHttp3Headers
 import dev.kathttp3.KatHttp3Client
 import dev.kathttp3.KatHttp3ClientConfig
 import dev.kathttp3.KatHttp3Header
@@ -17,7 +18,6 @@ import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
-import java.util.Locale
 
 /**
  * NewPipe [Downloader] backed by kathttp3's native HTTP/3 transport.
@@ -122,11 +122,8 @@ class KatHttp3Downloader(
             "accept-encoding" to mutableListOf("identity"),
         )
         request.headers().forEach { (name, values) ->
-            val normalizedName = name.lowercase(Locale.ROOT)
-            if (normalizedName !in HTTP3_FORBIDDEN_REQUEST_HEADERS &&
-                normalizedName != "accept-encoding" &&
-                normalizedName != "content-length"
-            ) {
+            val normalizedName = name.lowercase()
+            if (normalizedName != "accept-encoding" && normalizedName != "content-length") {
                 headers[normalizedName] = values.toMutableList()
             }
         }
@@ -137,7 +134,10 @@ class KatHttp3Downloader(
         request.dataToSend()?.let { body ->
             headers["content-length"] = mutableListOf(body.size.toString())
         }
-        return headers.flatMap { (name, values) -> values.map { KatHttp3Header(name, it) } }
+        return sanitizeHttp3Headers(
+            headers = headers.flatMap { (name, values) -> values.map { name to it } },
+            contentLength = request.dataToSend()?.size?.toLong(),
+        )
     }
 
     private fun dev.kathttp3.KatHttp3Response.toNewPipeResponse(requestUrl: String): Response {
@@ -157,14 +157,5 @@ class KatHttp3Downloader(
         const val POST_RETRY_BACKOFF_MILLIS = 250L
         val POST_ATTEMPT_TIMEOUT_MILLIS = longArrayOf(4_000L, 6_000L)
 
-        /** HTTP/3 forbids these hop-by-hop headers; :authority is generated natively. */
-        val HTTP3_FORBIDDEN_REQUEST_HEADERS = setOf(
-            "connection",
-            "keep-alive",
-            "proxy-connection",
-            "transfer-encoding",
-            "upgrade",
-            "host",
-        )
     }
 }
