@@ -53,8 +53,12 @@ class KatHttp3CoilNetworkClient(
             // YouTube's image CDNs expose a large number of small resources
             // at one origin. Serialize each origin until kathttp3's native
             // HTTP/3 multiplexing path is fully stable under Coil churn.
-            maxActiveStreamsPerOrigin = 8, // 8
-            maxQueuedRequestsPerOrigin = 128, //128
+            maxActiveStreamsPerOrigin = 8,
+            // The response body is currently materialized before Coil starts
+            // decoding it. Keep queued image work bounded as well as active
+            // streams so many large artwork requests cannot accumulate three
+            // copies (native buffer, ByteArray, decoder) at once.
+            maxQueuedRequestsPerOrigin = 48,
             queueTimeoutMillis = 120_000,
             responseHeadersTimeoutMillis = 45_000, // 45_00
             readTimeoutMillis = 90_000, // 90_000
@@ -183,7 +187,10 @@ private fun Throwable.isKatHttp3ConnectivityFailure(): Boolean =
 /** kathttp3 currently uses one HTTP/3 connection per origin; keep its streams bounded. */
 @OptIn(coil3.annotation.ExperimentalCoilApi::class)
 object KatHttp3CoilConcurrentRequestStrategy : ConcurrentRequestStrategy {
-    private val permits = Semaphore(32)
+    // NetworkResponseBody is backed by a complete ByteArray until Coil has
+    // decoded it. Twelve concurrent requests balances scrolling throughput
+    // with peak memory on high-resolution artwork.
+    private val permits = Semaphore(12)
 
     override suspend fun apply(
         key: String,
