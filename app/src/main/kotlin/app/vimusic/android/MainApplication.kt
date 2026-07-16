@@ -84,10 +84,10 @@ import app.vimusic.android.repositories.DatabaseSettingsRepository
 import app.vimusic.android.repositories.DatabaseMediaItemMenuRepository
 import app.vimusic.android.repositories.DeepLinkRepository
 import app.vimusic.android.repositories.HomeDiscoveryRepository
-import app.vimusic.android.repositories.InnertubeDeepLinkRepository
-import app.vimusic.android.repositories.InnertubeSearchResultRepository
-import app.vimusic.android.repositories.InnertubeHomeDiscoveryRepository
-import app.vimusic.android.repositories.InnertubeMoodRepository
+import app.vimusic.android.repositories.NewPipeMusicDeepLinkRepository
+import app.vimusic.android.repositories.NewPipeMusicSearchResultRepository
+import app.vimusic.android.repositories.NewPipeMusicHomeDiscoveryRepository
+import app.vimusic.android.repositories.NewPipeMusicMoodRepository
 import app.vimusic.android.repositories.HomeQuickPicksRepository
 import app.vimusic.android.repositories.LibraryRepository
 import app.vimusic.android.repositories.HomePlaylistsRepository
@@ -114,7 +114,7 @@ import app.vimusic.android.repositories.DatabaseSyncSettingsRepository
 import app.vimusic.android.repositories.DefaultDatabaseSettingsRepository
 import app.vimusic.android.repositories.PlayerLyricsRepository
 import app.vimusic.android.repositories.DefaultPlayerLyricsRepository
-import app.vimusic.android.repositories.InnertubeYouTubeRadioDataSource
+import app.vimusic.android.repositories.NewPipeMusicYouTubeRadioDataSource
 import app.vimusic.android.repositories.ApiSponsorBlockRepository
 import app.vimusic.android.service.PlayerService
 import app.vimusic.android.extractor.NewPipeExtractorClient
@@ -564,7 +564,7 @@ class AppContainer(
 ) {
     val credentialManager: CredentialManager by lazy { CredentialManager.create(application) }
     val songsRepository: SongsRepository by lazy { DatabaseSongsRepository }
-    val searchResultRepository: SearchResultRepository by lazy { InnertubeSearchResultRepository }
+    val searchResultRepository: SearchResultRepository by lazy { NewPipeMusicSearchResultRepository }
     val artistRepository: ArtistRepository by lazy { DatabaseArtistRepository }
     val libraryRepository: LibraryRepository by lazy { DatabaseLibraryRepository }
     val onlineSearchRepository: OnlineSearchRepository by lazy { DatabaseOnlineSearchRepository }
@@ -574,8 +574,8 @@ class AppContainer(
     val albumRepository: AlbumRepository by lazy { DatabaseAlbumRepository }
     val playlistRepository: PlaylistRepository by lazy { DatabasePlaylistRepository }
     val pipedPlaylistRepository: PipedPlaylistRepository by lazy { ApiPipedPlaylistRepository }
-    val homeDiscoveryRepository: HomeDiscoveryRepository by lazy { InnertubeHomeDiscoveryRepository }
-    val moodRepository: MoodRepository by lazy { InnertubeMoodRepository }
+    val homeDiscoveryRepository: HomeDiscoveryRepository by lazy { NewPipeMusicHomeDiscoveryRepository }
+    val moodRepository: MoodRepository by lazy { NewPipeMusicMoodRepository }
     val localPlaylistRepository: LocalPlaylistRepository by lazy { DatabaseLocalPlaylistRepository }
     val syncSettingsRepository: SyncSettingsRepository by lazy { DatabaseSyncSettingsRepository }
     val playerRepository: PlayerRepository by lazy { DatabasePlayerRepository }
@@ -583,10 +583,10 @@ class AppContainer(
     val databaseSettingsRepository: DatabaseSettingsRepository by lazy { DefaultDatabaseSettingsRepository }
     val playerLyricsRepository: PlayerLyricsRepository by lazy { DefaultPlayerLyricsRepository }
     val mediaItemMenuRepository: MediaItemMenuRepository by lazy { DatabaseMediaItemMenuRepository }
-    val deepLinkRepository: DeepLinkRepository by lazy { InnertubeDeepLinkRepository }
+    val deepLinkRepository: DeepLinkRepository by lazy { NewPipeMusicDeepLinkRepository }
     val precacheRepository: PrecacheRepository by lazy { DatabasePrecacheRepository }
     val mediaLibraryRepository: MediaLibraryRepository by lazy { DatabaseMediaLibraryRepository }
-    val youTubeRadioDataSource: YouTubeRadioDataSource by lazy { InnertubeYouTubeRadioDataSource }
+    val youTubeRadioDataSource: YouTubeRadioDataSource by lazy { NewPipeMusicYouTubeRadioDataSource }
     val sponsorBlockRepository: SponsorBlockRepository by lazy { ApiSponsorBlockRepository }
 
     fun initialize() {

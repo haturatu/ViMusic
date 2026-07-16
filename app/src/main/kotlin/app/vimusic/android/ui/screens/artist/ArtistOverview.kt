@@ -48,8 +48,8 @@ import app.vimusic.android.utils.semiBold
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.isLandscape
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.NavigationEndpoint
+import app.vimusic.providers.newpipe.NewPipeMusic
+import app.vimusic.providers.newpipe.models.NavigationEndpoint
 
 private val sectionTextModifier = Modifier
     .padding(horizontal = 16.dp)
@@ -58,7 +58,7 @@ private val sectionTextModifier = Modifier
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ArtistOverview(
-    youtubeArtistPage: Innertube.ArtistPage?,
+    youtubeArtistPage: NewPipeMusic.ArtistPage?,
     onViewAllSongsClick: () -> Unit,
     onViewAllAlbumsClick: () -> Unit,
     onViewAllSinglesClick: () -> Unit,
@@ -199,7 +199,7 @@ fun ArtistOverview(
                     ) {
                         items(
                             items = albums,
-                            key = Innertube.AlbumItem::key
+                            key = NewPipeMusic.AlbumItem::key
                         ) { album ->
                             AlbumItem(
                                 album = album,
@@ -242,7 +242,7 @@ fun ArtistOverview(
                     ) {
                         items(
                             items = singles,
-                            key = Innertube.AlbumItem::key
+                            key = NewPipeMusic.AlbumItem::key
                         ) { album ->
                             AlbumItem(
                                 album = album,

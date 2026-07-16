@@ -1,54 +1,54 @@
 package app.vimusic.android.repositories
 
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.ContinuationBody
-import app.vimusic.providers.innertube.models.bodies.SearchBody
-import app.vimusic.providers.innertube.requests.searchPage
-import app.vimusic.providers.innertube.utils.from
+import app.vimusic.providers.newpipe.NewPipeMusic
+import app.vimusic.providers.newpipe.models.bodies.ContinuationBody
+import app.vimusic.providers.newpipe.models.bodies.SearchBody
+import app.vimusic.providers.newpipe.requests.searchPage
+import app.vimusic.providers.newpipe.utils.from
 
 interface SearchResultRepository {
     suspend fun searchSongs(
         query: String,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.SongItem>?>?
+    ): Result<NewPipeMusic.ItemsPage<NewPipeMusic.SongItem>?>?
 
     suspend fun searchAlbums(
         query: String,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.AlbumItem>?>?
+    ): Result<NewPipeMusic.ItemsPage<NewPipeMusic.AlbumItem>?>?
 
     suspend fun searchArtists(
         query: String,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.ArtistItem>?>?
+    ): Result<NewPipeMusic.ItemsPage<NewPipeMusic.ArtistItem>?>?
 
     suspend fun searchVideos(
         query: String,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.VideoItem>?>?
+    ): Result<NewPipeMusic.ItemsPage<NewPipeMusic.VideoItem>?>?
 
     suspend fun searchPlaylists(
         query: String,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.PlaylistItem>?>?
+    ): Result<NewPipeMusic.ItemsPage<NewPipeMusic.PlaylistItem>?>?
 }
 
-object InnertubeSearchResultRepository : SearchResultRepository {
+object NewPipeMusicSearchResultRepository : SearchResultRepository {
     override suspend fun searchSongs(
         query: String,
         continuation: String?
     ) = if (continuation == null) {
-        Innertube.searchPage(
+        NewPipeMusic.searchPage(
             body = SearchBody(
                 query = query,
-                params = Innertube.SearchFilter.Song.value
+                params = NewPipeMusic.SearchFilter.Song.value
             ),
-            fromMusicShelfRendererContent = Innertube.SongItem.Companion::from
+            fromMusicShelfRendererContent = NewPipeMusic.SongItem.Companion::from
         )
     } else {
-        Innertube.searchPage(
+        NewPipeMusic.searchPage(
             body = ContinuationBody(continuation = continuation),
-            fromMusicShelfRendererContent = Innertube.SongItem.Companion::from
+            fromMusicShelfRendererContent = NewPipeMusic.SongItem.Companion::from
         )
     }
 
@@ -56,17 +56,17 @@ object InnertubeSearchResultRepository : SearchResultRepository {
         query: String,
         continuation: String?
     ) = if (continuation == null) {
-        Innertube.searchPage(
+        NewPipeMusic.searchPage(
             body = SearchBody(
                 query = query,
-                params = Innertube.SearchFilter.Album.value
+                params = NewPipeMusic.SearchFilter.Album.value
             ),
-            fromMusicShelfRendererContent = Innertube.AlbumItem::from
+            fromMusicShelfRendererContent = NewPipeMusic.AlbumItem::from
         )
     } else {
-        Innertube.searchPage(
+        NewPipeMusic.searchPage(
             body = ContinuationBody(continuation = continuation),
-            fromMusicShelfRendererContent = Innertube.AlbumItem::from
+            fromMusicShelfRendererContent = NewPipeMusic.AlbumItem::from
         )
     }
 
@@ -74,17 +74,17 @@ object InnertubeSearchResultRepository : SearchResultRepository {
         query: String,
         continuation: String?
     ) = if (continuation == null) {
-        Innertube.searchPage(
+        NewPipeMusic.searchPage(
             body = SearchBody(
                 query = query,
-                params = Innertube.SearchFilter.Artist.value
+                params = NewPipeMusic.SearchFilter.Artist.value
             ),
-            fromMusicShelfRendererContent = Innertube.ArtistItem::from
+            fromMusicShelfRendererContent = NewPipeMusic.ArtistItem::from
         )
     } else {
-        Innertube.searchPage(
+        NewPipeMusic.searchPage(
             body = ContinuationBody(continuation = continuation),
-            fromMusicShelfRendererContent = Innertube.ArtistItem::from
+            fromMusicShelfRendererContent = NewPipeMusic.ArtistItem::from
         )
     }
 
@@ -92,17 +92,17 @@ object InnertubeSearchResultRepository : SearchResultRepository {
         query: String,
         continuation: String?
     ) = if (continuation == null) {
-        Innertube.searchPage(
+        NewPipeMusic.searchPage(
             body = SearchBody(
                 query = query,
-                params = Innertube.SearchFilter.Video.value
+                params = NewPipeMusic.SearchFilter.Video.value
             ),
-            fromMusicShelfRendererContent = Innertube.VideoItem::from
+            fromMusicShelfRendererContent = NewPipeMusic.VideoItem::from
         )
     } else {
-        Innertube.searchPage(
+        NewPipeMusic.searchPage(
             body = ContinuationBody(continuation = continuation),
-            fromMusicShelfRendererContent = Innertube.VideoItem::from
+            fromMusicShelfRendererContent = NewPipeMusic.VideoItem::from
         )
     }
 
@@ -110,17 +110,17 @@ object InnertubeSearchResultRepository : SearchResultRepository {
         query: String,
         continuation: String?
     ) = if (continuation == null) {
-        Innertube.searchPage(
+        NewPipeMusic.searchPage(
             body = SearchBody(
                 query = query,
-                params = Innertube.SearchFilter.CommunityPlaylist.value
+                params = NewPipeMusic.SearchFilter.CommunityPlaylist.value
             ),
-            fromMusicShelfRendererContent = Innertube.PlaylistItem::from
+            fromMusicShelfRendererContent = NewPipeMusic.PlaylistItem::from
         )
     } else {
-        Innertube.searchPage(
+        NewPipeMusic.searchPage(
             body = ContinuationBody(continuation = continuation),
-            fromMusicShelfRendererContent = Innertube.PlaylistItem::from
+            fromMusicShelfRendererContent = NewPipeMusic.PlaylistItem::from
         )
     }
 }

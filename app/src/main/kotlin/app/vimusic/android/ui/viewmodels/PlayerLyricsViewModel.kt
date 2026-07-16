@@ -14,7 +14,7 @@ class PlayerLyricsViewModel(
 
     fun upsertLyrics(lyrics: Lyrics) = repository.upsertLyrics(lyrics)
 
-    suspend fun fetchInnertubeLyrics(mediaId: String) = repository.fetchInnertubeLyrics(mediaId)
+    suspend fun fetchNewPipeMusicLyrics(mediaId: String) = repository.fetchNewPipeMusicLyrics(mediaId)
 
     suspend fun fetchBestLrcLibLyrics(
         artist: String,

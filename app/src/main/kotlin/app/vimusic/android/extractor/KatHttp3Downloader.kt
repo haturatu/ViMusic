@@ -81,7 +81,7 @@ class KatHttp3Downloader(
 
     private fun requestHeaders(request: Request): List<KatHttp3Header> {
         val headers = linkedMapOf(
-            // NewPipe replaces this default for Innertube with its Android
+            // NewPipe replaces this default for NewPipeMusic with its Android
             // client User-Agent, exactly as YoutubeHttp3Example does.
             "user-agent" to mutableListOf(NewPipeDownloader.USER_AGENT),
             // KatHTTP3 decodes gzip/deflate, but forcing identity also avoids
@@ -98,7 +98,7 @@ class KatHttp3Downloader(
             }
         }
         // Match curl/OkHttp's fixed-length JSON POST framing.  NewPipe's request
-        // already contains the JSON body and all Innertube headers; make the
+        // already contains the JSON body and all NewPipeMusic headers; make the
         // length derive from those exact bytes rather than trusting a stale or
         // caller-supplied Content-Length value.
         request.dataToSend()?.let { body ->

@@ -18,7 +18,7 @@ fun <T> persist(
 ): MutableState<T> {
     val persistMap = LocalPersistMap.current
 
-    return remember(persistMap) {
+    return remember(persistMap, tag) {
         persistMap?.map?.getOrPut(tag) { mutableStateOf(initialValue, policy) } as? MutableState<T>
             ?: mutableStateOf(initialValue, policy)
     }

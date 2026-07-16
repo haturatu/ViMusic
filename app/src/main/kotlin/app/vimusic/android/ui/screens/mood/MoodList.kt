@@ -45,8 +45,8 @@ import app.vimusic.android.utils.semiBold
 import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.requests.BrowseResult
+import app.vimusic.providers.newpipe.NewPipeMusic
+import app.vimusic.providers.newpipe.requests.BrowseResult
 import com.valentinilk.shimmer.shimmer
 
 private const val DEFAULT_BROWSE_ID = "FEmusic_moods_and_genres_category"
@@ -123,7 +123,7 @@ fun MoodList(
                             if (childItem.key == DEFAULT_BROWSE_ID) return@items
 
                             when (childItem) {
-                                is Innertube.AlbumItem -> AlbumItem(
+                                is NewPipeMusic.AlbumItem -> AlbumItem(
                                     album = childItem,
                                     thumbnailSize = Dimensions.thumbnails.album,
                                     alternative = true,
@@ -134,7 +134,7 @@ fun MoodList(
                                     }
                                 )
 
-                                is Innertube.ArtistItem -> ArtistItem(
+                                is NewPipeMusic.ArtistItem -> ArtistItem(
                                     artist = childItem,
                                     thumbnailSize = Dimensions.thumbnails.album,
                                     alternative = true,
@@ -145,7 +145,7 @@ fun MoodList(
                                     }
                                 )
 
-                                is Innertube.PlaylistItem -> PlaylistItem(
+                                is NewPipeMusic.PlaylistItem -> PlaylistItem(
                                     playlist = childItem,
                                     thumbnailSize = Dimensions.thumbnails.album,
                                     alternative = true,

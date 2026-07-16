@@ -31,10 +31,10 @@ import app.vimusic.android.ui.items.AlbumItemPlaceholder
 import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.BrowseBody
-import app.vimusic.providers.innertube.requests.BrowseResult
-import app.vimusic.providers.innertube.requests.browse
+import app.vimusic.providers.newpipe.NewPipeMusic
+import app.vimusic.providers.newpipe.models.bodies.BrowseBody
+import app.vimusic.providers.newpipe.requests.BrowseResult
+import app.vimusic.providers.newpipe.requests.browse
 import com.valentinilk.shimmer.shimmer
 import kotlinx.collections.immutable.toImmutableList
 
@@ -57,7 +57,7 @@ fun MoreAlbumsList(
                 ?.items
                 ?.firstOrNull()
                 ?.items
-                ?.filterIsInstance<Innertube.AlbumItem>()
+                ?.filterIsInstance<NewPipeMusic.AlbumItem>()
                 ?.toImmutableList()
         }
     }
@@ -65,7 +65,7 @@ fun MoreAlbumsList(
     LaunchedEffect(Unit) {
         if (albumsPage != null) return@LaunchedEffect
 
-        albumsPage = Innertube
+        albumsPage = NewPipeMusic
             .browse(BrowseBody(browseId = DEFAULT_BROWSE_ID))
             ?.also { it.exceptionOrNull()?.printStackTrace() }
             ?.getOrNull()

@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import app.vimusic.android.models.Album
 import app.vimusic.android.utils.semiBold
 import app.vimusic.core.ui.LocalAppearance
-import app.vimusic.providers.innertube.Innertube
+import app.vimusic.providers.newpipe.NewPipeMusic
 
 @Composable
 fun PlaylistInfo(
@@ -54,7 +54,7 @@ fun PlaylistInfo(
 
 @Composable
 fun PlaylistInfo(
-    playlist: Innertube.PlaylistOrAlbumPage?,
+    playlist: NewPipeMusic.PlaylistOrAlbumPage?,
     modifier: Modifier = Modifier
 ) = PlaylistInfo(
     description = playlist?.description,

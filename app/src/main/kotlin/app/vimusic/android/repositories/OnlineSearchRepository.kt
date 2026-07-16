@@ -3,9 +3,9 @@ package app.vimusic.android.repositories
 import app.vimusic.android.Database
 import app.vimusic.android.models.SearchQuery
 import app.vimusic.android.query
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.SearchSuggestionsBody
-import app.vimusic.providers.innertube.requests.searchSuggestions
+import app.vimusic.providers.newpipe.NewPipeMusic
+import app.vimusic.providers.newpipe.models.bodies.SearchSuggestionsBody
+import app.vimusic.providers.newpipe.requests.searchSuggestions
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 
@@ -26,7 +26,7 @@ object DatabaseOnlineSearchRepository : OnlineSearchRepository {
     override fun observeHistoryCount(): Flow<Int> = Database.queriesCount().distinctUntilChanged()
 
     override suspend fun fetchSuggestions(input: String): Result<List<String>?>? =
-        Innertube.searchSuggestions(body = SearchSuggestionsBody(input = input))
+        NewPipeMusic.searchSuggestions(body = SearchSuggestionsBody(input = input))
 
     override fun deleteHistory(searchQuery: SearchQuery) {
         query { Database.delete(searchQuery) }
