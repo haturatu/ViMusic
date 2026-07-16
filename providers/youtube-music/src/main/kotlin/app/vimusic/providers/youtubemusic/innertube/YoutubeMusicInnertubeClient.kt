@@ -16,7 +16,6 @@ import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.downloader.Request
 import java.io.IOException
 import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 /**
  * Small, buffered client for YouTube Music's private API.
@@ -121,7 +120,10 @@ internal class YoutubeMusicInnertubeClient(
     }
 
     private fun encode(value: String): String =
-        URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20")
+        // URLEncoder.encode(String, Charset) exists only on newer Android
+        // releases. The String charset-name overload is available on every
+        // supported Android API level.
+        URLEncoder.encode(value, "UTF-8").replace("+", "%20")
 
     /**
      * Request payloads are a closed set in this provider.  Do not serialize
