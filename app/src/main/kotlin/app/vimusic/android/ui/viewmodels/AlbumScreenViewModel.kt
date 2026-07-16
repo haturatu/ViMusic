@@ -17,7 +17,7 @@ class AlbumScreenViewModel(
     fun replaceAlbumFromPage(
         browseId: String,
         bookmarkedAt: Long?,
-        page: app.vimusic.providers.newpipe.NewPipeMusic.PlaylistOrAlbumPage
+        page: app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube.PlaylistOrAlbumPage
     ) = repository.replaceAlbumFromPage(
         browseId = browseId,
         bookmarkedAt = bookmarkedAt,

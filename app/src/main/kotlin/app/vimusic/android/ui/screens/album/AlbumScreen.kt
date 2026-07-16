@@ -39,7 +39,7 @@ import app.vimusic.compose.routing.RouteHandler
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.stateFlowSaver
-import app.vimusic.providers.newpipe.NewPipeMusic
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import com.valentinilk.shimmer.shimmer
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
@@ -64,7 +64,7 @@ fun AlbumScreen(browseId: String) {
     val tabIndex by tabIndexState.collectAsStateWithLifecycle()
 
     var album by persist<Album?>("album/$browseId/album")
-    var albumPage by persist<NewPipeMusic.PlaylistOrAlbumPage?>("album/$browseId/albumPage")
+    var albumPage by persist<YoutubeMusicInnertube.PlaylistOrAlbumPage?>("album/$browseId/albumPage")
     var songs by persistList<Song>("album/$browseId/songs")
 
     PersistMapCleanup(prefix = "album/$browseId/")
@@ -188,7 +188,7 @@ fun AlbumScreen(browseId: String) {
                                 provider = albumPage?.let {
                                     {
                                         Result.success(
-                                            NewPipeMusic.ItemsPage(
+                                            YoutubeMusicInnertube.ItemsPage(
                                                 items = albumPage?.otherVersions,
                                                 continuation = null
                                             )

@@ -7,19 +7,19 @@ import app.vimusic.android.query
 import app.vimusic.android.models.SongAlbumMap
 import app.vimusic.android.transaction
 import app.vimusic.android.utils.asMediaItem
-import app.vimusic.providers.newpipe.NewPipeMusic
-import app.vimusic.providers.newpipe.models.bodies.BrowseBody
-import app.vimusic.providers.newpipe.requests.albumPage
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
+import app.vimusic.providers.youtubemusic.innertube.models.bodies.BrowseBody
+import app.vimusic.providers.youtubemusic.innertube.requests.albumPage
 import kotlinx.coroutines.flow.Flow
 
 interface AlbumRepository {
     fun observeAlbum(browseId: String): Flow<Album?>
     fun observeAlbumSongs(browseId: String): Flow<List<Song>>
-    suspend fun fetchAlbumPage(browseId: String): Result<NewPipeMusic.PlaylistOrAlbumPage?>?
+    suspend fun fetchAlbumPage(browseId: String): Result<YoutubeMusicInnertube.PlaylistOrAlbumPage?>?
     fun replaceAlbumFromPage(
         browseId: String,
         bookmarkedAt: Long?,
-        page: NewPipeMusic.PlaylistOrAlbumPage
+        page: YoutubeMusicInnertube.PlaylistOrAlbumPage
     )
 
     fun updateAlbum(album: Album)
@@ -30,13 +30,13 @@ object DatabaseAlbumRepository : AlbumRepository {
 
     override fun observeAlbumSongs(browseId: String): Flow<List<Song>> = Database.albumSongs(browseId)
 
-    override suspend fun fetchAlbumPage(browseId: String): Result<NewPipeMusic.PlaylistOrAlbumPage?>? =
-        NewPipeMusic.albumPage(BrowseBody(browseId = browseId))
+    override suspend fun fetchAlbumPage(browseId: String): Result<YoutubeMusicInnertube.PlaylistOrAlbumPage?>? =
+        YoutubeMusicInnertube.albumPage(BrowseBody(browseId = browseId))
 
     override fun replaceAlbumFromPage(
         browseId: String,
         bookmarkedAt: Long?,
-        page: NewPipeMusic.PlaylistOrAlbumPage
+        page: YoutubeMusicInnertube.PlaylistOrAlbumPage
     ) {
         val songAlbumMaps = page
             .songsPage

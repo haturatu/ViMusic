@@ -188,7 +188,7 @@ dependencies {
     implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.3")
 
     implementation(projects.providers.github)
-    implementation(projects.providers.newpipe)
+    implementation(projects.providers.youtubeMusic)
     implementation(projects.providers.kugou)
     implementation(projects.providers.lrclib)
     implementation(projects.providers.piped)

@@ -111,7 +111,7 @@ import app.vimusic.core.ui.utils.isAtLeastAndroid8
 import app.vimusic.core.ui.utils.isAtLeastAndroid9
 import app.vimusic.core.ui.utils.songBundle
 import app.vimusic.core.ui.utils.streamVolumeFlow
-import app.vimusic.providers.newpipe.models.NavigationEndpoint
+import app.vimusic.providers.youtubemusic.innertube.models.NavigationEndpoint
 import app.vimusic.providers.sponsorblock.models.Action
 import app.vimusic.providers.sponsorblock.models.Category
 import app.vimusic.providers.sponsorblock.models.Segment

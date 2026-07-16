@@ -33,10 +33,10 @@ import app.vimusic.android.utils.semiBold
 import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
-import app.vimusic.providers.newpipe.NewPipeMusic
-import app.vimusic.providers.newpipe.models.bodies.BrowseBody
-import app.vimusic.providers.newpipe.requests.BrowseResult
-import app.vimusic.providers.newpipe.requests.browse
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
+import app.vimusic.providers.youtubemusic.innertube.models.bodies.BrowseBody
+import app.vimusic.providers.youtubemusic.innertube.requests.BrowseResult
+import app.vimusic.providers.youtubemusic.innertube.requests.browse
 import com.valentinilk.shimmer.shimmer
 import kotlinx.collections.immutable.toImmutableList
 
@@ -44,7 +44,7 @@ private const val DEFAULT_BROWSE_ID = "FEmusic_moods_and_genres"
 
 @Composable
 fun MoreMoodsList(
-    onMoodClick: (mood: NewPipeMusic.Mood.Item) -> Unit,
+    onMoodClick: (mood: YoutubeMusicInnertube.Mood.Item) -> Unit,
     modifier: Modifier = Modifier,
     columns: Int = 2
 ) {
@@ -62,7 +62,7 @@ fun MoreMoodsList(
     val data by remember {
         derivedStateOf {
             moodsPage?.items?.map {
-                it.title.orEmpty() to it.items.filterIsInstance<NewPipeMusic.Mood.Item>().toImmutableList()
+                it.title.orEmpty() to it.items.filterIsInstance<YoutubeMusicInnertube.Mood.Item>().toImmutableList()
             }
         }
     }
@@ -70,7 +70,7 @@ fun MoreMoodsList(
     LaunchedEffect(Unit) {
         if (moodsPage != null) return@LaunchedEffect
 
-        moodsPage = NewPipeMusic
+        moodsPage = YoutubeMusicInnertube
             .browse(BrowseBody(browseId = DEFAULT_BROWSE_ID))
             ?.also { it.exceptionOrNull()?.printStackTrace() }
             ?.getOrNull()

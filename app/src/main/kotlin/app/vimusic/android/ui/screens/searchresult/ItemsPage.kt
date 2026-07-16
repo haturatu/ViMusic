@@ -33,8 +33,8 @@ import app.vimusic.android.utils.center
 import app.vimusic.android.utils.secondary
 import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.LocalAppearance
-import app.vimusic.providers.newpipe.NewPipeMusic
-import app.vimusic.providers.newpipe.utils.plus
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
+import app.vimusic.providers.youtubemusic.innertube.utils.plus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-inline fun <T : NewPipeMusic.Item> ItemsPage(
+inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
     tag: String,
     crossinline header: @Composable (textButton: (@Composable () -> Unit)?) -> Unit,
     crossinline itemContent: @Composable LazyItemScope.(T) -> Unit,
@@ -52,7 +52,7 @@ inline fun <T : NewPipeMusic.Item> ItemsPage(
     initialPlaceholderCount: Int = 8,
     continuationPlaceholderCount: Int = 3,
     emptyItemsText: String = stringResource(R.string.no_items_found),
-    noinline provider: (suspend (String?) -> Result<NewPipeMusic.ItemsPage<T>?>?)? = null
+    noinline provider: (suspend (String?) -> Result<YoutubeMusicInnertube.ItemsPage<T>?>?)? = null
 ) = ItemsPage(
     tag = tag,
     header = { before, _ -> header(before) },
@@ -66,7 +66,7 @@ inline fun <T : NewPipeMusic.Item> ItemsPage(
 )
 
 @Composable
-inline fun <T : NewPipeMusic.Item> ItemsPage(
+inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
     tag: String,
     crossinline header: @Composable (
         beforeContent: (@Composable () -> Unit)?,
@@ -78,12 +78,12 @@ inline fun <T : NewPipeMusic.Item> ItemsPage(
     initialPlaceholderCount: Int = 8,
     continuationPlaceholderCount: Int = 3,
     emptyItemsText: String = stringResource(R.string.no_items_found),
-    noinline provider: (suspend (String?) -> Result<NewPipeMusic.ItemsPage<T>?>?)? = null
+    noinline provider: (suspend (String?) -> Result<YoutubeMusicInnertube.ItemsPage<T>?>?)? = null
 ) {
     val (_, typography) = LocalAppearance.current
     val updatedProvider by rememberUpdatedState(provider)
     val lazyListState = rememberLazyListState()
-    var itemsPage by persist<NewPipeMusic.ItemsPage<T>?>(tag)
+    var itemsPage by persist<YoutubeMusicInnertube.ItemsPage<T>?>(tag)
     // This scope deliberately has its own Job. LazyColumn can temporarily
     // dispose/recompose its loading item while a request is running; tying the
     // request to LaunchedEffect would cancel a successful HTTP response.
@@ -127,7 +127,7 @@ inline fun <T : NewPipeMusic.Item> ItemsPage(
                                 "loaded tag=$tag items=${it?.items?.size ?: 0} continuation=${it?.continuation != null}"
                             )
                             if (it == null) {
-                                itemsPage = (itemsPage ?: NewPipeMusic.ItemsPage(null, null))
+                                itemsPage = (itemsPage ?: YoutubeMusicInnertube.ItemsPage(null, null))
                                     .copy(continuation = null)
                             } else itemsPage += it
                         }?.onFailure {
@@ -156,7 +156,7 @@ inline fun <T : NewPipeMusic.Item> ItemsPage(
 
             items(
                 items = itemsPage?.items ?: emptyList(),
-                key = NewPipeMusic.Item::key,
+                key = YoutubeMusicInnertube.Item::key,
                 itemContent = itemContent
             )
 

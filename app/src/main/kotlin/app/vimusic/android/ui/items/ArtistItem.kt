@@ -22,7 +22,7 @@ import app.vimusic.android.utils.thumbnail
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.shimmer
 import app.vimusic.core.ui.utils.px
-import app.vimusic.providers.newpipe.NewPipeMusic
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import app.vimusic.android.ui.components.RetryingAsyncImage as AsyncImage
 
 @Composable
@@ -42,7 +42,7 @@ fun ArtistItem(
 
 @Composable
 fun ArtistItem(
-    artist: NewPipeMusic.ArtistItem,
+    artist: YoutubeMusicInnertube.ArtistItem,
     thumbnailSize: Dp,
     modifier: Modifier = Modifier,
     alternative: Boolean = false

@@ -41,7 +41,7 @@ import app.vimusic.core.ui.overlay
 import app.vimusic.core.ui.shimmer
 import app.vimusic.core.ui.utils.px
 import app.vimusic.core.ui.utils.roundedShape
-import app.vimusic.providers.newpipe.NewPipeMusic
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import app.vimusic.android.ui.components.RetryingAsyncImage as AsyncImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -130,7 +130,7 @@ fun PlaylistItem(
 
 @Composable
 fun PlaylistItem(
-    playlist: NewPipeMusic.PlaylistItem,
+    playlist: YoutubeMusicInnertube.PlaylistItem,
     thumbnailSize: Dp,
     modifier: Modifier = Modifier,
     alternative: Boolean = false

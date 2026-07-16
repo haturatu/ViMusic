@@ -70,17 +70,17 @@ import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.isLandscape
-import app.vimusic.providers.newpipe.NewPipeMusic
-import app.vimusic.providers.newpipe.models.NavigationEndpoint
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
+import app.vimusic.providers.youtubemusic.innertube.models.NavigationEndpoint
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @OptIn(ExperimentalFoundationApi::class)
 @Route
 @Composable
 fun QuickPicks(
-    onAlbumClick: (NewPipeMusic.AlbumItem) -> Unit,
-    onArtistClick: (NewPipeMusic.ArtistItem) -> Unit,
-    onPlaylistClick: (NewPipeMusic.PlaylistItem) -> Unit,
+    onAlbumClick: (YoutubeMusicInnertube.AlbumItem) -> Unit,
+    onArtistClick: (YoutubeMusicInnertube.ArtistItem) -> Unit,
+    onPlaylistClick: (YoutubeMusicInnertube.PlaylistItem) -> Unit,
     onSearchClick: () -> Unit
 ) {
     val viewModel: HomeQuickPicksViewModel = viewModel(
@@ -94,7 +94,7 @@ fun QuickPicks(
 
     var trending by persist<Song?>("home/trending")
 
-    var relatedPageResult by persist<Result<NewPipeMusic.RelatedPage?>?>(tag = "home/relatedPageResult")
+    var relatedPageResult by persist<Result<YoutubeMusicInnertube.RelatedPage?>?>(tag = "home/relatedPageResult")
 
     LaunchedEffect(relatedPageResult, DataPreferences.shouldCacheQuickPicks) {
         if (DataPreferences.shouldCacheQuickPicks)
@@ -220,7 +220,7 @@ fun QuickPicks(
                     items(
                         items = related.songs?.dropLast(if (trending == null) 0 else 1)
                             ?: emptyList(),
-                        key = NewPipeMusic.SongItem::key
+                        key = YoutubeMusicInnertube.SongItem::key
                     ) { song ->
                         SongItem(
                             song = song,
@@ -261,7 +261,7 @@ fun QuickPicks(
                     LazyRow(contentPadding = endPaddingValues) {
                         items(
                             items = albums,
-                            key = NewPipeMusic.AlbumItem::key
+                            key = YoutubeMusicInnertube.AlbumItem::key
                         ) { album ->
                             AlbumItem(
                                 album = album,
@@ -283,7 +283,7 @@ fun QuickPicks(
                     LazyRow(contentPadding = endPaddingValues) {
                         items(
                             items = artists,
-                            key = NewPipeMusic.ArtistItem::key
+                            key = YoutubeMusicInnertube.ArtistItem::key
                         ) { artist ->
                             ArtistItem(
                                 artist = artist,
@@ -307,7 +307,7 @@ fun QuickPicks(
                     LazyRow(contentPadding = endPaddingValues) {
                         items(
                             items = playlists,
-                            key = NewPipeMusic.PlaylistItem::key
+                            key = YoutubeMusicInnertube.PlaylistItem::key
                         ) { playlist ->
                             PlaylistItem(
                                 playlist = playlist,

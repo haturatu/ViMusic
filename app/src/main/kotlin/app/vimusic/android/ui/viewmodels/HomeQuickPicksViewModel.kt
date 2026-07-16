@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import app.vimusic.android.models.Song
 import app.vimusic.android.repositories.HomeQuickPicksRepository
-import app.vimusic.providers.newpipe.NewPipeMusic
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import kotlinx.coroutines.flow.Flow
 
 class HomeQuickPicksViewModel(
@@ -18,9 +18,9 @@ class HomeQuickPicksViewModel(
 
     fun removeFromQuickPicks(songId: String) = repository.clearEventsFor(songId = songId)
 
-    fun getCachedQuickPicksIfAvailable(): NewPipeMusic.RelatedPage? = repository.getCachedQuickPicksIfAvailable()
+    fun getCachedQuickPicksIfAvailable(): YoutubeMusicInnertube.RelatedPage? = repository.getCachedQuickPicksIfAvailable()
 
-    fun cacheQuickPicks(page: NewPipeMusic.RelatedPage) = repository.cacheQuickPicks(page = page)
+    fun cacheQuickPicks(page: YoutubeMusicInnertube.RelatedPage) = repository.cacheQuickPicks(page = page)
 
     fun clearCachedQuickPicks() = repository.clearCachedQuickPicks()
 

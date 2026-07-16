@@ -75,14 +75,14 @@ import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.shimmer
 import app.vimusic.core.ui.utils.isLandscape
-import app.vimusic.providers.newpipe.NewPipeMusic
-import app.vimusic.providers.newpipe.models.NavigationEndpoint
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
+import app.vimusic.providers.youtubemusic.innertube.models.NavigationEndpoint
 
 @OptIn(ExperimentalFoundationApi::class)
 @Route
 @Composable
 fun HomeDiscovery(
-    onMoodClick: (mood: NewPipeMusic.Mood.Item) -> Unit,
+    onMoodClick: (mood: YoutubeMusicInnertube.Mood.Item) -> Unit,
     onNewReleaseAlbumClick: (String) -> Unit,
     onSearchClick: () -> Unit,
     onMoreMoodsClick: () -> Unit,
@@ -111,7 +111,7 @@ fun HomeDiscovery(
         .padding(top = 24.dp, bottom = 8.dp)
         .padding(endPaddingValues)
 
-    var discoverPage by persist<Result<NewPipeMusic.DiscoverPage>>("home/discovery")
+    var discoverPage by persist<Result<YoutubeMusicInnertube.DiscoverPage>>("home/discovery")
 
     LaunchedEffect(Unit) {
         if (discoverPage?.isSuccess != true) discoverPage = viewModel.fetchDiscoverPage()
@@ -222,7 +222,7 @@ fun HomeDiscovery(
                     ) {
                         items(
                             items = page.trending.songs,
-                            key = NewPipeMusic.SongItem::key
+                            key = YoutubeMusicInnertube.SongItem::key
                         ) { song ->
                             SongItem(
                                 song = song,
@@ -337,7 +337,7 @@ private fun DiscoverySectionHeader(
 
 @Composable
 fun MoodItem(
-    mood: NewPipeMusic.Mood.Item,
+    mood: YoutubeMusicInnertube.Mood.Item,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {

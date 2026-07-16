@@ -10,9 +10,9 @@ import app.vimusic.android.query
 import app.vimusic.android.transaction
 import app.vimusic.android.internal
 import androidx.media3.common.MediaItem
-import app.vimusic.providers.newpipe.NewPipeMusic
-import app.vimusic.providers.newpipe.models.bodies.PlayerBody
-import app.vimusic.providers.newpipe.requests.player
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
+import app.vimusic.providers.youtubemusic.innertube.models.bodies.PlayerBody
+import app.vimusic.providers.youtubemusic.innertube.requests.player
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -110,7 +110,7 @@ object DatabasePlayerRepository : PlayerRepository {
     override suspend fun refreshFormat(songId: String, mediaItem: MediaItem?) {
         mediaItem ?: return
 
-        NewPipeMusic.player(PlayerBody(videoId = songId))
+        YoutubeMusicInnertube.player(PlayerBody(videoId = songId))
             ?.onSuccess { response ->
                 response?.streamingData?.highestQualityFormat?.let { format ->
                     Database.insert(mediaItem)

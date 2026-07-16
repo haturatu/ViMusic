@@ -25,12 +25,12 @@ import app.vimusic.core.ui.onOverlay
 import app.vimusic.core.ui.overlay
 import app.vimusic.core.ui.shimmer
 import app.vimusic.core.ui.utils.roundedShape
-import app.vimusic.providers.newpipe.NewPipeMusic
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import app.vimusic.android.ui.components.RetryingAsyncImage as AsyncImage
 
 @Composable
 fun VideoItem(
-    video: NewPipeMusic.VideoItem,
+    video: YoutubeMusicInnertube.VideoItem,
     thumbnailWidth: Dp,
     thumbnailHeight: Dp,
     modifier: Modifier = Modifier

@@ -35,14 +35,14 @@ import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.viewmodels.PlaylistSongListViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
-import app.vimusic.android.utils.NewPipeMusicSongMediaItemMapper
+import app.vimusic.android.utils.YoutubeMusicInnertubeSongMediaItemMapper
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.rememberMediaItemsOrNull
 import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.isLandscape
-import app.vimusic.providers.newpipe.NewPipeMusic
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -65,7 +65,7 @@ fun PlaylistSongList(
     val menuState = LocalMenuState.current
     val playbackActions = LocalPlaybackActions.current
 
-    var playlistPage by persist<NewPipeMusic.PlaylistOrAlbumPage?>("playlist/$browseId/playlistPage")
+    var playlistPage by persist<YoutubeMusicInnertube.PlaylistOrAlbumPage?>("playlist/$browseId/playlistPage")
 
     LaunchedEffect(Unit) {
         if (playlistPage != null && playlistPage?.songsPage?.continuation == null) return@LaunchedEffect
@@ -97,7 +97,7 @@ fun PlaylistSongList(
     )
 
     val playlistItems = playlistPage?.songsPage?.items
-    val mediaItems = rememberMediaItemsOrNull(playlistItems, NewPipeMusicSongMediaItemMapper)
+    val mediaItems = rememberMediaItemsOrNull(playlistItems, YoutubeMusicInnertubeSongMediaItemMapper)
 
     val headerContent: @Composable () -> Unit = {
         if (playlistPage == null) HeaderPlaceholder(modifier = Modifier.shimmer())
@@ -181,7 +181,7 @@ fun PlaylistSongList(
                         }
                     )
                     .songSwipeActions(
-                        key = playlistItems ?: emptyList<NewPipeMusic.SongItem>(),
+                        key = playlistItems ?: emptyList<YoutubeMusicInnertube.SongItem>(),
                         mediaItem = song.asMediaItem
                     )
             )
