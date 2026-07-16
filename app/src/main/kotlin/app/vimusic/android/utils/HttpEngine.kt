@@ -10,14 +10,12 @@ import androidx.media3.datasource.HttpDataSource
 import app.vimusic.android.extractor.HttpEngineDownloader
 import app.vimusic.android.extractor.NewPipeDnsTarget
 import org.schabi.newpipe.extractor.downloader.Downloader
-import java.util.concurrent.Executor
 
-/** Shared Android platform HTTP/3-over-QUIC stack for Android 14 and newer. */
+/** Shared Android platform HTTP/2 stack for Android 14 and newer. */
 object HttpEngineProvider {
     private const val TAG = "HttpEngine"
-    private val executor = Executor(Runnable::run)
 
-    /** Returns the shared [HttpEngine], or null when HTTP/3 is unavailable (pre-API 34 or build failure). */
+    /** Returns the shared [HttpEngine], or null before API 34 or when creation fails. */
     fun engine(context: Context): HttpEngine? =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             Api34.engine(context)
@@ -25,7 +23,7 @@ object HttpEngineProvider {
             null
         }
 
-    /** media3 [HttpDataSource.Factory] backed by [HttpEngine] (falls back to [DefaultHttpDataSource]). */
+    /** media3 [HttpDataSource.Factory] backed by HTTP/2 [HttpEngine] (falls back to [DefaultHttpDataSource]). */
     fun dataSourceFactory(context: Context): HttpDataSource.Factory {
         val httpEngine = engine(context) ?: return DefaultHttpDataSource.Factory()
         return runCatching { HttpEngineUrlRequestDataSource.Factory(httpEngine) }
@@ -36,8 +34,8 @@ object HttpEngineProvider {
     }
 
     /**
-     * [Downloader] backed by [HttpEngine] for the generic NewPipe extractor requests.
-     * Returns null when HTTP/3 is unavailable so callers can fall back to the OkHttp downloader.
+     * [Downloader] backed by HTTP/2 [HttpEngine] for generic NewPipe extractor requests.
+     * Returns null when unavailable so callers can fall back to the OkHttp downloader.
      */
     fun downloader(context: Context): Downloader? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return null
@@ -45,7 +43,7 @@ object HttpEngineProvider {
     }
 
     /**
-     * HTTP/3 downloader for NewPipe's fixed-address retry. The URL host remains unchanged for
+     * HTTP/2 downloader for NewPipe's fixed-address retry. The URL host remains unchanged for
      * TLS/SNI while HttpEngine receives a per-request hostname-to-address mapping.
      */
     fun resolvedDownloader(context: Context, dnsTarget: NewPipeDnsTarget.Resolved): Downloader? {
@@ -60,7 +58,6 @@ object HttpEngineProvider {
         fun engine(context: Context): HttpEngine = synchronized(this) {
             engine ?: HttpEngine.Builder(context.applicationContext)
                 .setEnableHttp2(true)
-                .setEnableQuic(true)
                 .build()
                 .also { engine = it }
         }

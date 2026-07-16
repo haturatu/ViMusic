@@ -36,7 +36,7 @@ import app.vimusic.android.utils.thumbnail
 import app.vimusic.android.utils.windowState
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.px
-import coil3.compose.AsyncImage
+import app.vimusic.android.ui.components.RetryingAsyncImage as AsyncImage
 
 @Composable
 fun LyricsDialog(

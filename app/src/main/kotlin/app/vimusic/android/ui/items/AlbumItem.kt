@@ -20,8 +20,8 @@ import app.vimusic.android.utils.thumbnail
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.shimmer
 import app.vimusic.core.ui.utils.px
-import app.vimusic.providers.innertube.Innertube
-import coil3.compose.AsyncImage
+import app.vimusic.providers.newpipe.NewPipeMusic
+import app.vimusic.android.ui.components.RetryingAsyncImage as AsyncImage
 
 @Composable
 fun AlbumItem(
@@ -41,7 +41,7 @@ fun AlbumItem(
 
 @Composable
 fun AlbumItem(
-    album: Innertube.AlbumItem,
+    album: NewPipeMusic.AlbumItem,
     thumbnailSize: Dp,
     modifier: Modifier = Modifier,
     alternative: Boolean = false

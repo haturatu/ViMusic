@@ -9,9 +9,9 @@ import app.vimusic.android.transaction
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.core.data.enums.PlaylistSortBy
 import app.vimusic.core.data.enums.SortOrder
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.NextBody
-import app.vimusic.providers.innertube.requests.nextPage
+import app.vimusic.providers.newpipe.NewPipeMusic
+import app.vimusic.providers.newpipe.models.bodies.NextBody
+import app.vimusic.providers.newpipe.requests.nextPage
 import kotlinx.coroutines.flow.Flow
 
 interface QueueRepository {
@@ -22,7 +22,7 @@ interface QueueRepository {
 
 object DatabaseQueueRepository : QueueRepository {
     override suspend fun fetchSuggestions(videoId: String): List<MediaItem>? =
-        Innertube.nextPage(NextBody(videoId = videoId))
+        NewPipeMusic.nextPage(NextBody(videoId = videoId))
             ?.getOrNull()
             ?.itemsPage
             ?.items

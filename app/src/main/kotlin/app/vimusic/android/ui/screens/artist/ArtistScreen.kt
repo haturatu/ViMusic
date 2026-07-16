@@ -45,7 +45,7 @@ import app.vimusic.compose.persist.persist
 import app.vimusic.compose.routing.RouteHandler
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
-import app.vimusic.providers.innertube.Innertube
+import app.vimusic.providers.newpipe.NewPipeMusic
 import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
@@ -73,7 +73,7 @@ fun ArtistScreen(browseId: String) {
 
     var artist by persist<Artist?>("artist/$browseId/artist")
 
-    var artistPage by persist<Innertube.ArtistPage?>("artist/$browseId/artistPage")
+    var artistPage by persist<NewPipeMusic.ArtistPage?>("artist/$browseId/artistPage")
 
     LaunchedEffect(Unit) {
         viewModel

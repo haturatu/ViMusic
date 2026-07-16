@@ -25,7 +25,6 @@ import app.vimusic.android.models.Format
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.preferences.PlayerPreferences
 import app.vimusic.android.utils.ConditionalCacheDataSourceFactory
-import app.vimusic.android.utils.HttpEngineProvider
 import app.vimusic.android.utils.asDataSource
 import app.vimusic.android.utils.readOnlyWhen
 import app.vimusic.core.ui.utils.songBundle
@@ -188,8 +187,7 @@ class NewPipeAudioMediaSourceFactory(
                 context,
                 YoutubeHttpDataSourceFactory(
                     rangeParameterEnabled = true,
-                    rnParameterEnabled = true,
-                    upstreamFactory = HttpEngineProvider.dataSourceFactory(context)
+                    rnParameterEnabled = true
                 )
             )
 

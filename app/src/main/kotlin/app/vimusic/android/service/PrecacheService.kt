@@ -40,6 +40,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,7 +53,6 @@ import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.concurrent.Executor
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration.Companion.milliseconds
 
 // While the class is not a singleton (lifecycle), there should only be one download state at a time
@@ -91,6 +91,8 @@ class PrecacheService : DownloadService(
 
     private val notificationActionReceiver = NotificationActionReceiver()
 
+    /** Serializes service-bind completion and registration of cache waiters. */
+    private val bindingLock = Any()
     private val waiters = mutableListOf<() -> Unit>()
 
     private val serviceConnection = object : ServiceConnection {
@@ -98,15 +100,13 @@ class PrecacheService : DownloadService(
             if (service !is PlayerService.Binder) return
             bound = true
             binder = service
-            waiters.forEach { it() }
-            waiters.clear()
+            resumeCacheWaiters()
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
             bound = false
             binder = null
-            waiters.forEach { it() }
-            waiters.clear()
+            resumeCacheWaiters()
         }
     }
 
@@ -152,18 +152,7 @@ class PrecacheService : DownloadService(
             toast(getString(R.string.error_pre_cache))
         }
 
-        val cache = BlockingDeferredCache(
-            coroutineScope.async {
-                suspendCoroutine {
-                    waiters += { it.resume(Unit) }
-                }
-                binder?.cache ?: run {
-                    Log.w("PrecacheService", "PlayerService not bound; falling back to standalone cache")
-                    toast(getString(R.string.error_pre_cache))
-                    PlayerService.createCache(this@PrecacheService)
-                }
-            }
-        )
+        val cache = BlockingDeferredCache(coroutineScope.async { awaitPlayerCache() })
 
         progressUpdaterJob?.cancel()
         progressUpdaterJob = coroutineScope.launch {
@@ -264,6 +253,42 @@ class PrecacheService : DownloadService(
         safeUnregisterReceiver(notificationActionReceiver)
         mutableDownloadState.update { false }
         coroutineScope.cancel()
+    }
+
+    /**
+     * Returns PlayerService's cache once it is available.
+     *
+     * bindService may invoke onServiceConnected before the coroutine starts. The old code always
+     * registered a waiter after that point, leaving the download manager blocked forever. Checking
+     * and registering while holding the same lock closes that race.
+     */
+    private suspend fun awaitPlayerCache(): Cache = suspendCancellableCoroutine { continuation ->
+        val waiter = {
+            val cache = synchronized(bindingLock) { binder?.cache }
+                ?: run {
+                    Log.w("PrecacheService", "PlayerService disconnected; using standalone cache")
+                    PlayerService.createCache(this@PrecacheService)
+                }
+            if (continuation.isActive) continuation.resume(cache)
+        }
+
+        synchronized(bindingLock) {
+            binder?.cache?.let {
+                continuation.resume(it)
+                return@synchronized
+            }
+            waiters += waiter
+        }
+        continuation.invokeOnCancellation {
+            synchronized(bindingLock) { waiters.remove(waiter) }
+        }
+    }
+
+    private fun resumeCacheWaiters() {
+        val pending = synchronized(bindingLock) {
+            waiters.toList().also { waiters.clear() }
+        }
+        pending.forEach { it() }
     }
 
     companion object {

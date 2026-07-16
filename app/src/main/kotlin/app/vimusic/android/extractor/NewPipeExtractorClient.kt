@@ -122,13 +122,24 @@ object NewPipeExtractorClient {
 
     private fun createDownloader(dnsTarget: NewPipeDnsTarget): Downloader {
         val context = appContextRef.get()
-        if (dnsTarget == NewPipeDnsTarget.System && context != null) {
-            HttpEngineProvider.downloader(context)?.let { return it }
+        val fallback = when {
+            dnsTarget == NewPipeDnsTarget.System && context != null ->
+                HttpEngineProvider.downloader(context) ?: NewPipeDownloader(NewPipeDownloader.client(dnsTarget))
+
+            dnsTarget is NewPipeDnsTarget.Resolved && context != null ->
+                HttpEngineProvider.resolvedDownloader(context, dnsTarget)
+                    ?: NewPipeDownloader(NewPipeDownloader.client(dnsTarget))
+
+            else -> NewPipeDownloader(NewPipeDownloader.client(dnsTarget))
         }
-        if (dnsTarget is NewPipeDnsTarget.Resolved && context != null) {
-            HttpEngineProvider.resolvedDownloader(context, dnsTarget)?.let { return it }
+
+        // kathttp3 resolves the URL hostname itself, so it is used for NewPipe's normal resolver
+        // path. Fixed-address retry needs the existing HTTP-engine/OkHttp DNS override fallback.
+        return if (dnsTarget == NewPipeDnsTarget.System && android.os.Build.VERSION.SDK_INT >= 26) {
+            KatHttp3Downloader(fallback, context)
+        } else {
+            fallback
         }
-        return NewPipeDownloader(NewPipeDownloader.client(dnsTarget))
     }
 
     private fun getPlayableAudioStreams(streamInfo: StreamInfo): List<AudioStream> =

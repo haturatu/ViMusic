@@ -92,6 +92,10 @@ android {
     }
 
     packaging {
+        // Keep native libraries uncompressed so AGP can place every .so on a 16 KiB ZIP boundary.
+        jniLibs {
+            useLegacyPackaging = false
+        }
         resources.excludes.add("META-INF/**/*")
     }
 
@@ -135,6 +139,9 @@ dependencies {
     implementation(libs.compose.foundation)
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.util)
+    // Compose pulls graphics-path transitively. Pin the current release so its native binary uses
+    // 16 KiB ELF segment alignment instead of an older transitive version.
+    implementation(libs.androidx.graphics.path)
     implementation(libs.compose.shimmer)
     implementation(libs.compose.lottie)
     implementation(libs.compose.material3)
@@ -143,7 +150,7 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.coil.ktor)
-    implementation(projects.ktorClientHttpengineAndroid)
+    implementation(projects.ktorClientKathttp3)
 
     implementation(libs.palette)
     implementation(libs.monet)
@@ -180,7 +187,7 @@ dependencies {
     implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.3")
 
     implementation(projects.providers.github)
-    implementation(projects.providers.innertube)
+    implementation(projects.providers.newpipe)
     implementation(projects.providers.kugou)
     implementation(projects.providers.lrclib)
     implementation(projects.providers.piped)
@@ -190,4 +197,28 @@ dependencies {
     implementation(projects.core.data)
     implementation(projects.core.ui)
 
+}
+
+tasks.register("verifyDebug16kZipAlignment") {
+    group = "verification"
+    description = "Verifies that every native library in the debug APK is 16 KiB ZIP-aligned."
+    dependsOn("assembleDebug")
+
+    doLast {
+        val zipalign = android.sdkComponents.sdkDirectory.get().asFile
+            .resolve("build-tools/${android.buildToolsVersion}/zipalign")
+        check(zipalign.isFile) { "zipalign was not found: $zipalign" }
+
+        val apks = layout.buildDirectory.dir("outputs/apk/debug").get().asFileTree
+            .matching { include("*.apk") }
+            .files
+            .sorted()
+        check(apks.isNotEmpty()) { "No debug APK was produced." }
+
+        apks.forEach { apk ->
+            providers.exec {
+                commandLine(zipalign.absolutePath, "-c", "-P", "16", "-v", "4", apk.absolutePath)
+            }.result.get().assertNormalExitValue()
+        }
+    }
 }
