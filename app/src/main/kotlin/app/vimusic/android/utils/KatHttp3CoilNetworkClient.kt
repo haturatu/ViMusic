@@ -13,11 +13,9 @@ import coil3.network.NetworkResponseBody
 import coil3.fetch.FetchResult
 import dev.kathttp3.KatHttp3Client
 import dev.kathttp3.KatHttp3ClientConfig
-import dev.kathttp3.KatHttp3Exception
 import dev.kathttp3.KatHttp3Request
 import dev.kathttp3.KatHttp3RetryPolicy
 import dev.kathttp3.PolicyRetryInterceptor
-import dev.kathttp3.QuicTransportException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -98,7 +96,7 @@ class KatHttp3CoilNetworkClient(
             try {
                 return executeBufferedRequest(request, block)
             } catch (failure: Throwable) {
-                if (!failure.isKatHttp3ConnectivityFailure()) throw failure
+                if (!failure.isHttp3TransportFailure()) throw failure
                 Log.i(LOG_TAG, "HTTP/3 unavailable; using OkHttp fallback: ${request.url}")
                 Log.d(LOG_TAG, "HTTP/3 image fallback cause", failure)
                 return executeRequestWithOkHttpFallback(request, block, failure)
@@ -179,11 +177,6 @@ class KatHttp3CoilNetworkClient(
         buffer.readByteArray()
     }
 }
-
-private fun Throwable.isKatHttp3ConnectivityFailure(): Boolean =
-    this is KatHttp3Exception.Timeout ||
-        this is KatHttp3Exception.Dns ||
-        this is QuicTransportException
 
 /** kathttp3 currently uses one HTTP/3 connection per origin; keep its streams bounded. */
 @OptIn(coil3.annotation.ExperimentalCoilApi::class)

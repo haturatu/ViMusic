@@ -30,8 +30,10 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import java.io.IOException
 import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -45,6 +47,7 @@ import java.util.concurrent.atomic.AtomicLong
 class KatHttp3MediaDataSource(
     private val clientFactory: () -> KatHttp3Client,
     private val clientInvalidator: ((KatHttp3Client) -> Unit)? = null,
+    private val clientReleaser: (KatHttp3Client) -> Unit = {},
     private val fallbackFactory: HttpDataSource.Factory = DefaultHttpDataSource.Factory(),
 ) : BaseDataSource(true), HttpDataSource {
     private val sourceId = NEXT_SOURCE_ID.incrementAndGet()
@@ -52,6 +55,7 @@ class KatHttp3MediaDataSource(
     private var dataSpec: DataSpec? = null
     private var call: KatHttp3Call? = null
     private var collector: Job? = null
+    private var activeAttempt: H3Attempt? = null
     @Volatile private var stream: StreamState? = null
     private var currentChunk: ByteArray? = null
     private var currentChunkOffset = 0
@@ -94,7 +98,7 @@ class KatHttp3MediaDataSource(
                 // headers and first body chunk have arrived. A watchdog-cancelled
                 // attempt may otherwise resume later and overwrite the stream
                 // belonging to a newer playback request.
-                val h3Attempt = H3Attempt(StreamState())
+                val h3Attempt = H3Attempt(StreamState(), clientReleaser)
                 val completion = CompletableDeferred<H3Attempt>()
                 h3Attempt.openJob = STREAM_SCOPE.launch {
                     try {
@@ -128,6 +132,8 @@ class KatHttp3MediaDataSource(
                                 if (stream === h3Attempt.state) {
                                     releaseH3Transport("terminal")
                                 }
+                                h3Attempt.releaseClient()
+                                if (activeAttempt === h3Attempt) activeAttempt = null
                             }
                         }
                         val headers = h3Attempt.state.awaitHeaders(HEADERS_WAIT_MILLIS)
@@ -157,6 +163,7 @@ class KatHttp3MediaDataSource(
                     stream = h3Attempt.state
                     call = h3Attempt.call
                     collector = h3Attempt.collector
+                    activeAttempt = h3Attempt
                     responseCode = headers.status
                     responseHeaders = headers.headers.groupBy(KatHttp3Header::name, KatHttp3Header::value)
                     opened = true
@@ -182,11 +189,16 @@ class KatHttp3MediaDataSource(
                 }
                 h3Attempt.cancel()
                 if (attempt + 1 < H3_OPEN_ATTEMPTS) {
-                    // The second and final try must not reuse a suspect QUIC
-                    // connection. The holder invalidates only if this attempt
-                    // still owns the current shared generation.
-                    clientInvalidator?.let { invalidator -> h3Attempt.client?.let(invalidator) }
-                    Log.w(TAG, "HTTP/3 media open attempt ${attempt + 1} failed; retrying with a fresh client", lastError)
+                    if (lastError.isHttp3TransportFailure()) {
+                        // Retire only a connection-level failure. Existing
+                        // streams retain their lease and drain before its
+                        // native client is closed; new requests use a fresh
+                        // generation.
+                        clientInvalidator?.let { invalidator -> h3Attempt.client?.let(invalidator) }
+                        Log.w(TAG, "HTTP/3 media open attempt ${attempt + 1} failed; retrying with a fresh client", lastError)
+                    } else {
+                        Log.w(TAG, "HTTP/3 media open attempt ${attempt + 1} failed; retrying", lastError)
+                    }
                     Thread.sleep(h3OpenRetryBackoffMillis(attempt))
                 }
             }
@@ -284,6 +296,8 @@ class KatHttp3MediaDataSource(
         collector = null
         runCatching { call?.cancel() }
         call = null
+        activeAttempt?.releaseClient()
+        activeAttempt = null
         stream = null
         releaseH3Transport("close")
         currentChunk = null
@@ -316,17 +330,21 @@ class KatHttp3MediaDataSource(
      */
     private fun validateRangeResponse(dataSpec: DataSpec, headers: Headers): IOException? {
         if (headers.status !in 200..299) return IOException("HTTP/3 returned ${headers.status}")
+        val contentRange = if (headers.status == HTTP_PARTIAL_CONTENT) {
+            headers.headers
+                .firstOrNull { it.name.equals(CONTENT_RANGE_HEADER, ignoreCase = true) }
+                ?.value
+                ?: return IOException("HTTP/3 206 response has no Content-Range")
+        } else {
+            null
+        }
         if (dataSpec.position == 0L) return null
         if (headers.status != HTTP_PARTIAL_CONTENT) {
             return IOException(
                 "HTTP/3 ignored Range position=${dataSpec.position}: status=${headers.status}",
             )
         }
-        val contentRange = headers.headers
-            .firstOrNull { it.name.equals(CONTENT_RANGE_HEADER, ignoreCase = true) }
-            ?.value
-            ?: return IOException("HTTP/3 206 response has no Content-Range")
-        val responseStart = CONTENT_RANGE_PATTERN.matchEntire(contentRange)?.groupValues?.get(1)?.toLongOrNull()
+        val responseStart = CONTENT_RANGE_PATTERN.matchEntire(checkNotNull(contentRange))?.groupValues?.get(1)?.toLongOrNull()
             ?: return IOException("Invalid HTTP/3 Content-Range: $contentRange")
         return if (responseStart == dataSpec.position) {
             null
@@ -361,8 +379,9 @@ class KatHttp3MediaDataSource(
         private var defaultRequestProperties: Map<String, String> = emptyMap()
 
         override fun createDataSource(): HttpDataSource = KatHttp3MediaDataSource(
-            clientFactory = { KatHttp3PlaybackClient.get(applicationContext) },
+            clientFactory = { KatHttp3PlaybackClient.acquire(applicationContext) },
             clientInvalidator = KatHttp3PlaybackClient::invalidate,
+            clientReleaser = KatHttp3PlaybackClient::release,
         ).also { source -> defaultRequestProperties.forEach(source::setRequestProperty) }
 
         override fun setDefaultRequestProperties(defaultRequestProperties: Map<String, String>): Factory = apply {
@@ -460,7 +479,10 @@ class KatHttp3MediaDataSource(
     private data class Headers(val status: Int, val headers: List<KatHttp3Header>)
 
     /** Resources belonging to exactly one open attempt. */
-    private class H3Attempt(val state: StreamState) {
+    private class H3Attempt(
+        val state: StreamState,
+        private val clientReleaser: (KatHttp3Client) -> Unit,
+    ) {
         @Volatile var call: KatHttp3Call? = null
         @Volatile var client: KatHttp3Client? = null
         @Volatile var collector: Job? = null
@@ -468,6 +490,7 @@ class KatHttp3MediaDataSource(
         @Volatile var headers: Headers? = null
         @Volatile var hasFirstBody: Boolean = false
         @Volatile var responseError: IOException? = null
+        private val clientReleased = AtomicBoolean(false)
 
         fun cancel() {
             // Closing the channel releases a collector currently blocked
@@ -476,6 +499,12 @@ class KatHttp3MediaDataSource(
             collector?.cancel()
             runCatching { call?.cancel() }
             openJob?.cancel()
+            releaseClient()
+        }
+
+        fun releaseClient() {
+            val activeClient = client ?: return
+            if (clientReleased.compareAndSet(false, true)) clientReleaser(activeClient)
         }
     }
     private sealed interface StreamItem {
@@ -507,10 +536,39 @@ class KatHttp3MediaDataSource(
 
 /** One native HTTP/3 client for all playback range DataSources in this process. */
 object KatHttp3PlaybackClient {
-    @Volatile private var client: KatHttp3Client? = null
+    private data class ClientGeneration(
+        val client: KatHttp3Client,
+        val activeCalls: AtomicInteger = AtomicInteger(),
+        var retired: Boolean = false,
+    )
 
-    fun get(context: Context): KatHttp3Client = client ?: synchronized(this) {
-        client ?: create(context.applicationContext).also { client = it }
+    private var current: ClientGeneration? = null
+    private val generations = IdentityHashMap<KatHttp3Client, ClientGeneration>()
+
+    /** Acquires one request lease from the current client generation. */
+    fun acquire(context: Context): KatHttp3Client = synchronized(this) {
+        val generation = current ?: ClientGeneration(create(context.applicationContext)).also {
+            current = it
+            generations[it.client] = it
+        }
+        generation.activeCalls.incrementAndGet()
+        generation.client
+    }
+
+    /** Releases the lease acquired by [acquire]. */
+    fun release(client: KatHttp3Client) {
+        val closeClient = synchronized(this) {
+            val generation = generations[client]
+            if (generation == null) {
+                null
+            } else {
+                check(generation.activeCalls.decrementAndGet() >= 0) {
+                    "Released HTTP/3 client without an active lease"
+                }
+                closeRetiredIfIdleLocked(generation)
+            }
+        }
+        closeClient?.close()
     }
 
     /**
@@ -518,18 +576,36 @@ object KatHttp3PlaybackClient {
      * an already-rotated client is left untouched by a late failed attempt.
      */
     fun invalidate(expected: KatHttp3Client) {
-        synchronized(this) {
-            if (client !== expected) return
-            client = null
-            runCatching { expected.close() }
-                .onFailure { Log.w("KatHttp3Media", "Failed to close invalidated HTTP/3 client", it) }
+        val closeClient = synchronized(this) {
+            val generation = generations[expected]
+            if (generation == null || generation.retired) {
+                null
+            } else {
+                generation.retired = true
+                if (current === generation) current = null
+                closeRetiredIfIdleLocked(generation)
+            }
+        }
+        closeClient?.let { client ->
+            runCatching { client.close() }
+                .onFailure { Log.w("KatHttp3Media", "Failed to close retired HTTP/3 client", it) }
         }
     }
 
     /** Call when the owning process is deliberately torn down in tests/tools. */
-    fun close() = synchronized(this) {
-        client?.close()
-        client = null
+    fun close() {
+        val closeClients = synchronized(this) {
+            current = null
+            generations.values.forEach { it.retired = true }
+            generations.values.toList().mapNotNull(::closeRetiredIfIdleLocked)
+        }
+        closeClients.forEach { client -> runCatching { client.close() } }
+    }
+
+    private fun closeRetiredIfIdleLocked(generation: ClientGeneration): KatHttp3Client? {
+        if (!generation.retired || generation.activeCalls.get() != 0) return null
+        generations.remove(generation.client)
+        return generation.client
     }
 
     private fun create(context: Context): KatHttp3Client = KatHttp3Client(

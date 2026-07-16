@@ -3,19 +3,16 @@
 package app.vimusic.android.extractor
 
 import android.util.Log
+import app.vimusic.android.utils.isHttp3TransportFailure
 import app.vimusic.android.utils.sanitizeHttp3Headers
 import dev.kathttp3.KatHttp3Client
 import dev.kathttp3.KatHttp3ClientConfig
-import dev.kathttp3.KatHttp3Exception
 import dev.kathttp3.KatHttp3Header
 import dev.kathttp3.KatHttp3Request
 import dev.kathttp3.KatHttp3Response
 import dev.kathttp3.KatHttp3RetryPolicy
 import dev.kathttp3.PolicyRetryInterceptor
-import dev.kathttp3.QuicTransportException
-import dev.kathttp3.TlsHandshakeException
 import dev.kathttp3.decodeContent
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.schabi.newpipe.extractor.downloader.Downloader
@@ -90,7 +87,7 @@ class KatHttp3Downloader(
         } catch (error: ReCaptchaException) {
             throw error
         } catch (error: Exception) {
-            if (!error.isKatHttp3ConnectivityFailure()) throw error
+            if (!error.isHttp3TransportFailure()) throw error
             Log.i(TAG, "HTTP/3 unavailable; using the standard downloader: ${request.url()}")
             Log.d(TAG, "HTTP/3 fallback cause", error)
             fallback.execute(request)
@@ -150,10 +147,3 @@ class KatHttp3Downloader(
         const val HTTP_TOO_MANY_REQUESTS = 429
     }
 }
-
-private fun Throwable.isKatHttp3ConnectivityFailure(): Boolean =
-    this is TimeoutCancellationException ||
-        this is KatHttp3Exception.Dns ||
-        this is KatHttp3Exception.Timeout ||
-        this is QuicTransportException ||
-        this is TlsHandshakeException
