@@ -15,7 +15,6 @@ import dev.kathttp3.KatHttp3RetryPolicy
 import dev.kathttp3.PolicyRetryInterceptor
 import dev.kathttp3.decodeContent
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
@@ -113,10 +112,10 @@ class KatHttp3Downloader(
 
     private fun executeHttp3(request: KatHttp3Request): KatHttp3Response {
         return runBlocking {
-            // Cancelling this watchdog cancels the native request. The
-            // The retry policy above has one attempt, so every method gets
-            // exactly one HTTP/3 chance before the HTTP/2 fallback.
-            withTimeout(HTTP3_WATCHDOG_MILLIS) { client.execute(request) }
+            // Kathttp3 owns the request deadline. Keeping a second, shorter
+            // coroutine watchdog would make its configured timeout budget
+            // unreachable and obscure the native failure classification.
+            client.execute(request)
         }
     }
 
@@ -160,7 +159,6 @@ class KatHttp3Downloader(
 
     private companion object {
         const val TAG = "KatHttp3Downloader"
-        const val HTTP3_WATCHDOG_MILLIS = 5_000L
         const val HTTP_TOO_MANY_REQUESTS = 429
     }
 }
