@@ -114,10 +114,9 @@ class KatHttp3CoilNetworkClient(
         ) {
             try {
                 return executeBufferedRequest(resolvedRequest, block, request.url)
+            } catch (_: IncompatibleThumbnailHostException) {
+                return executeBufferedRequest(request, block)
             } catch (failure: Throwable) {
-                if (failure is IncompatibleThumbnailHostException) {
-                    return executeBufferedRequest(request, block)
-                }
                 if (!failure.isHttp3TransportFailure()) throw failure
                 Http3OriginPolicy.recordHttp3Failure(resolvedRequest.url, failure)
                 Log.i(LOG_TAG, "HTTP/3 unavailable; using OkHttp fallback: ${resolvedRequest.url}")
@@ -136,72 +135,81 @@ class KatHttp3CoilNetworkClient(
     ): T {
         val fallbackStartedAt = SystemClock.elapsedRealtime()
         val response = try {
-            withContext(Dispatchers.IO) {
-                val requestMillis = System.currentTimeMillis()
-                val method = request.method.uppercase()
-                val contentType = request.headers.asMap()
-                    .entries
-                    .firstOrNull { (name, _) -> name.equals("content-type", ignoreCase = true) }
-                    ?.value
-                    ?.firstOrNull()
-                    ?.toMediaTypeOrNull()
-                val requestBody = when (method) {
-                    "GET", "HEAD" -> null
-                    else -> (request.body?.toByteArray() ?: ByteArray(0)).toRequestBody(contentType)
-                }
-                val httpRequest = Request.Builder()
-                    .url(request.url)
-                    .apply {
-                        request.headers.asMap().forEach { (name, values) ->
-                            values.forEach { value -> addHeader(name, value) }
-                        }
-                        method(method, requestBody)
-                    }
-                    .build()
-                fallbackClient.newCall(httpRequest).execute().use { httpResponse ->
-                    if (YoutubeThumbnailHostResolver.shouldRetryOriginal(
-                            originalUrl,
-                            request.url,
-                            httpResponse.code,
-                            httpResponse.header("content-type"),
-                            if (httpResponse.body.contentLength() == 0L) 0 else 1,
-                        )
-                    ) throw IncompatibleThumbnailHostException()
-                    YoutubeThumbnailHostResolver.recordResponse(
-                        request.url,
-                        httpResponse.code,
-                        httpResponse.header("content-type"),
-                        SystemClock.elapsedRealtime() - fallbackStartedAt,
-                    )
-                    Http3OriginPolicy.recordOriginResponse(
-                        request.url,
-                        httpResponse.headers.map { (name, value) -> name to value },
-                    )
-                    NetworkResponse(
-                        code = httpResponse.code,
-                        requestMillis = requestMillis,
-                        responseMillis = System.currentTimeMillis(),
-                        headers = NetworkHeaders.Builder().apply {
-                            httpResponse.headers.forEach { (name, value) -> add(name, value) }
-                        }.build(),
-                        body = ByteArrayNetworkResponseBody(httpResponse.body.bytes()),
-                    ).also {
-                        Log.i(LOG_TAG, "OkHttp ${httpResponse.protocol}: ${httpResponse.code} ${request.url}")
-                    }
-                }
-            }
+            executeOkHttpFallback(request, originalUrl, fallbackStartedAt)
+        } catch (incompatibleHost: IncompatibleThumbnailHostException) {
+            originalFailure?.let(incompatibleHost::addSuppressed)
+            throw incompatibleHost
         } catch (fallbackError: Throwable) {
-            if (fallbackError !is IncompatibleThumbnailHostException) {
-                YoutubeThumbnailHostResolver.recordFailure(
-                    request.url,
-                    fallbackError,
-                    SystemClock.elapsedRealtime() - fallbackStartedAt,
-                )
-            }
+            YoutubeThumbnailHostResolver.recordFailure(request.url, fallbackError)
             originalFailure?.let(fallbackError::addSuppressed)
             throw fallbackError
         }
         return block(response)
+    }
+
+    private suspend fun executeOkHttpFallback(
+        request: NetworkRequest,
+        originalUrl: String,
+        startedAt: Long,
+    ): NetworkResponse = withContext(Dispatchers.IO) {
+        val requestMillis = System.currentTimeMillis()
+        val httpRequest = request.toOkHttpRequest()
+        fallbackClient.newCall(httpRequest).execute().use { httpResponse ->
+            val contentType = httpResponse.header("content-type")
+            if (YoutubeThumbnailHostResolver.shouldRetryOriginal(
+                    originalUrl = originalUrl,
+                    resolvedUrl = request.url,
+                    status = httpResponse.code,
+                    contentType = contentType,
+                    bodySize = if (httpResponse.body.contentLength() == 0L) 0 else 1,
+                )
+            ) throw IncompatibleThumbnailHostException()
+
+            YoutubeThumbnailHostResolver.recordResponse(
+                request.url,
+                httpResponse.code,
+                contentType,
+                SystemClock.elapsedRealtime() - startedAt,
+            )
+            Http3OriginPolicy.recordOriginResponse(
+                request.url,
+                httpResponse.headers.map { (name, value) -> name to value },
+            )
+            NetworkResponse(
+                code = httpResponse.code,
+                requestMillis = requestMillis,
+                responseMillis = System.currentTimeMillis(),
+                headers = NetworkHeaders.Builder().apply {
+                    httpResponse.headers.forEach { (name, value) -> add(name, value) }
+                }.build(),
+                body = ByteArrayNetworkResponseBody(httpResponse.body.bytes()),
+            ).also {
+                Log.i(LOG_TAG, "OkHttp ${httpResponse.protocol}: ${httpResponse.code} ${request.url}")
+            }
+        }
+    }
+
+    private suspend fun NetworkRequest.toOkHttpRequest(): Request {
+        val requestMethod = method.uppercase()
+        val contentType = headers.asMap()
+            .entries
+            .firstOrNull { (name, _) -> name.equals("content-type", ignoreCase = true) }
+            ?.value
+            ?.firstOrNull()
+            ?.toMediaTypeOrNull()
+        val requestBody = when (requestMethod) {
+            "GET", "HEAD" -> null
+            else -> (body?.toByteArray() ?: ByteArray(0)).toRequestBody(contentType)
+        }
+        return Request.Builder()
+            .url(url)
+            .apply {
+                headers.asMap().forEach { (name, values) ->
+                    values.forEach { value -> addHeader(name, value) }
+                }
+                method(requestMethod, requestBody)
+            }
+            .build()
     }
 
     private suspend fun <T> executeBufferedRequest(
