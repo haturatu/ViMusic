@@ -8,6 +8,7 @@ val <T> CancellableContinuation<T>.asCancellationSignal get() = CancellationSign
     it.setOnCancelListener { cancel() }
 }
 
+@Suppress("TooGenericExceptionCaught")
 suspend inline fun <T> runSuspendCatching(
     crossinline block: suspend () -> T,
 ): Result<T> = try {
