@@ -93,8 +93,10 @@ class KatHttp3CoilNetworkClient(
             return executeRequestWithOkHttpFallback(request, block, null)
         }
         // PolicyRetryInterceptor retries idempotent requests once for a
-        // timeout, DNS failure, or QUIC transport failure. Once its attempt
-        // budget is exhausted, retain HTTPS as the availability fallback.
+        // timeout, DNS failure, or QUIC transport failure. Only idempotent
+        // requests may then use the HTTP fallback: retrying a failed POST or
+        // PUT could apply the same side effect twice. The fallback still
+        // builds their bodies for the Alt-Svc-unavailable path above.
         if (request.method.equals("GET", ignoreCase = true) ||
             request.method.equals("HEAD", ignoreCase = true)
         ) {
