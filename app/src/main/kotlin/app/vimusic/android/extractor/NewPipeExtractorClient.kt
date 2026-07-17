@@ -25,7 +25,8 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 
 object NewPipeExtractorClient {
-    private var initialized = false
+    @Volatile private var initialized = false
+    private val initializationLock = Any()
     private val lock = ReentrantLock()
     private val downloaderLock = Any()
     private val appContextRef = AtomicReference<Context?>()
@@ -39,8 +40,11 @@ object NewPipeExtractorClient {
 
     fun ensureInitialized() {
         if (initialized) return
-        configureDownloader(NewPipeDnsTarget.System)
-        initialized = true
+        synchronized(initializationLock) {
+            if (initialized) return
+            configureDownloader(NewPipeDnsTarget.System)
+            initialized = true
+        }
     }
 
     @Throws(IOException::class, ExtractionException::class)
