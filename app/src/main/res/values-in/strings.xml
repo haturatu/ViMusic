@@ -170,7 +170,7 @@
     <string name="view_playlist">Lihat daftar putar</string>
 
     <string name="search_placeholder">Masukkan nama</string>
-    <string name="format_version_credits">v%1$s oleh  vfsfitvnm</string>
+    <string name="format_version_credits">v%1$s • Di-fork dari vfsfitvnm oleh haturatu</string>
     <string name="social">Sosial</string>
     <string name="contact">Kontak</string>
     <string name="github">GitHub</string>
