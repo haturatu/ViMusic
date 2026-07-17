@@ -144,7 +144,8 @@ class KatHttp3MediaDataSource(
                         h3Attempt.headers = headers
                         h3Attempt.responseError = headers?.let { validateRangeResponse(dataSpec, it) }
                         h3Attempt.hasFirstBody = headers != null && h3Attempt.responseError == null &&
-                            h3Attempt.state.awaitFirstBody(FIRST_BODY_WAIT_MILLIS)
+                            (!requiresFirstBody(dataSpec, headers) ||
+                                h3Attempt.state.awaitFirstBody(FIRST_BODY_WAIT_MILLIS))
                         completion.complete(h3Attempt)
                     } catch (error: Throwable) {
                         completion.completeExceptionally(error)
@@ -443,6 +444,15 @@ class KatHttp3MediaDataSource(
     private fun requestedLength(dataSpec: DataSpec): Long =
         dataSpec.length.takeIf { it != C.LENGTH_UNSET.toLong() } ?: contentLength(dataSpec)
 
+    private fun requiresFirstBody(dataSpec: DataSpec, headers: Headers): Boolean {
+        if (dataSpec.httpMethod == DataSpec.HTTP_METHOD_HEAD || dataSpec.length == 0L) return false
+        if (headers.status == HTTP_NO_CONTENT || headers.status == HTTP_NOT_MODIFIED) return false
+        return headers.headers
+            .firstOrNull { it.name.equals(CONTENT_LENGTH_HEADER, ignoreCase = true) }
+            ?.value
+            ?.toLongOrNull() != 0L
+    }
+
     class Factory(context: Context) : HttpDataSource.Factory {
         private val applicationContext = context.applicationContext
         private var defaultRequestProperties: Map<String, String> = emptyMap()
@@ -584,12 +594,12 @@ class KatHttp3MediaDataSource(
 
     private companion object {
         const val TAG = "KatHttp3Media"
-        // Playback must reach the standard HTTP fallback promptly. Attempt 1
-        // uses the shared connection; attempt 2 gets a fresh generation.
-        const val H3_OPEN_ATTEMPTS = 2
+        // An Alt-Svc route that is unusable must not add a multi-second retry
+        // chain before Media3 can start the standard HTTP fallback.
+        const val H3_OPEN_ATTEMPTS = 1
         const val H3_OPEN_INITIAL_RETRY_BACKOFF_MILLIS = 100L
         const val H3_OPEN_MAX_RETRY_BACKOFF_MILLIS = 100L
-        const val H3_ATTEMPT_DEADLINE_MILLIS = 7_000L
+        const val H3_ATTEMPT_DEADLINE_MILLIS = 6_000L
         const val HEADERS_WAIT_MILLIS = 3_500L
         const val FIRST_BODY_WAIT_MILLIS = 2_500L
         // kathttp3 owns the primary 30s consumer-stall timeout. Keep this
@@ -597,7 +607,10 @@ class KatHttp3MediaDataSource(
         const val STREAM_DELIVERY_STALL_MILLIS = 35_000L
         const val LOG_EVERY_BYTES = 1_048_576L
         const val HTTP_PARTIAL_CONTENT = 206
+        const val HTTP_NO_CONTENT = 204
+        const val HTTP_NOT_MODIFIED = 304
         const val CONTENT_RANGE_HEADER = "content-range"
+        const val CONTENT_LENGTH_HEADER = "content-length"
         val CONTENT_RANGE_PATTERN = Regex("bytes\\s+(\\d+)-\\d+/(?:\\d+|\\*)", RegexOption.IGNORE_CASE)
         val NEXT_SOURCE_ID = AtomicLong()
         val ACTIVE_H3_SOURCES = AtomicLong()
