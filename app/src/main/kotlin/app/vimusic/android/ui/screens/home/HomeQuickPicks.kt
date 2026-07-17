@@ -38,6 +38,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.LocalPlayerServiceBinder
@@ -60,6 +61,7 @@ import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.screens.Route
 import app.vimusic.android.ui.viewmodels.HomeQuickPicksViewModel
+import app.vimusic.android.ui.viewmodels.QuickPicksUiState
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.center
 import app.vimusic.android.utils.forcePlay
@@ -94,20 +96,22 @@ fun QuickPicks(
 
     var trending by persist<Song?>("home/trending")
 
-    var relatedPageResult by persist<Result<YoutubeMusicInnertube.RelatedPage?>?>(tag = "home/relatedPageResult")
+    val quickPicksState by viewModel.uiState.collectAsStateWithLifecycle()
+    val relatedPage = when (val state = quickPicksState) {
+        QuickPicksUiState.Loading -> null
+        is QuickPicksUiState.Content -> state.page
+        is QuickPicksUiState.Error -> state.stalePage
+    }
 
-    LaunchedEffect(relatedPageResult, DataPreferences.shouldCacheQuickPicks) {
-        if (DataPreferences.shouldCacheQuickPicks)
-            relatedPageResult?.getOrNull()?.let(viewModel::cacheQuickPicks)
-        else viewModel.clearCachedQuickPicks()
+    LaunchedEffect(DataPreferences.shouldCacheQuickPicks) {
+        if (!DataPreferences.shouldCacheQuickPicks) viewModel.clearCachedQuickPicks()
     }
 
     LaunchedEffect(DataPreferences.quickPicksSource) {
-        viewModel.getCachedQuickPicksIfAvailable()?.let { relatedPageResult = Result.success(it) }
-
         suspend fun handleSong(song: Song?) {
-            if (relatedPageResult == null || trending?.id != song?.id) relatedPageResult =
-                viewModel.fetchRelatedPage(videoId = (song?.id ?: "J7p4bzqLvCw"))
+            if (trending?.id != song?.id || quickPicksState is QuickPicksUiState.Loading) {
+                viewModel.load(videoId = song?.id ?: "J7p4bzqLvCw")
+            }
             trending = song
         }
 
@@ -165,7 +169,7 @@ fun QuickPicks(
                 modifier = Modifier.padding(endPaddingValues)
             )
 
-            relatedPageResult?.getOrNull()?.let { related ->
+            relatedPage?.let { related ->
                 LazyHorizontalGrid(
                     state = quickPicksLazyGridState,
                     rows = GridCells.Fixed(4),
@@ -320,12 +324,13 @@ fun QuickPicks(
                 }
 
                 Unit
-            } ?: relatedPageResult?.exceptionOrNull()?.let {
+            } ?: (quickPicksState as? QuickPicksUiState.Error)?.let {
                 BasicText(
                     text = stringResource(R.string.error_message),
                     style = typography.s.secondary.center,
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
+                        .clickable { viewModel.retry() }
                         .padding(all = 16.dp)
                 )
             } ?: ShimmerHost {
