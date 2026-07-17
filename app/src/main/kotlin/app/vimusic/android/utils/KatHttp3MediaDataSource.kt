@@ -170,7 +170,7 @@ class KatHttp3MediaDataSource(
                     activeAttempt = h3Attempt
                     responseCode = headers.status
                     responseHeaders = headers.headers.groupBy(KatHttp3Header::name, KatHttp3Header::value)
-                    Http3OriginPolicy.recordHttp3Success(
+                    Http3OriginPolicy.recordHttp3Response(
                         dataSpec.uri.toString(),
                         headers.status,
                         headers.headers.map { it.name to it.value },
@@ -311,9 +311,8 @@ class KatHttp3MediaDataSource(
         }
         return try {
             val length = source.open(dataSpec)
-            Http3OriginPolicy.recordHttpResponse(
+            Http3OriginPolicy.recordOriginResponse(
                 dataSpec.uri.toString(),
-                source.responseCode,
                 source.responseHeaders.flatMap { (name, values) -> values.map { name to it } },
             )
             fallback = source

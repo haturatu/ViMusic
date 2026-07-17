@@ -76,7 +76,7 @@ class KatHttp3Downloader(
                 body = request.dataToSend(),
             )
             val rawResponse = executeHttp3(katRequest)
-            Http3OriginPolicy.recordHttp3Success(
+            Http3OriginPolicy.recordHttp3Response(
                 request.url(),
                 rawResponse.status,
                 rawResponse.headers.map { it.name to it.value },
@@ -105,9 +105,8 @@ class KatHttp3Downloader(
     }
 
     private fun executeStandard(request: Request): Response = fallback.execute(request).also { response ->
-        Http3OriginPolicy.recordHttpResponse(
+        Http3OriginPolicy.recordOriginResponse(
             request.url(),
-            response.responseCode(),
             response.responseHeaders().flatMap { (name, values) -> values.map { name to it } },
         )
     }

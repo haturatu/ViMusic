@@ -127,9 +127,8 @@ class KatHttp3CoilNetworkClient(
                     }
                     .build()
                 fallbackClient.newCall(httpRequest).execute().use { httpResponse ->
-                    Http3OriginPolicy.recordHttpResponse(
+                    Http3OriginPolicy.recordOriginResponse(
                         request.url,
-                        httpResponse.code,
                         httpResponse.headers.map { (name, value) -> name to value },
                     )
                     NetworkResponse(
@@ -167,7 +166,7 @@ class KatHttp3CoilNetworkClient(
                 body = request.body?.toByteArray(),
             ),
         )
-        Http3OriginPolicy.recordHttp3Success(
+        Http3OriginPolicy.recordHttp3Response(
             request.url,
             response.status,
             response.headers.map { it.name to it.value },
