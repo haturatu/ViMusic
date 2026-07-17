@@ -85,6 +85,8 @@ import app.vimusic.android.ui.components.themed.TextToggle
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.modifiers.swipeToClose
+import app.vimusic.android.ui.state.LoadState
+import app.vimusic.android.ui.state.contentOrNull
 import app.vimusic.android.ui.viewmodels.QueueViewModel
 import app.vimusic.android.utils.DisposableListener
 import app.vimusic.android.utils.addNext
@@ -97,7 +99,6 @@ import app.vimusic.android.utils.shouldBePlaying
 import app.vimusic.android.utils.shuffleQueue
 import app.vimusic.android.utils.smoothScrollToTop
 import app.vimusic.android.utils.windows
-import app.vimusic.compose.persist.persist
 import app.vimusic.compose.reordering.animateItemPlacement
 import app.vimusic.compose.reordering.draggedItem
 import app.vimusic.compose.reordering.rememberReorderingState
@@ -110,7 +111,6 @@ import app.vimusic.core.ui.utils.roundedShape
 import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -139,7 +139,7 @@ fun Queue(
         .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
         .asPaddingValues()
 
-    var suggestions by persist<Result<List<MediaItem>?>?>(tag = "queue/suggestions")
+    val suggestionsState by viewModel.suggestions.collectAsStateWithLifecycle()
 
     var mediaItemIndex by remember {
         mutableIntStateOf(if (binder.player.mediaItemCount == 0) -1 else binder.player.currentMediaItemIndex)
@@ -160,8 +160,8 @@ fun Queue(
             val queuedMediaIds = windows.asSequence()
                 .map { it.mediaItem.mediaId }
                 .toHashSet()
-            suggestions
-                ?.getOrNull()
+            suggestionsState
+                .contentOrNull()
                 .orEmpty()
                 .filter { it.mediaId !in queuedMediaIds }
         }
@@ -174,15 +174,10 @@ fun Queue(
     }
 
     LaunchedEffect(mediaItemIndex, shouldLoadSuggestions) {
-        if (shouldLoadSuggestions) withContext(Dispatchers.IO) {
-            suggestions = runCatching {
-                viewModel.fetchSuggestions(videoId = windows[mediaItemIndex].mediaItem.mediaId)
-            }.also { it.exceptionOrNull()?.printStackTrace() }
+        viewModel.clearSuggestions()
+        if (shouldLoadSuggestions && mediaItemIndex in windows.indices) {
+            viewModel.loadSuggestions(videoId = windows[mediaItemIndex].mediaItem.mediaId)
         }
-    }
-
-    LaunchedEffect(mediaItemIndex) {
-        suggestions = null
     }
 
     binder.player.DisposableListener {
@@ -409,7 +404,7 @@ fun Queue(
                             key = "loading",
                             contentType = { ContentType.Placeholder }
                         ) {
-                            if (binder.isLoadingRadio || suggestions == null)
+                            if (binder.isLoadingRadio || suggestionsState is LoadState.Idle || suggestionsState is LoadState.Loading)
                                 Column(modifier = Modifier.shimmer()) {
                                     repeat(3) { index ->
                                         SongItemPlaceholder(
