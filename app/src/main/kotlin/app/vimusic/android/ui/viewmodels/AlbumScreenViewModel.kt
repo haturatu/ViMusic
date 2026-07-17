@@ -1,7 +1,6 @@
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import app.vimusic.android.models.Album
 import app.vimusic.android.repositories.AlbumRepository
 
@@ -34,11 +33,8 @@ class AlbumScreenViewModel(
     }
 
     companion object {
-        fun factory(repository: AlbumRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    AlbumScreenViewModel(repository = repository) as T
-            }
+        fun factory(repository: AlbumRepository) = viewModelFactory {
+            AlbumScreenViewModel(repository = repository)
+        }
     }
 }

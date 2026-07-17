@@ -1,7 +1,6 @@
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import app.vimusic.android.models.Song
 import app.vimusic.android.repositories.BuiltInPlaylistRepository
 import app.vimusic.core.data.enums.BuiltInPlaylist
@@ -33,11 +32,8 @@ class BuiltInPlaylistSongsViewModel(
     }
 
     companion object {
-        fun factory(repository: BuiltInPlaylistRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    BuiltInPlaylistSongsViewModel(repository = repository) as T
-            }
+        fun factory(repository: BuiltInPlaylistRepository) = viewModelFactory {
+            BuiltInPlaylistSongsViewModel(repository = repository)
+        }
     }
 }

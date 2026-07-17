@@ -1,7 +1,6 @@
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import app.vimusic.android.models.Playlist
 import app.vimusic.android.repositories.LocalPlaylistRepository
 
@@ -23,11 +22,8 @@ class LocalPlaylistViewModel(
         repository.sync(playlist = playlist, browseId = browseId)
 
     companion object {
-        fun factory(repository: LocalPlaylistRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    LocalPlaylistViewModel(repository = repository) as T
-            }
+        fun factory(repository: LocalPlaylistRepository) = viewModelFactory {
+            LocalPlaylistViewModel(repository = repository)
+        }
     }
 }

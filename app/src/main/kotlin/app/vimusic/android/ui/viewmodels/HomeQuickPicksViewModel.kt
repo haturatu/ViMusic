@@ -3,7 +3,6 @@
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import app.vimusic.android.models.Song
 import app.vimusic.android.repositories.HomeQuickPicksRepository
@@ -84,11 +83,8 @@ class HomeQuickPicksViewModel(
     fun clearCachedQuickPicks() = repository.clearCachedQuickPicks()
 
     companion object {
-        fun factory(repository: HomeQuickPicksRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    HomeQuickPicksViewModel(repository = repository) as T
-            }
+        fun factory(repository: HomeQuickPicksRepository) = viewModelFactory {
+            HomeQuickPicksViewModel(repository = repository)
+        }
     }
 }
