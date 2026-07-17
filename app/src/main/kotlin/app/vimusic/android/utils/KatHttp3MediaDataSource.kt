@@ -293,17 +293,28 @@ class KatHttp3MediaDataSource(
             TAG,
             "source=$sourceId close h3=${stream != null} fallback=${fallback != null}",
         )
-        stopStreaming()
-        fallback?.close()
-        fallback = null
-        responseCode = -1
-        responseHeaders = emptyMap()
-        responseUri = null
-        dataSpec = null
-        bytesRemaining = C.LENGTH_UNSET.toLong()
-        if (opened) {
-            opened = false
-            transferEnded()
+        var closeError: Throwable? = null
+        try {
+            stopStreaming()
+            fallback?.close()
+        } catch (error: Throwable) {
+            closeError = error
+        } finally {
+            fallback = null
+            responseCode = -1
+            responseHeaders = emptyMap()
+            responseUri = null
+            dataSpec = null
+            bytesRemaining = C.LENGTH_UNSET.toLong()
+            currentChunk = null
+            currentChunkOffset = 0
+            if (opened) {
+                opened = false
+                transferEnded()
+            }
+        }
+        closeError?.let { error ->
+            throw error as? IOException ?: IOException("Failed to close data source", error)
         }
     }
 
