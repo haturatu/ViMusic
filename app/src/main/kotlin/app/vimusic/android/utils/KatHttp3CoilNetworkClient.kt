@@ -97,7 +97,11 @@ class KatHttp3CoilNetworkClient(
         val resolvedRequest = request.copy(url = YoutubeThumbnailHostResolver.resolve(request.url))
         val startedAt = SystemClock.elapsedRealtime()
         if (!Http3OriginPolicy.shouldAttemptHttp3(resolvedRequest.url)) {
-            return executeRequestWithOkHttpFallback(resolvedRequest, block, null)
+            return try {
+                executeRequestWithOkHttpFallback(resolvedRequest, block, null, request.url)
+            } catch (_: IncompatibleThumbnailHostException) {
+                executeRequestWithOkHttpFallback(request, block, null)
+            }
         }
         // PolicyRetryInterceptor retries idempotent requests once for a
         // timeout, DNS failure, or QUIC transport failure. Only idempotent
@@ -108,32 +112,31 @@ class KatHttp3CoilNetworkClient(
             resolvedRequest.method.equals("HEAD", ignoreCase = true)
         ) {
             try {
-                return executeBufferedRequest(resolvedRequest, block)
+                return executeBufferedRequest(resolvedRequest, block, request.url)
             } catch (failure: Throwable) {
+                if (failure is IncompatibleThumbnailHostException) {
+                    return executeBufferedRequest(request, block)
+                }
                 if (!failure.isHttp3TransportFailure()) throw failure
-                YoutubeThumbnailHostResolver.recordFailure(
-                    resolvedRequest.url,
-                    failure,
-                    SystemClock.elapsedRealtime() - startedAt,
-                )
                 Http3OriginPolicy.recordHttp3Failure(resolvedRequest.url, failure)
                 Log.i(LOG_TAG, "HTTP/3 unavailable; using OkHttp fallback: ${resolvedRequest.url}")
                 Log.d(LOG_TAG, "HTTP/3 image fallback cause", failure)
-                return executeRequestWithOkHttpFallback(resolvedRequest, block, failure)
+                return executeRequestWithOkHttpFallback(resolvedRequest, block, failure, request.url)
             }
         }
-        return executeBufferedRequest(resolvedRequest, block)
+        return executeBufferedRequest(resolvedRequest, block, request.url)
     }
 
     private suspend fun <T> executeRequestWithOkHttpFallback(
         request: NetworkRequest,
         block: suspend (NetworkResponse) -> T,
         originalFailure: Throwable?,
+        originalUrl: String = request.url,
     ): T {
+        val fallbackStartedAt = SystemClock.elapsedRealtime()
         val response = try {
             withContext(Dispatchers.IO) {
                 val requestMillis = System.currentTimeMillis()
-                val startedAt = SystemClock.elapsedRealtime()
                 val method = request.method.uppercase()
                 val contentType = request.headers.asMap()
                     .entries
@@ -155,11 +158,19 @@ class KatHttp3CoilNetworkClient(
                     }
                     .build()
                 fallbackClient.newCall(httpRequest).execute().use { httpResponse ->
+                    if (YoutubeThumbnailHostResolver.shouldRetryOriginal(
+                            originalUrl,
+                            request.url,
+                            httpResponse.code,
+                            httpResponse.header("content-type"),
+                            if (httpResponse.body.contentLength() == 0L) 0 else 1,
+                        )
+                    ) throw IncompatibleThumbnailHostException()
                     YoutubeThumbnailHostResolver.recordResponse(
                         request.url,
                         httpResponse.code,
                         httpResponse.header("content-type"),
-                        SystemClock.elapsedRealtime() - startedAt,
+                        SystemClock.elapsedRealtime() - fallbackStartedAt,
                     )
                     Http3OriginPolicy.recordOriginResponse(
                         request.url,
@@ -179,6 +190,13 @@ class KatHttp3CoilNetworkClient(
                 }
             }
         } catch (fallbackError: Throwable) {
+            if (fallbackError !is IncompatibleThumbnailHostException) {
+                YoutubeThumbnailHostResolver.recordFailure(
+                    request.url,
+                    fallbackError,
+                    SystemClock.elapsedRealtime() - fallbackStartedAt,
+                )
+            }
             originalFailure?.let(fallbackError::addSuppressed)
             throw fallbackError
         }
@@ -188,6 +206,7 @@ class KatHttp3CoilNetworkClient(
     private suspend fun <T> executeBufferedRequest(
         request: NetworkRequest,
         block: suspend (NetworkResponse) -> T,
+        originalUrl: String = request.url,
     ): T {
         val requestMillis = System.currentTimeMillis()
         val startedAt = SystemClock.elapsedRealtime()
@@ -212,6 +231,14 @@ class KatHttp3CoilNetworkClient(
             response.headers.firstOrNull { it.name.equals("content-type", ignoreCase = true) }?.value,
             SystemClock.elapsedRealtime() - startedAt,
         )
+        if (YoutubeThumbnailHostResolver.shouldRetryOriginal(
+                originalUrl = originalUrl,
+                resolvedUrl = request.url,
+                status = response.status,
+                contentType = response.headers.firstOrNull { it.name.equals("content-type", ignoreCase = true) }?.value,
+                bodySize = response.body.size,
+            )
+        ) throw IncompatibleThumbnailHostException()
         Log.i(LOG_TAG, "${response.protocol.uppercase()}: ${response.status} ${request.url}")
         return block(
             NetworkResponse(
@@ -231,6 +258,8 @@ class KatHttp3CoilNetworkClient(
         buffer.readByteArray()
     }
 }
+
+private class IncompatibleThumbnailHostException : IOException("Thumbnail host rejected this image")
 
 /** kathttp3 currently uses one HTTP/3 connection per origin; keep its streams bounded. */
 @OptIn(coil3.annotation.ExperimentalCoilApi::class)

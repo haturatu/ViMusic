@@ -72,10 +72,17 @@ object YoutubeThumbnailHostResolver {
         if (originalHost !in supportedHosts) return url
         val now = SystemClock.elapsedRealtime()
         val selectedHost = synchronized(lock) {
+            // Host rewriting is an availability fallback, not an exploration
+            // mechanism. Preserve the API-provided host until it has a real
+            // transport failure streak; hosts are not guaranteed object-wise
+            // interchangeable.
+            val original = stats[originalHost]
+            if (original == null || original.blockedUntilElapsedMillis <= now) return@synchronized originalHost
             (listOf(originalHost) + supportedHosts)
                 .distinct()
+                .filter { it != originalHost }
                 .maxByOrNull { host -> stats[host]?.stabilityScore(now) ?: defaultScore(host, originalHost) }
-        } ?: return url
+        } ?: originalHost
         return if (selectedHost == originalHost) url else uri.buildUpon().authority(selectedHost).build().toString()
     }
 
@@ -102,6 +109,11 @@ object YoutubeThumbnailHostResolver {
         }
     }
 
+    fun shouldRetryOriginal(originalUrl: String, resolvedUrl: String, status: Int, contentType: String?, bodySize: Int): Boolean =
+        originalUrl != resolvedUrl &&
+            (status in setOf(403, 404, 410, 421) ||
+                contentType?.startsWith("image/", ignoreCase = true) != true || bodySize == 0)
+
     private fun refreshLegacyNetwork() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) return
         val network = connectivity?.activeNetwork
@@ -117,10 +129,10 @@ object YoutubeThumbnailHostResolver {
     }
 
     private fun defaultScore(host: String, originalHost: String): Double = when {
-        host == originalHost -> 9_500.0
-        host == "yt3.googleusercontent.com" -> 9_000.0
-        host == "yt3.ggpht.com" -> 8_500.0
-        else -> 8_000.0
+        host == originalHost -> PRIOR_SCORE + 300.0
+        host == "yt3.googleusercontent.com" -> PRIOR_SCORE + 200.0
+        host == "yt3.ggpht.com" -> PRIOR_SCORE + 100.0
+        else -> PRIOR_SCORE
     }
 
     private data class HostStats(
@@ -172,6 +184,7 @@ object YoutubeThumbnailHostResolver {
         "yt3.ggpht.com",
         "yt4.ggpht.com",
     )
+    private const val PRIOR_SCORE = 7_900.0
 }
 
 val YoutubeMusicInnertube.SongItem.asMediaItem: MediaItem
