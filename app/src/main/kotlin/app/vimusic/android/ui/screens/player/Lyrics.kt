@@ -251,7 +251,7 @@ fun Lyrics(
                             try {
                                 var fixed = currentLyrics?.fixed
                                 if (fixed.isNullOrBlank()) {
-                                    fixed = viewModel.fetchInnertubeLyrics(mediaId)
+                                    fixed = viewModel.fetchYoutubeMusicInnertubeLyrics(mediaId)
                                 }
 
                                 var attempt = 0

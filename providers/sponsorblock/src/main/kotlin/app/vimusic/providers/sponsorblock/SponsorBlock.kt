@@ -1,10 +1,7 @@
 package app.vimusic.providers.sponsorblock
 
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
+import app.vimusic.providers.utils.ProviderHttpClient
 import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.plugins.compression.ContentEncoding
-import io.ktor.client.plugins.compression.brotli
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.accept
@@ -17,7 +14,7 @@ import java.io.IOException
 
 object SponsorBlock {
     internal val httpClient by lazy {
-        HttpClient(CIO) {
+        ProviderHttpClient.create {
             install(ContentNegotiation) {
                 json(
                     Json {
@@ -46,12 +43,6 @@ object SponsorBlock {
                     it.headers.append("Connection", "close")
                     it.headers.append("Cache-Control", "no-cache")
                 }
-            }
-
-            install(ContentEncoding) {
-                brotli()
-                gzip()
-                deflate()
             }
 
             expectSuccess = true

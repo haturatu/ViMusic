@@ -4,19 +4,19 @@ import app.vimusic.android.Database
 import app.vimusic.android.models.Song
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.query
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.NextBody
-import app.vimusic.providers.innertube.requests.relatedPage
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
+import app.vimusic.providers.youtubemusic.innertube.models.bodies.NextBody
+import app.vimusic.providers.youtubemusic.innertube.requests.relatedPage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 interface HomeQuickPicksRepository {
     fun observeTrendingSong(): Flow<Song?>
     fun observeLastInteractionSong(): Flow<Song?>
-    suspend fun fetchRelatedPage(videoId: String): Result<Innertube.RelatedPage?>?
+    suspend fun fetchRelatedPage(videoId: String): Result<YoutubeMusicInnertube.RelatedPage?>?
     fun clearEventsFor(songId: String)
-    fun getCachedQuickPicksIfAvailable(): Innertube.RelatedPage?
-    fun cacheQuickPicks(page: Innertube.RelatedPage)
+    fun getCachedQuickPicksIfAvailable(): YoutubeMusicInnertube.RelatedPage?
+    fun cacheQuickPicks(page: YoutubeMusicInnertube.RelatedPage)
     fun clearCachedQuickPicks()
 }
 
@@ -27,14 +27,14 @@ object DatabaseHomeQuickPicksRepository : HomeQuickPicksRepository {
     override fun observeLastInteractionSong(): Flow<Song?> =
         Database.events().map { events -> events.firstOrNull()?.song }
 
-    override suspend fun fetchRelatedPage(videoId: String): Result<Innertube.RelatedPage?>? =
-        Innertube.relatedPage(body = NextBody(videoId = videoId))
+    override suspend fun fetchRelatedPage(videoId: String): Result<YoutubeMusicInnertube.RelatedPage?>? =
+        YoutubeMusicInnertube.relatedPage(body = NextBody(videoId = videoId))
 
     override fun clearEventsFor(songId: String) {
         query { Database.clearEventsFor(songId) }
     }
 
-    override fun getCachedQuickPicksIfAvailable(): Innertube.RelatedPage? {
+    override fun getCachedQuickPicksIfAvailable(): YoutubeMusicInnertube.RelatedPage? {
         if (!DataPreferences.shouldCacheQuickPicks) return null
         val cached = DataPreferences.cachedQuickPicks
         return if (
@@ -45,11 +45,11 @@ object DatabaseHomeQuickPicksRepository : HomeQuickPicksRepository {
         ) null else cached
     }
 
-    override fun cacheQuickPicks(page: Innertube.RelatedPage) {
+    override fun cacheQuickPicks(page: YoutubeMusicInnertube.RelatedPage) {
         DataPreferences.cachedQuickPicks = page
     }
 
     override fun clearCachedQuickPicks() {
-        DataPreferences.cachedQuickPicks = Innertube.RelatedPage()
+        DataPreferences.cachedQuickPicks = YoutubeMusicInnertube.RelatedPage()
     }
 }

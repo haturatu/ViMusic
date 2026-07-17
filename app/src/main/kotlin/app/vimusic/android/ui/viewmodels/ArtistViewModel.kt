@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import app.vimusic.android.models.Artist
 import app.vimusic.android.repositories.ArtistRepository
-import app.vimusic.providers.innertube.Innertube
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import kotlinx.coroutines.flow.Flow
 
 class ArtistViewModel(
@@ -17,7 +17,7 @@ class ArtistViewModel(
 
     fun upsertArtistFromPage(
         currentArtist: Artist?,
-        page: Innertube.ArtistPage
+        page: YoutubeMusicInnertube.ArtistPage
     ) {
         repository.upsertArtist(
             Artist(
@@ -40,21 +40,21 @@ class ArtistViewModel(
     }
 
     suspend fun songsPage(
-        artistPage: Innertube.ArtistPage?,
+        artistPage: YoutubeMusicInnertube.ArtistPage?,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.SongItem>?> =
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.SongItem>?> =
         repository.artistSongsPage(artistPage = artistPage, continuation = continuation)
 
     suspend fun albumsPage(
-        artistPage: Innertube.ArtistPage?,
+        artistPage: YoutubeMusicInnertube.ArtistPage?,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.AlbumItem>?> =
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.AlbumItem>?> =
         repository.artistAlbumsPage(artistPage = artistPage, continuation = continuation)
 
     suspend fun singlesPage(
-        artistPage: Innertube.ArtistPage?,
+        artistPage: YoutubeMusicInnertube.ArtistPage?,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.AlbumItem>?> =
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.AlbumItem>?> =
         repository.artistSinglesPage(artistPage = artistPage, continuation = continuation)
 
     companion object {

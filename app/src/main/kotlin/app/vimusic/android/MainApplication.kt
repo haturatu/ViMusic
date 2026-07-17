@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.os.StrictMode
@@ -83,10 +84,11 @@ import app.vimusic.android.repositories.DatabaseSettingsRepository
 import app.vimusic.android.repositories.DatabaseMediaItemMenuRepository
 import app.vimusic.android.repositories.DeepLinkRepository
 import app.vimusic.android.repositories.HomeDiscoveryRepository
-import app.vimusic.android.repositories.InnertubeDeepLinkRepository
-import app.vimusic.android.repositories.InnertubeSearchResultRepository
-import app.vimusic.android.repositories.InnertubeHomeDiscoveryRepository
-import app.vimusic.android.repositories.InnertubeMoodRepository
+import app.vimusic.android.repositories.YoutubeMusicInnertubeDeepLinkRepository
+import app.vimusic.android.repositories.YoutubeMusicInnertubeSearchResultRepository
+import app.vimusic.android.repositories.YoutubeMusicInnertubeHomeDiscoveryRepository
+import app.vimusic.android.repositories.YoutubeMusicInnertubeMoodRepository
+import app.vimusic.android.utils.Http3OriginPolicy
 import app.vimusic.android.repositories.HomeQuickPicksRepository
 import app.vimusic.android.repositories.LibraryRepository
 import app.vimusic.android.repositories.HomePlaylistsRepository
@@ -113,7 +115,7 @@ import app.vimusic.android.repositories.DatabaseSyncSettingsRepository
 import app.vimusic.android.repositories.DefaultDatabaseSettingsRepository
 import app.vimusic.android.repositories.PlayerLyricsRepository
 import app.vimusic.android.repositories.DefaultPlayerLyricsRepository
-import app.vimusic.android.repositories.InnertubeYouTubeRadioDataSource
+import app.vimusic.android.repositories.YoutubeMusicInnertubeYouTubeRadioDataSource
 import app.vimusic.android.repositories.ApiSponsorBlockRepository
 import app.vimusic.android.service.PlayerService
 import app.vimusic.android.extractor.NewPipeExtractorClient
@@ -138,6 +140,8 @@ import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.collectProvidedBitmapAsState
 import app.vimusic.android.utils.forcePlay
 import app.vimusic.android.utils.intent
+import app.vimusic.android.utils.KatHttp3CoilNetworkClient
+import app.vimusic.android.utils.KatHttp3CoilConcurrentRequestStrategy
 import app.vimusic.android.utils.invokeOnReady
 import app.vimusic.android.utils.isInPip
 import app.vimusic.android.utils.maybeEnterPip
@@ -170,6 +174,7 @@ import coil3.decode.ExifOrientationStrategy
 import coil3.disk.DiskCache
 import coil3.disk.directory
 import coil3.memory.MemoryCache
+import coil3.network.NetworkFetcher
 import coil3.request.crossfade
 import coil3.util.DebugLogger
 import com.kieronquinn.monetcompat.core.MonetActivityAccessException
@@ -558,7 +563,7 @@ class AppContainer(
 ) {
     val credentialManager: CredentialManager by lazy { CredentialManager.create(application) }
     val songsRepository: SongsRepository by lazy { DatabaseSongsRepository }
-    val searchResultRepository: SearchResultRepository by lazy { InnertubeSearchResultRepository }
+    val searchResultRepository: SearchResultRepository by lazy { YoutubeMusicInnertubeSearchResultRepository }
     val artistRepository: ArtistRepository by lazy { DatabaseArtistRepository }
     val libraryRepository: LibraryRepository by lazy { DatabaseLibraryRepository }
     val onlineSearchRepository: OnlineSearchRepository by lazy { DatabaseOnlineSearchRepository }
@@ -568,8 +573,8 @@ class AppContainer(
     val albumRepository: AlbumRepository by lazy { DatabaseAlbumRepository }
     val playlistRepository: PlaylistRepository by lazy { DatabasePlaylistRepository }
     val pipedPlaylistRepository: PipedPlaylistRepository by lazy { ApiPipedPlaylistRepository }
-    val homeDiscoveryRepository: HomeDiscoveryRepository by lazy { InnertubeHomeDiscoveryRepository }
-    val moodRepository: MoodRepository by lazy { InnertubeMoodRepository }
+    val homeDiscoveryRepository: HomeDiscoveryRepository by lazy { YoutubeMusicInnertubeHomeDiscoveryRepository }
+    val moodRepository: MoodRepository by lazy { YoutubeMusicInnertubeMoodRepository }
     val localPlaylistRepository: LocalPlaylistRepository by lazy { DatabaseLocalPlaylistRepository }
     val syncSettingsRepository: SyncSettingsRepository by lazy { DatabaseSyncSettingsRepository }
     val playerRepository: PlayerRepository by lazy { DatabasePlayerRepository }
@@ -577,10 +582,10 @@ class AppContainer(
     val databaseSettingsRepository: DatabaseSettingsRepository by lazy { DefaultDatabaseSettingsRepository }
     val playerLyricsRepository: PlayerLyricsRepository by lazy { DefaultPlayerLyricsRepository }
     val mediaItemMenuRepository: MediaItemMenuRepository by lazy { DatabaseMediaItemMenuRepository }
-    val deepLinkRepository: DeepLinkRepository by lazy { InnertubeDeepLinkRepository }
+    val deepLinkRepository: DeepLinkRepository by lazy { YoutubeMusicInnertubeDeepLinkRepository }
     val precacheRepository: PrecacheRepository by lazy { DatabasePrecacheRepository }
     val mediaLibraryRepository: MediaLibraryRepository by lazy { DatabaseMediaLibraryRepository }
-    val youTubeRadioDataSource: YouTubeRadioDataSource by lazy { InnertubeYouTubeRadioDataSource }
+    val youTubeRadioDataSource: YouTubeRadioDataSource by lazy { YoutubeMusicInnertubeYouTubeRadioDataSource }
     val sponsorBlockRepository: SponsorBlockRepository by lazy { ApiSponsorBlockRepository }
 
     fun initialize() {
@@ -588,7 +593,7 @@ class AppContainer(
         NewPipePoTokenProvider.initialize(application.applicationContext)
         YoutubeStreamExtractor.setPoTokenProvider(NewPipePoTokenProvider)
         YoutubeStreamExtractor.setFetchIosClient(false)
-        NewPipeExtractorClient.ensureInitialized()
+        NewPipeExtractorClient.ensureInitialized(application.applicationContext)
     }
 }
 
@@ -615,6 +620,7 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         super.onCreate()
 
         MainApplicationProvider.application = this
+        Http3OriginPolicy.initialize(this)
         appContainer = AppContainer(this).also(AppContainer::initialize)
         MonetCompat.enablePaletteCompat()
         ServiceNotifications.createAll(this)
@@ -622,6 +628,16 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
     }
 
     override fun newImageLoader(context: PlatformContext) = ImageLoader.Builder(this)
+        .components {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                add(
+                    NetworkFetcher.Factory(
+                        networkClient = { KatHttp3CoilNetworkClient(applicationContext) },
+                        concurrentRequestStrategy = { KatHttp3CoilConcurrentRequestStrategy },
+                    ),
+                )
+            }
+        }
         .crossfade(true)
         .memoryCache {
             MemoryCache.Builder()

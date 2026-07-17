@@ -3,43 +3,43 @@ package app.vimusic.android.repositories
 import app.vimusic.android.Database
 import app.vimusic.android.models.Artist
 import app.vimusic.android.query
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.BrowseBody
-import app.vimusic.providers.innertube.models.bodies.ContinuationBody
-import app.vimusic.providers.innertube.requests.artistPage
-import app.vimusic.providers.innertube.requests.itemsPage
-import app.vimusic.providers.innertube.utils.from
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
+import app.vimusic.providers.youtubemusic.innertube.models.bodies.BrowseBody
+import app.vimusic.providers.youtubemusic.innertube.models.bodies.ContinuationBody
+import app.vimusic.providers.youtubemusic.innertube.requests.artistPage
+import app.vimusic.providers.youtubemusic.innertube.requests.itemsPage
+import app.vimusic.providers.youtubemusic.innertube.utils.from
 import kotlinx.coroutines.flow.Flow
 
 interface ArtistRepository {
     fun observeArtist(browseId: String): Flow<Artist?>
 
-    suspend fun fetchArtistPage(browseId: String): Result<Innertube.ArtistPage?>?
+    suspend fun fetchArtistPage(browseId: String): Result<YoutubeMusicInnertube.ArtistPage?>?
 
     fun upsertArtist(artist: Artist)
     fun updateArtist(artist: Artist)
 
     suspend fun artistSongsPage(
-        artistPage: Innertube.ArtistPage?,
+        artistPage: YoutubeMusicInnertube.ArtistPage?,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.SongItem>?>
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.SongItem>?>
 
     suspend fun artistAlbumsPage(
-        artistPage: Innertube.ArtistPage?,
+        artistPage: YoutubeMusicInnertube.ArtistPage?,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.AlbumItem>?>
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.AlbumItem>?>
 
     suspend fun artistSinglesPage(
-        artistPage: Innertube.ArtistPage?,
+        artistPage: YoutubeMusicInnertube.ArtistPage?,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.AlbumItem>?>
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.AlbumItem>?>
 }
 
 object DatabaseArtistRepository : ArtistRepository {
     override fun observeArtist(browseId: String): Flow<Artist?> = Database.artist(browseId)
 
     override suspend fun fetchArtistPage(browseId: String) =
-        Innertube.artistPage(BrowseBody(browseId = browseId))
+        YoutubeMusicInnertube.artistPage(BrowseBody(browseId = browseId))
 
     override fun upsertArtist(artist: Artist) {
         query { Database.upsert(artist) }
@@ -50,28 +50,28 @@ object DatabaseArtistRepository : ArtistRepository {
     }
 
     override suspend fun artistSongsPage(
-        artistPage: Innertube.ArtistPage?,
+        artistPage: YoutubeMusicInnertube.ArtistPage?,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.SongItem>?> {
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.SongItem>?> {
         return continuation?.let {
-            Innertube.itemsPage(
+            YoutubeMusicInnertube.itemsPage(
                 body = ContinuationBody(continuation = continuation),
-                fromMusicResponsiveListItemRenderer = Innertube.SongItem::from
+                fromMusicResponsiveListItemRenderer = YoutubeMusicInnertube.SongItem::from
             )
         } ?: artistPage
             ?.songsEndpoint
             ?.takeIf { it.browseId != null }
             ?.let { endpoint ->
-                Innertube.itemsPage(
+                YoutubeMusicInnertube.itemsPage(
                     body = BrowseBody(
                         browseId = endpoint.browseId!!,
                         params = endpoint.params
                     ),
-                    fromMusicResponsiveListItemRenderer = Innertube.SongItem::from
+                    fromMusicResponsiveListItemRenderer = YoutubeMusicInnertube.SongItem::from
                 )
             }
             ?: Result.success(
-                Innertube.ItemsPage(
+                YoutubeMusicInnertube.ItemsPage(
                     items = artistPage?.songs,
                     continuation = null
                 )
@@ -79,28 +79,28 @@ object DatabaseArtistRepository : ArtistRepository {
     }
 
     override suspend fun artistAlbumsPage(
-        artistPage: Innertube.ArtistPage?,
+        artistPage: YoutubeMusicInnertube.ArtistPage?,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.AlbumItem>?> {
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.AlbumItem>?> {
         return continuation?.let {
-            Innertube.itemsPage(
+            YoutubeMusicInnertube.itemsPage(
                 body = ContinuationBody(continuation = continuation),
-                fromMusicTwoRowItemRenderer = Innertube.AlbumItem::from
+                fromMusicTwoRowItemRenderer = YoutubeMusicInnertube.AlbumItem::from
             )
         } ?: artistPage
             ?.albumsEndpoint
             ?.takeIf { it.browseId != null }
             ?.let { endpoint ->
-                Innertube.itemsPage(
+                YoutubeMusicInnertube.itemsPage(
                     body = BrowseBody(
                         browseId = endpoint.browseId!!,
                         params = endpoint.params
                     ),
-                    fromMusicTwoRowItemRenderer = Innertube.AlbumItem::from
+                    fromMusicTwoRowItemRenderer = YoutubeMusicInnertube.AlbumItem::from
                 )
             }
             ?: Result.success(
-                Innertube.ItemsPage(
+                YoutubeMusicInnertube.ItemsPage(
                     items = artistPage?.albums,
                     continuation = null
                 )
@@ -108,28 +108,28 @@ object DatabaseArtistRepository : ArtistRepository {
     }
 
     override suspend fun artistSinglesPage(
-        artistPage: Innertube.ArtistPage?,
+        artistPage: YoutubeMusicInnertube.ArtistPage?,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.AlbumItem>?> {
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.AlbumItem>?> {
         return continuation?.let {
-            Innertube.itemsPage(
+            YoutubeMusicInnertube.itemsPage(
                 body = ContinuationBody(continuation = continuation),
-                fromMusicTwoRowItemRenderer = Innertube.AlbumItem::from
+                fromMusicTwoRowItemRenderer = YoutubeMusicInnertube.AlbumItem::from
             )
         } ?: artistPage
             ?.singlesEndpoint
             ?.takeIf { it.browseId != null }
             ?.let { endpoint ->
-                Innertube.itemsPage(
+                YoutubeMusicInnertube.itemsPage(
                     body = BrowseBody(
                         browseId = endpoint.browseId!!,
                         params = endpoint.params
                     ),
-                    fromMusicTwoRowItemRenderer = Innertube.AlbumItem::from
+                    fromMusicTwoRowItemRenderer = YoutubeMusicInnertube.AlbumItem::from
                 )
             }
             ?: Result.success(
-                Innertube.ItemsPage(
+                YoutubeMusicInnertube.ItemsPage(
                     items = artistPage?.singles,
                     continuation = null
                 )

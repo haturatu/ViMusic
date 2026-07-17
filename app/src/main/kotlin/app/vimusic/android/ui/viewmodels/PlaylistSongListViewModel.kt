@@ -3,7 +3,7 @@ package app.vimusic.android.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import app.vimusic.android.repositories.PlaylistRepository
-import app.vimusic.providers.innertube.Innertube
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 
 class PlaylistSongListViewModel(
     private val repository: PlaylistRepository
@@ -13,7 +13,7 @@ class PlaylistSongListViewModel(
         params: String?,
         maxDepth: Int?,
         shouldDedup: Boolean
-    ): Innertube.PlaylistOrAlbumPage? = repository.fetchPlaylistPage(
+    ): YoutubeMusicInnertube.PlaylistOrAlbumPage? = repository.fetchPlaylistPage(
         browseId = browseId,
         params = params,
         maxDepth = maxDepth,
@@ -24,7 +24,7 @@ class PlaylistSongListViewModel(
         name: String,
         browseId: String,
         thumbnailUrl: String?,
-        songs: List<Innertube.SongItem>?
+        songs: List<YoutubeMusicInnertube.SongItem>?
     ) = repository.importPlaylist(
         name = name,
         browseId = browseId,

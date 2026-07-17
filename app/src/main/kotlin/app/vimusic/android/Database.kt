@@ -73,7 +73,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 @Dao
-@Suppress("TooManyFunctions")
+@Suppress("LargeClass", "TooManyFunctions") // Room requires the DAO surface to remain in one interface.
 interface Database {
     companion object : Database by DatabaseInitializer.instance.database
 

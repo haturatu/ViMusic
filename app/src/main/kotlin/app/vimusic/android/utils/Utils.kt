@@ -19,9 +19,9 @@ import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.service.LOCAL_KEY_PREFIX
 import app.vimusic.android.service.isLocal
 import app.vimusic.core.ui.utils.SongBundleAccessor
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.ContinuationBody
-import app.vimusic.providers.innertube.requests.playlistPage
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
+import app.vimusic.providers.youtubemusic.innertube.models.bodies.ContinuationBody
+import app.vimusic.providers.youtubemusic.innertube.requests.playlistPage
 import app.vimusic.providers.piped.models.Playlist
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlin.time.Duration
 
-val Innertube.SongItem.asMediaItem: MediaItem
+val YoutubeMusicInnertube.SongItem.asMediaItem: MediaItem
     get() = MediaItem.Builder()
         .setMediaId(key)
         .setUri(key)
@@ -55,7 +55,7 @@ val Innertube.SongItem.asMediaItem: MediaItem
         )
         .build()
 
-val Innertube.VideoItem.asMediaItem: MediaItem
+val YoutubeMusicInnertube.VideoItem.asMediaItem: MediaItem
     get() = MediaItem.Builder()
         .setMediaId(key)
         .setUri(key)
@@ -161,7 +161,7 @@ fun Uri?.thumbnail(size: Int) = toString().thumbnail(size)?.toUri()
 fun formatAsDuration(millis: Long) = DateUtils.formatElapsedTime(millis / 1000).removePrefix("0")
 
 @Suppress("LoopWithTooManyJumpStatements")
-suspend fun Result<Innertube.PlaylistOrAlbumPage>.completed(
+suspend fun Result<YoutubeMusicInnertube.PlaylistOrAlbumPage>.completed(
     maxDepth: Int = Int.MAX_VALUE,
     shouldDedup: Boolean = false
 ) = runCatching {
@@ -177,7 +177,7 @@ suspend fun Result<Innertube.PlaylistOrAlbumPage>.completed(
     val context = currentCoroutineContext()
 
     while (continuation != null && depth++ < maxDepth && context.isActive) {
-        val newSongs = Innertube
+        val newSongs = YoutubeMusicInnertube
             .playlistPage(
                 body = ContinuationBody(continuation = continuation)
             )
@@ -195,7 +195,7 @@ suspend fun Result<Innertube.PlaylistOrAlbumPage>.completed(
     }
 
     page.copy(
-        songsPage = Innertube.ItemsPage(
+        songsPage = YoutubeMusicInnertube.ItemsPage(
             items = songs,
             continuation = null
         )

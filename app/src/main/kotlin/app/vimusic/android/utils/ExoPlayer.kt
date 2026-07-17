@@ -11,11 +11,13 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.okhttp.OkHttpDataSource
+import okhttp3.OkHttpClient
+import okhttp3.brotli.BrotliInterceptor
 import java.io.EOFException
 import java.io.IOException
 
@@ -62,6 +64,7 @@ private fun parseContentRange(value: String?): ByteRange? {
     return ByteRange(start = start, end = end)
 }
 
+@Suppress("CyclomaticComplexMethod") // Each protocol/range invariant needs an independent check.
 private fun validateResponse(
     dataSpec: DataSpec,
     headers: Map<String, List<String>>,
@@ -205,6 +208,12 @@ private fun Throwable.playbackDebugMessage(dataSpec: DataSpec): String {
 
 private const val EXO_PLAYER_DATA_SOURCE_TAG = "ExoPlayerDataSource"
 
+private val mediaOkHttpClient by lazy {
+    OkHttpClient.Builder()
+        .addInterceptor(BrotliInterceptor)
+        .build()
+}
+
 val Cache.asDataSource
     get() = CacheDataSource.Factory()
         .setCache(this)
@@ -214,8 +223,6 @@ val Context.defaultDataSource
     get() = DefaultDataSource.Factory(
         this,
         ValidatingHttpDataSourceFactory(
-            DefaultHttpDataSource.Factory().setConnectTimeoutMs(16000)
-                .setReadTimeoutMs(8000)
-                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0")
+            OkHttpDataSource.Factory(mediaOkHttpClient)
         )
     )

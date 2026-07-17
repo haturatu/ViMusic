@@ -44,7 +44,7 @@ import app.vimusic.android.utils.forcePlay
 import app.vimusic.android.utils.medium
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
-import app.vimusic.providers.innertube.models.NavigationEndpoint
+import app.vimusic.providers.youtubemusic.innertube.models.NavigationEndpoint
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData

@@ -6,7 +6,7 @@ import app.vimusic.android.GlobalPreferencesHolder
 import app.vimusic.android.R
 import app.vimusic.core.data.enums.CoilDiskCacheSize
 import app.vimusic.core.data.enums.ExoPlayerDiskCacheSize
-import app.vimusic.providers.innertube.Innertube
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -25,7 +25,7 @@ object DataPreferences : GlobalPreferencesHolder() {
     var quickPicksSource by enum(QuickPicksSource.Trending)
     var versionCheckPeriod by enum(VersionCheckPeriod.Off)
     var shouldCacheQuickPicks by boolean(true)
-    var cachedQuickPicks by json(Innertube.RelatedPage())
+    var cachedQuickPicks by json(YoutubeMusicInnertube.RelatedPage())
     var autoSyncPlaylists by boolean(true)
     var autoDatabaseBackupEnabled by boolean(false)
     var autoDatabaseBackupTreeUri by string("")

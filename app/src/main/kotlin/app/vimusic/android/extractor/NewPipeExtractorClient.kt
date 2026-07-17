@@ -1,5 +1,6 @@
 package app.vimusic.android.extractor
 
+import android.content.Context
 import android.util.Log
 import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.NewPipe
@@ -14,12 +15,27 @@ import org.schabi.newpipe.extractor.stream.DeliveryMethod
 import org.schabi.newpipe.extractor.stream.Stream
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.VideoStream
+import org.schabi.newpipe.extractor.downloader.Downloader
 import java.io.IOException
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantLock
 
 object NewPipeExtractorClient {
     private var initialized = false
-    private val lock = Any()
+    private val lock = ReentrantLock()
+    private val downloaderLock = Any()
+    private val appContextRef = AtomicReference<Context?>()
+    @Volatile private var sharedSystemDownloader: Downloader? = null
     private var lastSuccessfulDnsIndex: Int? = null
+
+    fun ensureInitialized(context: Context) {
+        appContextRef.set(context.applicationContext)
+        ensureInitialized()
+    }
 
     fun ensureInitialized() {
         if (initialized) return
@@ -30,33 +46,77 @@ object NewPipeExtractorClient {
     @Throws(IOException::class, ExtractionException::class)
     fun resolveAudioStream(videoId: String): NewPipeAudioResult {
         ensureInitialized()
-
-        synchronized(lock) {
-            var firstError: Throwable? = null
-            var lastError: Throwable? = null
-
-            dnsFallbackTargets().forEach { dnsTarget ->
-                runCatching {
-                    Log.d(TAG, "Resolving audio stream videoId=$videoId dnsTarget=${dnsTarget.label}")
-                    val result = resolveAudioStream(videoId, dnsTarget)
-                    if (dnsTarget is NewPipeDnsTarget.Resolved) {
-                        lastSuccessfulDnsIndex = dnsTarget.index
-                    }
-                    return result
-                }.onFailure { error ->
-                    Log.w(TAG, "Audio stream resolve failed videoId=$videoId dnsTarget=${dnsTarget.label}", error)
-                    if (firstError == null) firstError = error
-                    lastError = error
-                }
+        val task = RESOLVER_EXECUTOR.submit<NewPipeAudioResult> {
+            lock.lockInterruptibly()
+            try {
+                resolveAudioStreamWithFallback(videoId)
+            } finally {
+                lock.unlock()
             }
-
-            lastError?.let { error ->
-                firstError?.takeIf { it !== error }?.let(error::addSuppressed)
-                throw error
-            }
-
-            throw ExtractionException("No DNS fallback targets configured")
         }
+        return try {
+            task.get(PLAYBACK_RESOLVE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        } catch (error: TimeoutException) {
+            task.cancel(true)
+            throw IOException("NewPipe stream resolution timed out for $videoId", error)
+        } catch (error: ExecutionException) {
+            val cause = error.cause ?: error
+            when (cause) {
+                is IOException -> throw cause
+                is ExtractionException -> throw cause
+                else -> throw IOException("NewPipe stream resolution failed for $videoId", cause)
+            }
+        } catch (error: InterruptedException) {
+            task.cancel(true)
+            Thread.currentThread().interrupt()
+            throw IOException("NewPipe stream resolution interrupted for $videoId", error)
+        }
+    }
+
+    /** Opportunistic preload that never waits behind an active playback resolve. */
+    fun preloadAudioStream(videoId: String): NewPipeAudioResult? {
+        ensureInitialized()
+        val task = RESOLVER_EXECUTOR.submit<NewPipeAudioResult?> {
+            if (!lock.tryLock()) return@submit null
+            try {
+                resolveAudioStreamWithFallback(videoId)
+            } finally {
+                lock.unlock()
+            }
+        }
+        return try {
+            task.get(PRELOAD_RESOLVE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        } catch (_: Exception) {
+            task.cancel(true)
+            null
+        }
+    }
+
+    private fun resolveAudioStreamWithFallback(videoId: String): NewPipeAudioResult {
+        var firstError: Throwable? = null
+        var lastError: Throwable? = null
+
+        dnsFallbackTargets().forEach { dnsTarget ->
+            runCatching {
+                Log.d(TAG, "Resolving audio stream videoId=$videoId dnsTarget=${dnsTarget.label}")
+                val result = resolveAudioStream(videoId, dnsTarget)
+                if (dnsTarget is NewPipeDnsTarget.Resolved) {
+                    lastSuccessfulDnsIndex = dnsTarget.index
+                }
+                return result
+            }.onFailure { error ->
+                Log.w(TAG, "Audio stream resolve failed videoId=$videoId dnsTarget=${dnsTarget.label}", error)
+                if (firstError == null) firstError = error
+                lastError = error
+            }
+        }
+
+        lastError?.let { error ->
+            firstError?.takeIf { it !== error }?.let(error::addSuppressed)
+            throw error
+        }
+
+        throw ExtractionException("No DNS fallback targets configured")
     }
 
     @Throws(IOException::class, ExtractionException::class)
@@ -104,10 +164,26 @@ object NewPipeExtractorClient {
 
     private fun configureDownloader(dnsTarget: NewPipeDnsTarget) {
         NewPipe.init(
-            NewPipeDownloader(NewPipeDownloader.client(dnsTarget)),
+            createDownloader(dnsTarget),
             Localization.DEFAULT,
             ContentCountry.DEFAULT
         )
+    }
+
+    private fun createDownloader(dnsTarget: NewPipeDnsTarget): Downloader {
+        val context = appContextRef.get()
+        val fallback = NewPipeDownloader(NewPipeDownloader.client(dnsTarget))
+
+        // kathttp3 resolves the URL hostname itself, so it is used for NewPipe's normal resolver
+        // path. Fixed-address retry uses the OkHttp DNS override fallback.
+        return if (dnsTarget == NewPipeDnsTarget.System && android.os.Build.VERSION.SDK_INT >= 26) {
+            synchronized(downloaderLock) {
+                sharedSystemDownloader ?: KatHttp3Downloader(fallback, context)
+                    .also { sharedSystemDownloader = it }
+            }
+        } else {
+            fallback
+        }
     }
 
     private fun getPlayableAudioStreams(streamInfo: StreamInfo): List<AudioStream> =
@@ -223,7 +299,10 @@ object NewPipeExtractorClient {
     }
 
     private const val TAG = "NewPipeExtractorClient"
-    private const val DNS_RESOLVED_ADDRESS_ATTEMPTS = 20
+    private const val DNS_RESOLVED_ADDRESS_ATTEMPTS = 4
+    private const val PLAYBACK_RESOLVE_TIMEOUT_SECONDS = 45L
+    private const val PRELOAD_RESOLVE_TIMEOUT_SECONDS = 5L
+    private val RESOLVER_EXECUTOR = Executors.newCachedThreadPool()
 }
 
 data class NewPipeAudioResult(

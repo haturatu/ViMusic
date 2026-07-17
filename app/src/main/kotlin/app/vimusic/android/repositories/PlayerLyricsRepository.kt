@@ -3,9 +3,9 @@ package app.vimusic.android.repositories
 import app.vimusic.android.Database
 import app.vimusic.android.models.Lyrics
 import app.vimusic.android.transaction
-import app.vimusic.providers.innertube.models.bodies.NextBody
-import app.vimusic.providers.innertube.requests.lyrics
-import app.vimusic.providers.innertube.Innertube
+import app.vimusic.providers.youtubemusic.innertube.models.bodies.NextBody
+import app.vimusic.providers.youtubemusic.innertube.requests.lyrics
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import app.vimusic.providers.kugou.KuGou
 import app.vimusic.providers.lrclib.LrcLib
 import app.vimusic.providers.lrclib.models.Track
@@ -15,7 +15,7 @@ import kotlin.time.Duration
 interface PlayerLyricsRepository {
     fun observeLyrics(songId: String): Flow<Lyrics?>
     fun upsertLyrics(lyrics: Lyrics)
-    suspend fun fetchInnertubeLyrics(mediaId: String): String?
+    suspend fun fetchYoutubeMusicInnertubeLyrics(mediaId: String): String?
     suspend fun fetchBestLrcLibLyrics(
         artist: String,
         title: String,
@@ -40,8 +40,8 @@ object DefaultPlayerLyricsRepository : PlayerLyricsRepository {
         transaction { Database.upsert(lyrics) }
     }
 
-    override suspend fun fetchInnertubeLyrics(mediaId: String): String? =
-        Innertube.lyrics(NextBody(videoId = mediaId))?.getOrNull()
+    override suspend fun fetchYoutubeMusicInnertubeLyrics(mediaId: String): String? =
+        YoutubeMusicInnertube.lyrics(NextBody(videoId = mediaId))?.getOrNull()
 
     override suspend fun fetchBestLrcLibLyrics(
         artist: String,

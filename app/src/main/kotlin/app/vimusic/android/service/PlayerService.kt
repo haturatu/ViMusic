@@ -47,6 +47,7 @@ import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.analytics.PlaybackStats
@@ -110,7 +111,7 @@ import app.vimusic.core.ui.utils.isAtLeastAndroid8
 import app.vimusic.core.ui.utils.isAtLeastAndroid9
 import app.vimusic.core.ui.utils.songBundle
 import app.vimusic.core.ui.utils.streamVolumeFlow
-import app.vimusic.providers.innertube.models.NavigationEndpoint
+import app.vimusic.providers.youtubemusic.innertube.models.NavigationEndpoint
 import app.vimusic.providers.sponsorblock.models.Action
 import app.vimusic.providers.sponsorblock.models.Category
 import app.vimusic.providers.sponsorblock.models.Segment
@@ -160,6 +161,8 @@ private const val PERSISTENT_QUEUE_MAX_PAST_ITEMS = 50
 private const val PERSISTENT_QUEUE_MAX_FUTURE_ITEMS = 50
 private const val PERSISTENT_QUEUE_SAVE_DEBOUNCE_MS = 500L
 private const val SPONSOR_BLOCK_SEEK_POLL_DELAY_MS = 1_000L
+private const val NEXT_TRACK_RESOLVE_PRELOAD_ATTEMPTS = 4
+private const val NEXT_TRACK_RESOLVE_PRELOAD_RETRY_MS = 500L
 
 @get:OptIn(UnstableApi::class)
 val DataSpec.isLocal get() = key?.startsWith(LOCAL_KEY_PREFIX) == true
@@ -195,6 +198,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private var sponsorBlockJob: Job? = null
     private var queuePersistenceJob: Job? = null
     private var nextTrackPreloadJob: Job? = null
+    private var nextTrackPreloadMediaId: String? = null
 
     override var isInvincibilityEnabled by mutableStateOf(false)
 
@@ -427,6 +431,20 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
         cache = createCache(this)
         player = ExoPlayer.Builder(this, createRendersFactory(), createMediaSourceFactory())
+            .setLoadControl(
+                DefaultLoadControl.Builder()
+                    .setBufferDurationsMs(
+                        /* minBufferMs = */ PLAYBACK_MIN_BUFFER_MS,
+                        /* maxBufferMs = */ PLAYBACK_MAX_BUFFER_MS,
+                        /* bufferForPlaybackMs = */ PLAYBACK_START_BUFFER_MS,
+                        /* bufferForPlaybackAfterRebufferMs = */ PLAYBACK_REBUFFER_MS,
+                    )
+                    // Keep filling the current item even after the allocator's
+                    // byte target is reached. This gives HTTP/3 range retries
+                    // enough buffered audio to complete without an audible gap.
+                    .setPrioritizeTimeOverSizeThresholds(true)
+                    .build(),
+            )
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .setAudioAttributes(
@@ -638,6 +656,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     override fun onTimelineChanged(timeline: Timeline, reason: Int) {
         if (reason != Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) return
         maybeSavePlayerQueue()
+        // Queue insertion can reveal a next item without causing a media-item
+        // transition. Start URL extraction as soon as it becomes available.
+        prefetchNextMediaItem()
     }
 
     override fun onPlayerError(error: PlaybackException) {
@@ -1615,14 +1636,30 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
     private fun prefetchMediaItem(mediaItem: MediaItem) {
         if (mediaItem.isLocal) return
+        if (
+            nextTrackPreloadMediaId == mediaItem.mediaId &&
+            nextTrackPreloadJob?.isActive == true
+        ) return
 
         nextTrackPreloadJob?.cancel()
+        nextTrackPreloadMediaId = mediaItem.mediaId
         nextTrackPreloadJob = coroutineScope.launch {
-            runCatching {
-                NewPipeAudioMediaSourceFactory.preloadAudioResult(mediaItem.mediaId)
-            }.onFailure { error ->
-                Log.d(TAG, "Failed to preload next track ${mediaItem.mediaId}", error)
+            repeat(NEXT_TRACK_RESOLVE_PRELOAD_ATTEMPTS) { attempt ->
+                val preloaded = runCatching {
+                    NewPipeAudioMediaSourceFactory.preloadAudioResult(mediaItem.mediaId)
+                }.onFailure { error ->
+                    Log.d(TAG, "Failed to preload next track ${mediaItem.mediaId}", error)
+                }.getOrDefault(false)
+
+                if (preloaded) {
+                    Log.d(TAG, "Preloaded next track ${mediaItem.mediaId} attempt=${attempt + 1}")
+                    return@launch
+                }
+                if (attempt + 1 < NEXT_TRACK_RESOLVE_PRELOAD_ATTEMPTS) {
+                    delay(NEXT_TRACK_RESOLVE_PRELOAD_RETRY_MS)
+                }
             }
+            Log.d(TAG, "Next track preload remained busy for ${mediaItem.mediaId}")
         }
     }
 
@@ -1704,7 +1741,10 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
     companion object {
         private const val DEFAULT_CACHE_DIRECTORY = "exoplayer"
-        private const val DEFAULT_CHUNK_LENGTH = 2 * 1024 * 1024L
+        private const val PLAYBACK_MIN_BUFFER_MS = 120_000
+        private const val PLAYBACK_MAX_BUFFER_MS = 300_000
+        private const val PLAYBACK_START_BUFFER_MS = 2_500
+        private const val PLAYBACK_REBUFFER_MS = 5_000
         private val youtubeIdRegex = Regex("^[A-Za-z0-9_-]{11}$")
 
         fun extractYouTubeVideoId(raw: String): String {

@@ -1,24 +1,23 @@
+@file:androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+
 package app.vimusic.android.extractor
 
 import android.net.Uri
 import android.util.Log
-import androidx.media3.common.C
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException
 import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
 import java.util.concurrent.atomic.AtomicLong
 
 class YoutubeHttpDataSourceFactory(
-    private val rangeParameterEnabled: Boolean,
-    private val rnParameterEnabled: Boolean
+    private val rnParameterEnabled: Boolean,
+    upstreamFactory: HttpDataSource.Factory = DefaultHttpDataSource.Factory()
 ) : DataSource.Factory {
     private val requestNumber = AtomicLong()
-    private val upstream = DefaultHttpDataSource.Factory()
-        .setConnectTimeoutMs(DEFAULT_CONNECT_TIMEOUT_MS)
-        .setReadTimeoutMs(DEFAULT_READ_TIMEOUT_MS)
-        .setUserAgent(NewPipeDownloader.USER_AGENT)
+    private val upstream = upstreamFactory
 
     override fun createDataSource(): DataSource = Source(upstream.createDataSource())
 
@@ -58,15 +57,10 @@ class YoutubeHttpDataSourceFactory(
 
         val builder = buildUpon()
 
-        if (rangeParameterEnabled && isVideoPlaybackUrl) {
-            buildRangeParameter(position, length)?.let { requestUrl += it }
-            builder
-                .setPosition(0)
-                .setLength(C.LENGTH_UNSET.toLong())
-                .setHttpRequestHeaders(youtubeHeaders(requestUrl, httpRequestHeaders, dropRange = true))
-        } else {
-            builder.setHttpRequestHeaders(youtubeHeaders(requestUrl, httpRequestHeaders, dropRange = false))
-        }
+        // Googlevideo accepts regular HTTP Range for both GET and the Android
+        // POST playback request. Keep Media3's requested position intact so
+        // the upstream can require 206 + Content-Range.
+        builder.setHttpRequestHeaders(youtubeHeaders(requestUrl, httpRequestHeaders))
 
         if (isVideoPlaybackUrl && isMobileStreamingUrl) {
             builder.setHttpMethod(DataSpec.HTTP_METHOD_POST)
@@ -80,13 +74,8 @@ class YoutubeHttpDataSourceFactory(
     private fun youtubeHeaders(
         requestUrl: String,
         originalHeaders: Map<String, String>,
-        dropRange: Boolean
     ): Map<String, String> = buildMap {
-        originalHeaders.forEach { (key, value) ->
-            if (!dropRange || !key.equals("Range", ignoreCase = true)) {
-                put(key, value)
-            }
-        }
+        putAll(originalHeaders)
 
         if (
             YoutubeParsingHelper.isWebStreamingUrl(requestUrl) ||
@@ -112,19 +101,6 @@ class YoutubeHttpDataSourceFactory(
         else -> NewPipeDownloader.USER_AGENT
     }
 
-    private fun buildRangeParameter(position: Long, length: Long): String? {
-        if (position == 0L && length == C.LENGTH_UNSET.toLong()) return null
-
-        return buildString {
-            append(RANGE_PARAMETER)
-            append(position)
-            append("-")
-            if (length != C.LENGTH_UNSET.toLong()) {
-                append(position + length - 1)
-            }
-        }
-    }
-
     private val DataSpec.httpMethodName: String
         get() = when (httpMethod) {
             DataSpec.HTTP_METHOD_GET -> "GET"
@@ -134,11 +110,8 @@ class YoutubeHttpDataSourceFactory(
         }
 
     companion object {
-        private const val DEFAULT_CONNECT_TIMEOUT_MS = 8_000
-        private const val DEFAULT_READ_TIMEOUT_MS = 8_000
         private const val TAG = "YoutubeHttpDataSource"
         private const val RN_PARAMETER = "&rn="
-        private const val RANGE_PARAMETER = "&range="
         private const val YOUTUBE_BASE_URL = "https://www.youtube.com"
     }
 }

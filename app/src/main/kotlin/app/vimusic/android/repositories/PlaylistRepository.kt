@@ -7,9 +7,9 @@ import app.vimusic.android.query
 import app.vimusic.android.transaction
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.completed
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.BrowseBody
-import app.vimusic.providers.innertube.requests.playlistPage
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
+import app.vimusic.providers.youtubemusic.innertube.models.bodies.BrowseBody
+import app.vimusic.providers.youtubemusic.innertube.requests.playlistPage
 
 interface PlaylistRepository {
     suspend fun fetchPlaylistPage(
@@ -17,13 +17,13 @@ interface PlaylistRepository {
         params: String?,
         maxDepth: Int?,
         shouldDedup: Boolean
-    ): Innertube.PlaylistOrAlbumPage?
+    ): YoutubeMusicInnertube.PlaylistOrAlbumPage?
 
     fun importPlaylist(
         name: String,
         browseId: String,
         thumbnailUrl: String?,
-        songs: List<Innertube.SongItem>?
+        songs: List<YoutubeMusicInnertube.SongItem>?
     )
 }
 
@@ -33,8 +33,8 @@ object DatabasePlaylistRepository : PlaylistRepository {
         params: String?,
         maxDepth: Int?,
         shouldDedup: Boolean
-    ): Innertube.PlaylistOrAlbumPage? =
-        Innertube
+    ): YoutubeMusicInnertube.PlaylistOrAlbumPage? =
+        YoutubeMusicInnertube
             .playlistPage(BrowseBody(browseId = browseId, params = params))
             ?.completed(maxDepth = maxDepth ?: Int.MAX_VALUE, shouldDedup = shouldDedup)
             ?.getOrNull()
@@ -43,7 +43,7 @@ object DatabasePlaylistRepository : PlaylistRepository {
         name: String,
         browseId: String,
         thumbnailUrl: String?,
-        songs: List<Innertube.SongItem>?
+        songs: List<YoutubeMusicInnertube.SongItem>?
     ) {
         query {
             transaction {
@@ -56,7 +56,7 @@ object DatabasePlaylistRepository : PlaylistRepository {
                 )
 
                 songs
-                    ?.map(Innertube.SongItem::asMediaItem)
+                    ?.map(YoutubeMusicInnertube.SongItem::asMediaItem)
                     ?.onEach(Database::insert)
                     ?.mapIndexed { index, mediaItem ->
                         SongPlaylistMap(

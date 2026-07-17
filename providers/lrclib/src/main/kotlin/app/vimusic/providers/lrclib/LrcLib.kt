@@ -3,14 +3,11 @@ package app.vimusic.providers.lrclib
 import app.vimusic.providers.lrclib.models.Track
 import app.vimusic.providers.lrclib.models.bestMatchingFor
 import app.vimusic.providers.utils.runCatchingCancellable
-import io.ktor.client.HttpClient
+import app.vimusic.providers.utils.ProviderHttpClient
 import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.UserAgent
-import io.ktor.client.plugins.compression.ContentEncoding
-import io.ktor.client.plugins.compression.brotli
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.get
@@ -29,7 +26,7 @@ private const val AGENT = "ViMusic (https://github.com/haturatu/ViMusic)"
 
 object LrcLib {
     private val client by lazy {
-        HttpClient(CIO) {
+        ProviderHttpClient.create {
             install(ContentNegotiation) {
                 json(
                     Json {
@@ -65,12 +62,6 @@ object LrcLib {
 
             install(HttpTimeout) {
                 connectTimeoutMillis = 500
-            }
-
-            install(ContentEncoding) {
-                brotli()
-                gzip()
-                deflate()
             }
 
             expectSuccess = true

@@ -2,19 +2,19 @@ package app.vimusic.android.repositories
 
 import androidx.media3.common.MediaItem
 import app.vimusic.android.utils.asMediaItem
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.BrowseBody
-import app.vimusic.providers.innertube.requests.playlistPage
-import app.vimusic.providers.innertube.requests.song
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
+import app.vimusic.providers.youtubemusic.innertube.models.bodies.BrowseBody
+import app.vimusic.providers.youtubemusic.innertube.requests.playlistPage
+import app.vimusic.providers.youtubemusic.innertube.requests.song
 
 interface DeepLinkRepository {
     suspend fun resolveAlbumBrowseIdFromPlaylist(browseId: String): String?
     suspend fun resolveSongMediaItem(videoId: String): MediaItem?
 }
 
-object InnertubeDeepLinkRepository : DeepLinkRepository {
+object YoutubeMusicInnertubeDeepLinkRepository : DeepLinkRepository {
     override suspend fun resolveAlbumBrowseIdFromPlaylist(browseId: String): String? =
-        Innertube.playlistPage(body = BrowseBody(browseId = browseId))
+        YoutubeMusicInnertube.playlistPage(body = BrowseBody(browseId = browseId))
             ?.getOrNull()
             ?.songsPage
             ?.items
@@ -24,5 +24,5 @@ object InnertubeDeepLinkRepository : DeepLinkRepository {
             ?.browseId
 
     override suspend fun resolveSongMediaItem(videoId: String): MediaItem? =
-        Innertube.song(videoId)?.getOrNull()?.asMediaItem
+        YoutubeMusicInnertube.song(videoId)?.getOrNull()?.asMediaItem
 }

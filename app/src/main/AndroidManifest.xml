@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- kathttp3 (HTTP/3) requires API 26+; it is only activated at runtime on supported devices. -->
+    <uses-sdk tools:overrideLibrary="dev.kathttp3" />
+
     <uses-feature
         android:name="android.software.leanback"
         android:required="false" />
@@ -11,6 +14,7 @@
         android:required="false" />
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -225,7 +229,8 @@
 
         <meta-data
             android:name="asset_statements"
-            android:resource="@string/asset_statements" />
+            android:resource="@string/asset_statements"
+            tools:ignore="CredManMissingDal" />
 
         <meta-data
             android:name="NothingKey"

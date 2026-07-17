@@ -1,54 +1,54 @@
 package app.vimusic.android.repositories
 
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.models.bodies.ContinuationBody
-import app.vimusic.providers.innertube.models.bodies.SearchBody
-import app.vimusic.providers.innertube.requests.searchPage
-import app.vimusic.providers.innertube.utils.from
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
+import app.vimusic.providers.youtubemusic.innertube.models.bodies.ContinuationBody
+import app.vimusic.providers.youtubemusic.innertube.models.bodies.SearchBody
+import app.vimusic.providers.youtubemusic.innertube.requests.searchPage
+import app.vimusic.providers.youtubemusic.innertube.utils.from
 
 interface SearchResultRepository {
     suspend fun searchSongs(
         query: String,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.SongItem>?>?
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.SongItem>?>?
 
     suspend fun searchAlbums(
         query: String,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.AlbumItem>?>?
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.AlbumItem>?>?
 
     suspend fun searchArtists(
         query: String,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.ArtistItem>?>?
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.ArtistItem>?>?
 
     suspend fun searchVideos(
         query: String,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.VideoItem>?>?
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.VideoItem>?>?
 
     suspend fun searchPlaylists(
         query: String,
         continuation: String?
-    ): Result<Innertube.ItemsPage<Innertube.PlaylistItem>?>?
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.PlaylistItem>?>?
 }
 
-object InnertubeSearchResultRepository : SearchResultRepository {
+object YoutubeMusicInnertubeSearchResultRepository : SearchResultRepository {
     override suspend fun searchSongs(
         query: String,
         continuation: String?
     ) = if (continuation == null) {
-        Innertube.searchPage(
+        YoutubeMusicInnertube.searchPage(
             body = SearchBody(
                 query = query,
-                params = Innertube.SearchFilter.Song.value
+                params = YoutubeMusicInnertube.SearchFilter.Song.value
             ),
-            fromMusicShelfRendererContent = Innertube.SongItem.Companion::from
+            fromMusicShelfRendererContent = YoutubeMusicInnertube.SongItem.Companion::from
         )
     } else {
-        Innertube.searchPage(
+        YoutubeMusicInnertube.searchPage(
             body = ContinuationBody(continuation = continuation),
-            fromMusicShelfRendererContent = Innertube.SongItem.Companion::from
+            fromMusicShelfRendererContent = YoutubeMusicInnertube.SongItem.Companion::from
         )
     }
 
@@ -56,17 +56,17 @@ object InnertubeSearchResultRepository : SearchResultRepository {
         query: String,
         continuation: String?
     ) = if (continuation == null) {
-        Innertube.searchPage(
+        YoutubeMusicInnertube.searchPage(
             body = SearchBody(
                 query = query,
-                params = Innertube.SearchFilter.Album.value
+                params = YoutubeMusicInnertube.SearchFilter.Album.value
             ),
-            fromMusicShelfRendererContent = Innertube.AlbumItem::from
+            fromMusicShelfRendererContent = YoutubeMusicInnertube.AlbumItem::from
         )
     } else {
-        Innertube.searchPage(
+        YoutubeMusicInnertube.searchPage(
             body = ContinuationBody(continuation = continuation),
-            fromMusicShelfRendererContent = Innertube.AlbumItem::from
+            fromMusicShelfRendererContent = YoutubeMusicInnertube.AlbumItem::from
         )
     }
 
@@ -74,17 +74,17 @@ object InnertubeSearchResultRepository : SearchResultRepository {
         query: String,
         continuation: String?
     ) = if (continuation == null) {
-        Innertube.searchPage(
+        YoutubeMusicInnertube.searchPage(
             body = SearchBody(
                 query = query,
-                params = Innertube.SearchFilter.Artist.value
+                params = YoutubeMusicInnertube.SearchFilter.Artist.value
             ),
-            fromMusicShelfRendererContent = Innertube.ArtistItem::from
+            fromMusicShelfRendererContent = YoutubeMusicInnertube.ArtistItem::from
         )
     } else {
-        Innertube.searchPage(
+        YoutubeMusicInnertube.searchPage(
             body = ContinuationBody(continuation = continuation),
-            fromMusicShelfRendererContent = Innertube.ArtistItem::from
+            fromMusicShelfRendererContent = YoutubeMusicInnertube.ArtistItem::from
         )
     }
 
@@ -92,17 +92,17 @@ object InnertubeSearchResultRepository : SearchResultRepository {
         query: String,
         continuation: String?
     ) = if (continuation == null) {
-        Innertube.searchPage(
+        YoutubeMusicInnertube.searchPage(
             body = SearchBody(
                 query = query,
-                params = Innertube.SearchFilter.Video.value
+                params = YoutubeMusicInnertube.SearchFilter.Video.value
             ),
-            fromMusicShelfRendererContent = Innertube.VideoItem::from
+            fromMusicShelfRendererContent = YoutubeMusicInnertube.VideoItem::from
         )
     } else {
-        Innertube.searchPage(
+        YoutubeMusicInnertube.searchPage(
             body = ContinuationBody(continuation = continuation),
-            fromMusicShelfRendererContent = Innertube.VideoItem::from
+            fromMusicShelfRendererContent = YoutubeMusicInnertube.VideoItem::from
         )
     }
 
@@ -110,17 +110,17 @@ object InnertubeSearchResultRepository : SearchResultRepository {
         query: String,
         continuation: String?
     ) = if (continuation == null) {
-        Innertube.searchPage(
+        YoutubeMusicInnertube.searchPage(
             body = SearchBody(
                 query = query,
-                params = Innertube.SearchFilter.CommunityPlaylist.value
+                params = YoutubeMusicInnertube.SearchFilter.CommunityPlaylist.value
             ),
-            fromMusicShelfRendererContent = Innertube.PlaylistItem::from
+            fromMusicShelfRendererContent = YoutubeMusicInnertube.PlaylistItem::from
         )
     } else {
-        Innertube.searchPage(
+        YoutubeMusicInnertube.searchPage(
             body = ContinuationBody(continuation = continuation),
-            fromMusicShelfRendererContent = Innertube.PlaylistItem::from
+            fromMusicShelfRendererContent = YoutubeMusicInnertube.PlaylistItem::from
         )
     }
 }

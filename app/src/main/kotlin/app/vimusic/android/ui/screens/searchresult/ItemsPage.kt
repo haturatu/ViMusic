@@ -1,3 +1,5 @@
+@file:Suppress("TooGenericExceptionCaught") // Provider implementations may throw library-specific failures.
+
 package app.vimusic.android.ui.screens.searchresult
 
 import androidx.compose.foundation.layout.Box
@@ -16,12 +18,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import android.util.Log
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.R
 import app.vimusic.android.ui.components.ShimmerHost
@@ -30,13 +35,17 @@ import app.vimusic.android.utils.center
 import app.vimusic.android.utils.secondary
 import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.LocalAppearance
-import app.vimusic.providers.innertube.Innertube
-import app.vimusic.providers.innertube.utils.plus
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
+import app.vimusic.providers.youtubemusic.innertube.utils.plus
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-inline fun <T : Innertube.Item> ItemsPage(
+inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
     tag: String,
     crossinline header: @Composable (textButton: (@Composable () -> Unit)?) -> Unit,
     crossinline itemContent: @Composable LazyItemScope.(T) -> Unit,
@@ -45,7 +54,7 @@ inline fun <T : Innertube.Item> ItemsPage(
     initialPlaceholderCount: Int = 8,
     continuationPlaceholderCount: Int = 3,
     emptyItemsText: String = stringResource(R.string.no_items_found),
-    noinline provider: (suspend (String?) -> Result<Innertube.ItemsPage<T>?>?)? = null
+    noinline provider: (suspend (String?) -> Result<YoutubeMusicInnertube.ItemsPage<T>?>?)? = null
 ) = ItemsPage(
     tag = tag,
     header = { before, _ -> header(before) },
@@ -59,7 +68,7 @@ inline fun <T : Innertube.Item> ItemsPage(
 )
 
 @Composable
-inline fun <T : Innertube.Item> ItemsPage(
+inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
     tag: String,
     crossinline header: @Composable (
         beforeContent: (@Composable () -> Unit)?,
@@ -71,12 +80,17 @@ inline fun <T : Innertube.Item> ItemsPage(
     initialPlaceholderCount: Int = 8,
     continuationPlaceholderCount: Int = 3,
     emptyItemsText: String = stringResource(R.string.no_items_found),
-    noinline provider: (suspend (String?) -> Result<Innertube.ItemsPage<T>?>?)? = null
+    noinline provider: (suspend (String?) -> Result<YoutubeMusicInnertube.ItemsPage<T>?>?)? = null
 ) {
     val (_, typography) = LocalAppearance.current
     val updatedProvider by rememberUpdatedState(provider)
     val lazyListState = rememberLazyListState()
-    var itemsPage by persist<Innertube.ItemsPage<T>?>(tag)
+    var itemsPage by persist<YoutubeMusicInnertube.ItemsPage<T>?>(tag)
+    // This scope deliberately has its own Job. LazyColumn can temporarily
+    // dispose/recompose its loading item while a request is running; tying the
+    // request to LaunchedEffect would cancel a successful HTTP response.
+    val requestScope = remember(tag) { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
+    var requestInFlight by remember(tag) { mutableStateOf(false) }
 
     val shouldLoad by remember {
         derivedStateOf {
@@ -84,20 +98,47 @@ inline fun <T : Innertube.Item> ItemsPage(
         }
     }
 
-    LaunchedEffect(shouldLoad, updatedProvider) {
-        if (!shouldLoad) return@LaunchedEffect
-        val provideItems = updatedProvider ?: return@LaunchedEffect
+    // `shouldLoad` is driven by LazyColumn's layout pass and can temporarily
+    // switch back to false while a response is in flight. Do not use it as an
+    // effect key: that cancels the request and leaves the placeholder visible.
+    // The stable query/tab [tag] owns this collector; `shouldLoad` only starts
+    // the next page load.
+    LaunchedEffect(tag) {
+        snapshotFlow { shouldLoad }
+            .filter { it }
+            .collect {
+                if (requestInFlight) return@collect
+                val provideItems = updatedProvider ?: return@collect
+                requestInFlight = true
+                val continuation = itemsPage?.continuation
 
-        withContext(Dispatchers.IO) {
-            provideItems(itemsPage?.continuation)
-        }?.onSuccess {
-            if (it == null) {
-                itemsPage = (itemsPage ?: Innertube.ItemsPage(null, null))
-                    .copy(continuation = null)
-            } else itemsPage += it
-        }?.onFailure {
-            itemsPage = itemsPage?.copy(continuation = null)
-        }?.exceptionOrNull()?.printStackTrace()
+                requestScope.launch {
+                    Log.d("SearchItemsPage", "request started tag=$tag continuation=${continuation != null}")
+                    val result = try {
+                        provideItems(continuation)
+                    } catch (error: Throwable) {
+                        Log.e("SearchItemsPage", "provider threw for tag=$tag", error)
+                        null
+                    }
+                    Log.d("SearchItemsPage", "provider returned tag=$tag result=${result != null}")
+                    withContext(Dispatchers.Main.immediate) {
+                        requestInFlight = false
+                        result?.onSuccess {
+                            Log.d(
+                                "SearchItemsPage",
+                                "loaded tag=$tag items=${it?.items?.size ?: 0} continuation=${it?.continuation != null}"
+                            )
+                            if (it == null) {
+                                itemsPage = (itemsPage ?: YoutubeMusicInnertube.ItemsPage(null, null))
+                                    .copy(continuation = null)
+                            } else itemsPage += it
+                        }?.onFailure {
+                            Log.w("SearchItemsPage", "load failed for tag=$tag", it)
+                            itemsPage = itemsPage?.copy(continuation = null)
+                        }?.exceptionOrNull()?.printStackTrace()
+                    }
+                }
+            }
     }
 
     Box(modifier = modifier) {
@@ -117,7 +158,7 @@ inline fun <T : Innertube.Item> ItemsPage(
 
             items(
                 items = itemsPage?.items ?: emptyList(),
-                key = Innertube.Item::key,
+                key = YoutubeMusicInnertube.Item::key,
                 itemContent = itemContent
             )
 

@@ -1,9 +1,12 @@
+@file:Suppress("TooGenericExceptionCaught") // Storage providers can throw implementation-specific failures.
+
 package app.vimusic.android.work
 
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document
+import android.util.Log
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -24,6 +27,7 @@ class DatabaseAutoBackupWorker(
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
     companion object {
+        private const val TAG = "DatabaseAutoBackup"
         private const val WORK_NAME = "database_auto_backup_worker"
         private const val BACKUP_MIME_TYPE = "application/vnd.sqlite3"
         private const val BACKUP_FILE_NAME = "ViMusic_auto_backup.db"
@@ -55,7 +59,7 @@ class DatabaseAutoBackupWorker(
                 ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
                 request
             )
-        }.also { it.exceptionOrNull()?.printStackTrace() }
+        }.onFailure { error -> Log.e(TAG, "Failed to schedule database backup", error) }
     }
 
     override suspend fun doWork(): Result {
@@ -67,8 +71,8 @@ class DatabaseAutoBackupWorker(
             Database.checkpoint()
             val path = requireNotNull(Database.internal.dbPath) { "Database path is null" }
             sha256(path)
-        }.getOrElse {
-            it.printStackTrace()
+        }.getOrElse { error ->
+            Log.e(TAG, "Failed to calculate database backup hash", error)
             return Result.retry()
         }
 
@@ -87,15 +91,15 @@ class DatabaseAutoBackupWorker(
                 treeUri,
                 DocumentsContract.getTreeDocumentId(treeUri)
             )
-        }.getOrElse {
-            it.printStackTrace()
+        }.getOrElse { error ->
+            Log.e(TAG, "Invalid database backup tree URI", error)
             return Result.failure()
         }
 
         val documentUri = runCatching {
             resolveBackupDocumentUri(treeUri, parentUri)
-        }.getOrElse {
-            it.printStackTrace()
+        }.getOrElse { error ->
+            Log.e(TAG, "Failed to resolve database backup document", error)
             return Result.retry()
         } ?: return Result.retry()
 
@@ -110,7 +114,7 @@ class DatabaseAutoBackupWorker(
             DataPreferences.autoDatabaseBackupLastSha256 = currentHash
             Result.success()
         } catch (throwable: Throwable) {
-            throwable.printStackTrace()
+            Log.e(TAG, "Failed to write database backup", throwable)
             Result.retry()
         }
     }
@@ -154,11 +158,11 @@ class DatabaseAutoBackupWorker(
             if (idIndex < 0 || nameIndex < 0) return null
 
             while (cursor.moveToNext()) {
-                val name = cursor.getString(nameIndex) ?: continue
-                if (name != BACKUP_FILE_NAME) continue
-
-                val documentId = cursor.getString(idIndex) ?: continue
-                return DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
+                val name = cursor.getString(nameIndex)
+                val documentId = cursor.getString(idIndex)
+                if (name == BACKUP_FILE_NAME && documentId != null) {
+                    return DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
+                }
             }
         }
 

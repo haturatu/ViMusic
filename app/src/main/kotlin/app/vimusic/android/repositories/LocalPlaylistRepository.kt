@@ -8,9 +8,9 @@ import app.vimusic.android.query
 import app.vimusic.android.transaction
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.completed
-import app.vimusic.providers.innertube.models.bodies.BrowseBody
-import app.vimusic.providers.innertube.requests.playlistPage
-import app.vimusic.providers.innertube.Innertube
+import app.vimusic.providers.youtubemusic.innertube.models.bodies.BrowseBody
+import app.vimusic.providers.youtubemusic.innertube.requests.playlistPage
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 
@@ -41,7 +41,7 @@ object DatabaseLocalPlaylistRepository : LocalPlaylistRepository {
     }
 
     override suspend fun sync(playlist: Playlist, browseId: String): Result<Unit> = runCatching {
-        Innertube.playlistPage(BrowseBody(browseId = browseId))
+        YoutubeMusicInnertube.playlistPage(BrowseBody(browseId = browseId))
             ?.completed()
             ?.getOrNull()
             ?.let { remotePlaylist ->

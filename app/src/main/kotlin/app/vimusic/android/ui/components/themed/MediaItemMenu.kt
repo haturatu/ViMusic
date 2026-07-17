@@ -83,7 +83,7 @@ import app.vimusic.core.ui.favoritesIcon
 import app.vimusic.core.ui.utils.px
 import app.vimusic.core.ui.utils.roundedShape
 import app.vimusic.core.ui.utils.songBundle
-import app.vimusic.providers.innertube.models.NavigationEndpoint
+import app.vimusic.providers.youtubemusic.innertube.models.NavigationEndpoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
