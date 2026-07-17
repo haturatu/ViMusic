@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.vimusic.android.models.Artist
 import app.vimusic.android.repositories.ArtistRepository
+import app.vimusic.android.ui.state.LoadState
+import app.vimusic.android.ui.state.contentOrNull
 import app.vimusic.android.utils.requireValue
 import app.vimusic.android.utils.runSuspendCatching
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
@@ -14,25 +16,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
-sealed interface ArtistUiState {
-    data object Loading : ArtistUiState
-    data class Content(
-        val artist: Artist?,
-        val page: YoutubeMusicInnertube.ArtistPage,
-    ) : ArtistUiState
-    data class Error(
-        val artist: Artist?,
-        val throwable: Throwable,
-        val stalePage: YoutubeMusicInnertube.ArtistPage? = null,
-    ) : ArtistUiState
-}
+data class ArtistContent(
+    val artist: Artist?,
+    val page: YoutubeMusicInnertube.ArtistPage,
+)
 
 class ArtistViewModel(
     private val browseId: String,
     private val repository: ArtistRepository
 ) : ViewModel() {
-    private val mutableUiState = MutableStateFlow<ArtistUiState>(ArtistUiState.Loading)
-    val uiState: StateFlow<ArtistUiState> = mutableUiState.asStateFlow()
+    private val mutableUiState = MutableStateFlow<LoadState<ArtistContent>>(LoadState.Loading)
+    val uiState: StateFlow<LoadState<ArtistContent>> = mutableUiState.asStateFlow()
     private var currentArtist: Artist? = null
     private var loadJob: Job? = null
 
@@ -41,9 +35,10 @@ class ArtistViewModel(
             repository.observeArtist(browseId).collect { artist ->
                 currentArtist = artist
                 mutableUiState.value = when (val state = mutableUiState.value) {
-                    ArtistUiState.Loading -> state
-                    is ArtistUiState.Content -> state.copy(artist = artist)
-                    is ArtistUiState.Error -> state.copy(artist = artist)
+                    is LoadState.Content -> state.copy(value = state.value.copy(artist = artist))
+                    is LoadState.Error -> state.copy(previous = state.previous?.copy(artist = artist))
+                    LoadState.Idle,
+                    LoadState.Loading -> state
                 }
             }
         }
@@ -53,18 +48,15 @@ class ArtistViewModel(
         cachedPage: YoutubeMusicInnertube.ArtistPage? = null,
         force: Boolean = false,
     ) {
-        if (!force && mutableUiState.value is ArtistUiState.Content) return
+        if (!force && mutableUiState.value is LoadState.Content) return
         if (!force && cachedPage != null) {
-            mutableUiState.value = ArtistUiState.Content(currentArtist, cachedPage)
+            mutableUiState.value = LoadState.Content(ArtistContent(currentArtist, cachedPage))
             return
         }
         if (loadJob?.isActive == true) return
-        val stalePage = when (val state = mutableUiState.value) {
-            is ArtistUiState.Content -> state.page
-            is ArtistUiState.Error -> state.stalePage
-            ArtistUiState.Loading -> cachedPage
-        }
-        mutableUiState.value = ArtistUiState.Loading
+        val previous = mutableUiState.value.contentOrNull()
+            ?: cachedPage?.let { ArtistContent(currentArtist, it) }
+        mutableUiState.value = LoadState.Loading
         loadJob = viewModelScope.launch {
             runSuspendCatching {
                 repository.fetchArtistPage(browseId).requireValue(
@@ -73,11 +65,11 @@ class ArtistViewModel(
                 ).getOrThrow()
             }.fold(
                 onSuccess = { page ->
-                    mutableUiState.value = ArtistUiState.Content(currentArtist, page)
+                    mutableUiState.value = LoadState.Content(ArtistContent(currentArtist, page))
                     upsertArtistFromPage(currentArtist, page)
                 },
                 onFailure = { error ->
-                    mutableUiState.value = ArtistUiState.Error(currentArtist, error, stalePage)
+                    mutableUiState.value = LoadState.Error(error, previous)
                 },
             )
         }

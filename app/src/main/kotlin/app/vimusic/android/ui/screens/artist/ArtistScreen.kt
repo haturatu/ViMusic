@@ -40,8 +40,9 @@ import app.vimusic.android.ui.screens.GlobalRoutes
 import app.vimusic.android.ui.screens.Route
 import app.vimusic.android.ui.screens.albumRoute
 import app.vimusic.android.ui.screens.searchresult.ItemsPage
+import app.vimusic.android.ui.state.LoadState
+import app.vimusic.android.ui.state.contentOrNull
 import app.vimusic.android.ui.viewmodels.ArtistViewModel
-import app.vimusic.android.ui.viewmodels.ArtistUiState
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.forcePlay
 import app.vimusic.compose.persist.PersistMapCleanup
@@ -74,25 +75,17 @@ fun ArtistScreen(browseId: String) {
 
     var artistPage by persist<YoutubeMusicInnertube.ArtistPage?>("artist/$browseId/artistPage")
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val stateArtist = when (val state = uiState) {
-        ArtistUiState.Loading -> null
-        is ArtistUiState.Content -> state.artist
-        is ArtistUiState.Error -> state.artist
-    }
+    val stateArtist = uiState.contentOrNull()?.artist
     val artist = stateArtist ?: persistedArtist
-    val statePage = when (val state = uiState) {
-        ArtistUiState.Loading -> null
-        is ArtistUiState.Content -> state.page
-        is ArtistUiState.Error -> state.stalePage
-    }
+    val statePage = uiState.contentOrNull()?.page
     val displayedPage = statePage ?: artistPage
 
     LaunchedEffect(browseId) {
         viewModel.loadArtist(cachedPage = artistPage)
     }
     LaunchedEffect(uiState) {
-        if (uiState is ArtistUiState.Content) {
-            artistPage = (uiState as ArtistUiState.Content).page
+        if (uiState is LoadState.Content) {
+            artistPage = (uiState as LoadState.Content).value.page
             stateArtist?.let { persistedArtist = it }
         }
     }
@@ -102,14 +95,14 @@ fun ArtistScreen(browseId: String) {
 
         Content {
             val thumbnailContent = adaptiveThumbnailContent(
-                isLoading = uiState is ArtistUiState.Loading && displayedPage == null,
+                isLoading = uiState is LoadState.Loading && displayedPage == null,
                 url = artist?.thumbnailUrl,
                 shape = CircleShape
             )
 
             val headerContent: @Composable (textButton: (@Composable () -> Unit)?) -> Unit =
                 { textButton ->
-                    if (uiState is ArtistUiState.Loading && artist == null) HeaderPlaceholder(modifier = Modifier.shimmer()) else {
+                    if (uiState is LoadState.Loading && artist == null) HeaderPlaceholder(modifier = Modifier.shimmer()) else {
                         val (colorPalette) = LocalAppearance.current
                         val context = LocalContext.current
 
@@ -160,7 +153,7 @@ fun ArtistScreen(browseId: String) {
                 }
             ) { currentTabIndex ->
                 saveableStateHolder.SaveableStateProvider(key = currentTabIndex) {
-                    if (uiState is ArtistUiState.Error && displayedPage == null && currentTabIndex != 4) {
+                    if (uiState is LoadState.Error && displayedPage == null && currentTabIndex != 4) {
                         BasicText(
                             text = stringResource(R.string.error_message),
                             modifier = Modifier

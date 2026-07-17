@@ -60,8 +60,9 @@ import app.vimusic.android.ui.items.PlaylistItemPlaceholder
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.screens.Route
+import app.vimusic.android.ui.state.LoadState
+import app.vimusic.android.ui.state.contentOrNull
 import app.vimusic.android.ui.viewmodels.HomeQuickPicksViewModel
-import app.vimusic.android.ui.viewmodels.QuickPicksUiState
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.center
 import app.vimusic.android.utils.forcePlay
@@ -97,11 +98,7 @@ fun QuickPicks(
     var trending by persist<Song?>("home/trending")
 
     val quickPicksState by viewModel.uiState.collectAsStateWithLifecycle()
-    val relatedPage = when (val state = quickPicksState) {
-        QuickPicksUiState.Loading -> null
-        is QuickPicksUiState.Content -> state.page
-        is QuickPicksUiState.Error -> state.stalePage
-    }
+    val relatedPage = quickPicksState.contentOrNull()
 
     LaunchedEffect(DataPreferences.shouldCacheQuickPicks) {
         if (!DataPreferences.shouldCacheQuickPicks) viewModel.clearCachedQuickPicks()
@@ -109,7 +106,7 @@ fun QuickPicks(
 
     LaunchedEffect(DataPreferences.quickPicksSource) {
         suspend fun handleSong(song: Song?) {
-            if (trending?.id != song?.id || quickPicksState is QuickPicksUiState.Loading) {
+            if (trending?.id != song?.id || quickPicksState is LoadState.Loading) {
                 viewModel.load(videoId = song?.id ?: "J7p4bzqLvCw")
             }
             trending = song
@@ -324,7 +321,7 @@ fun QuickPicks(
                 }
 
                 Unit
-            } ?: (quickPicksState as? QuickPicksUiState.Error)?.let {
+            } ?: (quickPicksState as? LoadState.Error)?.let {
                 BasicText(
                     text = stringResource(R.string.error_message),
                     style = typography.s.secondary.center,

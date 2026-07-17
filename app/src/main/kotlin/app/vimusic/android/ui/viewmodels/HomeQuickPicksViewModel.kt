@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.vimusic.android.models.Song
 import app.vimusic.android.repositories.HomeQuickPicksRepository
+import app.vimusic.android.ui.state.LoadState
 import app.vimusic.android.utils.requireValue
 import app.vimusic.android.utils.runSuspendCatching
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
@@ -14,23 +15,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-sealed interface QuickPicksUiState {
-    data object Loading : QuickPicksUiState
-    data class Content(
-        val page: YoutubeMusicInnertube.RelatedPage,
-        val isRefreshing: Boolean = false,
-    ) : QuickPicksUiState
-    data class Error(
-        val throwable: Throwable,
-        val stalePage: YoutubeMusicInnertube.RelatedPage? = null,
-    ) : QuickPicksUiState
-}
-
 class HomeQuickPicksViewModel(
     private val repository: HomeQuickPicksRepository
 ) : ViewModel() {
-    private val mutableUiState = MutableStateFlow<QuickPicksUiState>(QuickPicksUiState.Loading)
-    val uiState: StateFlow<QuickPicksUiState> = mutableUiState.asStateFlow()
+    private val mutableUiState = MutableStateFlow<LoadState<YoutubeMusicInnertube.RelatedPage>>(
+        LoadState.Loading
+    )
+    val uiState: StateFlow<LoadState<YoutubeMusicInnertube.RelatedPage>> =
+        mutableUiState.asStateFlow()
     private var loadJob: Job? = null
     private var currentVideoId: String? = null
 
@@ -43,8 +35,7 @@ class HomeQuickPicksViewModel(
         currentVideoId = videoId
         loadJob?.cancel()
         val cached = repository.getCachedQuickPicksIfAvailable()
-        mutableUiState.value = if (cached == null) QuickPicksUiState.Loading
-        else QuickPicksUiState.Content(cached, isRefreshing = true)
+        mutableUiState.value = if (cached == null) LoadState.Loading else LoadState.Content(cached)
         loadJob = viewModelScope.launch {
             runSuspendCatching {
                 repository.fetchRelatedPage(videoId).requireValue(
@@ -54,10 +45,10 @@ class HomeQuickPicksViewModel(
             }.fold(
                 onSuccess = { page ->
                     repository.cacheQuickPicks(page)
-                    mutableUiState.value = QuickPicksUiState.Content(page)
+                    mutableUiState.value = LoadState.Content(page)
                 },
                 onFailure = { error ->
-                    mutableUiState.value = QuickPicksUiState.Error(error, cached)
+                    mutableUiState.value = LoadState.Error(error, cached)
                 },
             )
         }
