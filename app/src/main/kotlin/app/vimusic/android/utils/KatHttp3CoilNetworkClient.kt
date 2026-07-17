@@ -3,6 +3,7 @@
 package app.vimusic.android.utils
 
 import android.util.Log
+import android.os.SystemClock
 import coil3.network.NetworkClient
 import coil3.network.ConcurrentRequestStrategy
 import coil3.network.NetworkHeaders
@@ -85,32 +86,43 @@ class KatHttp3CoilNetworkClient(
         .addInterceptor(BrotliInterceptor)
         .build()
 
+    init {
+        applicationContext?.let(YoutubeThumbnailHostResolver::initialize)
+    }
+
     override suspend fun <T> executeRequest(
         request: NetworkRequest,
         block: suspend (NetworkResponse) -> T,
     ): T {
-        if (!Http3OriginPolicy.shouldAttemptHttp3(request.url)) {
-            return executeRequestWithOkHttpFallback(request, block, null)
+        val resolvedRequest = request.copy(url = YoutubeThumbnailHostResolver.resolve(request.url))
+        val startedAt = SystemClock.elapsedRealtime()
+        if (!Http3OriginPolicy.shouldAttemptHttp3(resolvedRequest.url)) {
+            return executeRequestWithOkHttpFallback(resolvedRequest, block, null)
         }
         // PolicyRetryInterceptor retries idempotent requests once for a
         // timeout, DNS failure, or QUIC transport failure. Only idempotent
         // requests may then use the HTTP fallback: retrying a failed POST or
         // PUT could apply the same side effect twice. The fallback still
         // builds their bodies for the Alt-Svc-unavailable path above.
-        if (request.method.equals("GET", ignoreCase = true) ||
-            request.method.equals("HEAD", ignoreCase = true)
+        if (resolvedRequest.method.equals("GET", ignoreCase = true) ||
+            resolvedRequest.method.equals("HEAD", ignoreCase = true)
         ) {
             try {
-                return executeBufferedRequest(request, block)
+                return executeBufferedRequest(resolvedRequest, block)
             } catch (failure: Throwable) {
                 if (!failure.isHttp3TransportFailure()) throw failure
-                Http3OriginPolicy.recordHttp3Failure(request.url, failure)
-                Log.i(LOG_TAG, "HTTP/3 unavailable; using OkHttp fallback: ${request.url}")
+                YoutubeThumbnailHostResolver.recordFailure(
+                    resolvedRequest.url,
+                    failure,
+                    SystemClock.elapsedRealtime() - startedAt,
+                )
+                Http3OriginPolicy.recordHttp3Failure(resolvedRequest.url, failure)
+                Log.i(LOG_TAG, "HTTP/3 unavailable; using OkHttp fallback: ${resolvedRequest.url}")
                 Log.d(LOG_TAG, "HTTP/3 image fallback cause", failure)
-                return executeRequestWithOkHttpFallback(request, block, failure)
+                return executeRequestWithOkHttpFallback(resolvedRequest, block, failure)
             }
         }
-        return executeBufferedRequest(request, block)
+        return executeBufferedRequest(resolvedRequest, block)
     }
 
     private suspend fun <T> executeRequestWithOkHttpFallback(
@@ -121,6 +133,7 @@ class KatHttp3CoilNetworkClient(
         val response = try {
             withContext(Dispatchers.IO) {
                 val requestMillis = System.currentTimeMillis()
+                val startedAt = SystemClock.elapsedRealtime()
                 val method = request.method.uppercase()
                 val contentType = request.headers.asMap()
                     .entries
@@ -142,6 +155,12 @@ class KatHttp3CoilNetworkClient(
                     }
                     .build()
                 fallbackClient.newCall(httpRequest).execute().use { httpResponse ->
+                    YoutubeThumbnailHostResolver.recordResponse(
+                        request.url,
+                        httpResponse.code,
+                        httpResponse.header("content-type"),
+                        SystemClock.elapsedRealtime() - startedAt,
+                    )
                     Http3OriginPolicy.recordOriginResponse(
                         request.url,
                         httpResponse.headers.map { (name, value) -> name to value },
@@ -171,6 +190,7 @@ class KatHttp3CoilNetworkClient(
         block: suspend (NetworkResponse) -> T,
     ): T {
         val requestMillis = System.currentTimeMillis()
+        val startedAt = SystemClock.elapsedRealtime()
         val response = client.execute(
             KatHttp3Request(
                 method = request.method.uppercase(),
@@ -185,6 +205,12 @@ class KatHttp3CoilNetworkClient(
             request.url,
             response.status,
             response.headers.map { it.name to it.value },
+        )
+        YoutubeThumbnailHostResolver.recordResponse(
+            request.url,
+            response.status,
+            response.headers.firstOrNull { it.name.equals("content-type", ignoreCase = true) }?.value,
+            SystemClock.elapsedRealtime() - startedAt,
         )
         Log.i(LOG_TAG, "${response.protocol.uppercase()}: ${response.status} ${request.url}")
         return block(

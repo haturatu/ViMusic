@@ -3,7 +3,12 @@
 package app.vimusic.android.utils
 
 import android.content.ContentUris
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
 import android.net.Uri
+import android.os.Build
+import android.os.SystemClock
 import android.provider.MediaStore
 import android.text.format.DateUtils
 import androidx.annotation.OptIn
@@ -28,6 +33,146 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlin.time.Duration
+import java.net.SocketTimeoutException
+
+/**
+ * Chooses a compatible YouTube thumbnail host by observed reliability on the
+ * current network. Host substitution is intentionally limited to the known
+ * interchangeable yt3 endpoints; every other URL is left untouched.
+ */
+object YoutubeThumbnailHostResolver {
+    private val lock = Any()
+    private val stats = mutableMapOf<String, HostStats>()
+    private var activeNetwork: Network? = null
+    private var started = false
+    private var connectivity: ConnectivityManager? = null
+
+    fun initialize(context: Context) {
+        val manager = context.applicationContext.getSystemService(ConnectivityManager::class.java) ?: return
+        synchronized(lock) {
+            if (started) return
+            started = true
+            connectivity = manager
+            activeNetwork = manager.activeNetwork
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            manager.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) = resetForNetwork(network)
+                override fun onLost(network: Network) = synchronized(lock) {
+                    if (activeNetwork == network) resetForNetworkLocked(null)
+                }
+            })
+        }
+    }
+
+    fun resolve(url: String): String {
+        refreshLegacyNetwork()
+        val uri = Uri.parse(url)
+        val originalHost = uri.host?.lowercase() ?: return url
+        if (originalHost !in supportedHosts) return url
+        val now = SystemClock.elapsedRealtime()
+        val selectedHost = synchronized(lock) {
+            (listOf(originalHost) + supportedHosts)
+                .distinct()
+                .maxByOrNull { host -> stats[host]?.stabilityScore(now) ?: defaultScore(host, originalHost) }
+        } ?: return url
+        return if (selectedHost == originalHost) url else uri.buildUpon().authority(selectedHost).build().toString()
+    }
+
+    fun recordResponse(url: String, status: Int, contentType: String?, elapsedMillis: Long) {
+        val host = Uri.parse(url).host?.lowercase()?.takeIf { it in supportedHosts } ?: return
+        synchronized(lock) {
+            val state = stats.getOrPut(host, ::HostStats)
+            when {
+                status in 200..299 && contentType?.startsWith("image/", ignoreCase = true) == true ->
+                    state.recordSuccess(elapsedMillis)
+                status in 500..599 -> state.recordHttp5xx()
+                // 4xx is URL/auth related, not evidence that this host is unstable.
+            }
+        }
+    }
+
+    fun recordFailure(url: String, error: Throwable, elapsedMillis: Long) {
+        val host = Uri.parse(url).host?.lowercase()?.takeIf { it in supportedHosts } ?: return
+        synchronized(lock) {
+            val state = stats.getOrPut(host, ::HostStats)
+            if (error.findCause<SocketTimeoutException>() != null ||
+                error.findCause<kotlinx.coroutines.TimeoutCancellationException>() != null
+            ) state.recordTimeout() else state.recordTransportFailure()
+        }
+    }
+
+    private fun refreshLegacyNetwork() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) return
+        val network = connectivity?.activeNetwork
+        synchronized(lock) { if (network != activeNetwork) resetForNetworkLocked(network) }
+    }
+
+    private fun resetForNetwork(network: Network?) = synchronized(lock) { resetForNetworkLocked(network) }
+
+    private fun resetForNetworkLocked(network: Network?) {
+        if (network == activeNetwork) return
+        activeNetwork = network
+        stats.clear()
+    }
+
+    private fun defaultScore(host: String, originalHost: String): Double = when {
+        host == originalHost -> 9_500.0
+        host == "yt3.googleusercontent.com" -> 9_000.0
+        host == "yt3.ggpht.com" -> 8_500.0
+        else -> 8_000.0
+    }
+
+    private data class HostStats(
+        var successes: Int = 0,
+        var transportFailures: Int = 0,
+        var timeouts: Int = 0,
+        var http5xx: Int = 0,
+        var latencyEwmaMillis: Double = 500.0,
+        var consecutiveFailures: Int = 0,
+        var blockedUntilElapsedMillis: Long = 0,
+    ) {
+        fun stabilityScore(now: Long): Double {
+            if (blockedUntilElapsedMillis > now) return Double.NEGATIVE_INFINITY
+            val weightedSuccesses = successes + 8.0
+            val weightedFailures = transportFailures * 2.0 + timeouts * 3.0 + http5xx * 0.5 + 2.0
+            return weightedSuccesses / (weightedSuccesses + weightedFailures) * 10_000.0 -
+                latencyEwmaMillis * 0.2 - consecutiveFailures * 1_000.0
+        }
+
+        fun recordSuccess(elapsedMillis: Long) {
+            successes++
+            consecutiveFailures = 0
+            blockedUntilElapsedMillis = 0
+            latencyEwmaMillis = latencyEwmaMillis * 0.8 + elapsedMillis * 0.2
+        }
+
+        fun recordTransportFailure() = recordFailure(2)
+        fun recordTimeout() = recordFailure(3)
+        fun recordHttp5xx() = recordFailure(1)
+
+        private fun recordFailure(weight: Int) {
+            transportFailures += if (weight == 2) 1 else 0
+            timeouts += if (weight == 3) 1 else 0
+            http5xx += if (weight == 1) 1 else 0
+            consecutiveFailures++
+            val cooldown = when (consecutiveFailures) {
+                1 -> 0L
+                2 -> 10_000L
+                3 -> 30_000L
+                4 -> 120_000L
+                else -> 600_000L
+            }
+            blockedUntilElapsedMillis = SystemClock.elapsedRealtime() + cooldown
+        }
+    }
+
+    private val supportedHosts = listOf(
+        "yt3.googleusercontent.com",
+        "yt3.ggpht.com",
+        "yt4.ggpht.com",
+    )
+}
 
 val YoutubeMusicInnertube.SongItem.asMediaItem: MediaItem
     get() = MediaItem.Builder()
