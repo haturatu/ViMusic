@@ -1120,10 +1120,21 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     private fun updateSessionArtworkData(artworkUri: Uri?, bitmap: Bitmap) {
         val currentItem = player.currentMediaItem ?: return
         if (currentItem.mediaMetadata.artworkUri != artworkUri || bitmapProvider.lastUri != artworkUri) return
+        val largestSide = maxOf(bitmap.width, bitmap.height)
+        val encodedBitmap = if (largestSide > SYSTEM_ARTWORK_MAX_PIXELS) {
+            val scale = SYSTEM_ARTWORK_MAX_PIXELS.toFloat() / largestSide
+            Bitmap.createScaledBitmap(
+                bitmap,
+                (bitmap.width * scale).toInt().coerceAtLeast(1),
+                (bitmap.height * scale).toInt().coerceAtLeast(1),
+                true,
+            )
+        } else bitmap
         val artworkData = ByteArrayOutputStream().use { output ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, ARTWORK_JPEG_QUALITY, output)
+            encodedBitmap.compress(Bitmap.CompressFormat.JPEG, ARTWORK_JPEG_QUALITY, output)
             output.toByteArray()
         }
+        if (encodedBitmap !== bitmap) encodedBitmap.recycle()
         if (currentItem.mediaMetadata.artworkData?.contentEquals(artworkData) == true) return
         player.replaceMediaItem(
             player.currentMediaItemIndex,
@@ -1769,6 +1780,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         private const val PLAYBACK_START_BUFFER_MS = 2_500
         private const val PLAYBACK_REBUFFER_MS = 5_000
         private const val ARTWORK_JPEG_QUALITY = 85
+        private const val SYSTEM_ARTWORK_MAX_PIXELS = 320
         private val youtubeIdRegex = Regex("^[A-Za-z0-9_-]{11}$")
 
         fun extractYouTubeVideoId(raw: String): String {
