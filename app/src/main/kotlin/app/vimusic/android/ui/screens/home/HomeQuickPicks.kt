@@ -50,6 +50,7 @@ import app.vimusic.android.ui.components.ShimmerHost
 import app.vimusic.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
+import app.vimusic.android.ui.components.themed.RetryMessage
 import app.vimusic.android.ui.components.themed.TextPlaceholder
 import app.vimusic.android.ui.items.AlbumItem
 import app.vimusic.android.ui.items.AlbumItemPlaceholder
@@ -322,13 +323,10 @@ fun QuickPicks(
 
                 Unit
             } ?: (quickPicksState as? LoadState.Error)?.let {
-                BasicText(
-                    text = stringResource(R.string.error_message),
-                    style = typography.s.secondary.center,
+                RetryMessage(
+                    onRetry = viewModel::retry,
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
-                        .clickable { viewModel.retry() }
-                        .padding(all = 16.dp)
                 )
             } ?: ShimmerHost {
                 repeat(4) {

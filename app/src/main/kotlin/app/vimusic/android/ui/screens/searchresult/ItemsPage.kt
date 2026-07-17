@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
@@ -30,6 +29,7 @@ import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.R
 import app.vimusic.android.ui.components.ShimmerHost
 import app.vimusic.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
+import app.vimusic.android.ui.components.themed.RetryMessage
 import app.vimusic.android.ui.state.LoadPhase
 import app.vimusic.android.ui.state.PagedLoadState
 import app.vimusic.android.utils.center
@@ -182,16 +182,13 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
             }
 
             if (pageState.hasError) item(key = "load_error") {
-                BasicText(
-                    text = stringResource(R.string.error_message),
-                    style = typography.s.secondary.center,
+                RetryMessage(
+                    onRetry = {
+                        pageState = pageState.retry()
+                        retryGeneration++
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable {
-                            pageState = pageState.retry()
-                            retryGeneration++
-                        }
-                        .padding(horizontal = 16.dp, vertical = 32.dp)
                 )
             }
         }

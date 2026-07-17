@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
@@ -29,6 +28,7 @@ import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.HeaderIconButton
 import app.vimusic.android.ui.components.themed.HeaderPlaceholder
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
+import app.vimusic.android.ui.components.themed.RetryMessage
 import app.vimusic.android.ui.components.themed.Scaffold
 import app.vimusic.android.ui.components.themed.adaptiveThumbnailContent
 import app.vimusic.android.ui.items.AlbumItem
@@ -154,11 +154,10 @@ fun ArtistScreen(browseId: String) {
             ) { currentTabIndex ->
                 saveableStateHolder.SaveableStateProvider(key = currentTabIndex) {
                     if (uiState is LoadState.Error && displayedPage == null && currentTabIndex != 4) {
-                        BasicText(
-                            text = stringResource(R.string.error_message),
+                        RetryMessage(
+                            onRetry = { viewModel.loadArtist(force = true) },
                             modifier = Modifier
                                 .fillMaxSize()
-                                .clickable { viewModel.loadArtist(force = true) }
                                 .wrapContentSize()
                         )
                     } else when (currentTabIndex) {
