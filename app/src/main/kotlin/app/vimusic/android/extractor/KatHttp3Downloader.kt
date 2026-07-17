@@ -40,6 +40,10 @@ class KatHttp3Downloader(
             responseHeadersTimeoutMillis = 8_000,
             readTimeoutMillis = 10_000,
             callTimeoutMillis = 12_000,
+            // Search tabs can replace a request while native cancellation is
+            // still releasing the single-origin permit. H3 is opportunistic;
+            // do not leave the replacement request queued for the 30s default.
+            queueTimeoutMillis = 500,
             enable0Rtt = true,
             qlogEnabled = false,
             insecureCert = false,

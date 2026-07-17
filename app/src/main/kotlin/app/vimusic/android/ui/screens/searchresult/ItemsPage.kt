@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
@@ -37,12 +38,16 @@ import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import app.vimusic.providers.youtubemusic.innertube.utils.plus
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.first
+
+sealed interface PageLoadStatus {
+    data object Idle : PageLoadStatus
+    data object Loading : PageLoadStatus
+    data object Complete : PageLoadStatus
+    data class Error(val throwable: Throwable) : PageLoadStatus
+}
 
 @Composable
 inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
@@ -86,11 +91,13 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
     val updatedProvider by rememberUpdatedState(provider)
     val lazyListState = rememberLazyListState()
     var itemsPage by persist<YoutubeMusicInnertube.ItemsPage<T>?>(tag)
-    // This scope deliberately has its own Job. LazyColumn can temporarily
-    // dispose/recompose its loading item while a request is running; tying the
-    // request to LaunchedEffect would cancel a successful HTTP response.
-    val requestScope = remember(tag) { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
-    var requestInFlight by remember(tag) { mutableStateOf(false) }
+    var loadStatus by remember(tag) {
+        mutableStateOf<PageLoadStatus>(
+            if (itemsPage?.continuation == null && itemsPage != null) PageLoadStatus.Complete
+            else PageLoadStatus.Idle
+        )
+    }
+    var retryGeneration by remember(tag) { mutableStateOf(0) }
 
     val shouldLoad by remember {
         derivedStateOf {
@@ -98,47 +105,37 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
         }
     }
 
-    // `shouldLoad` is driven by LazyColumn's layout pass and can temporarily
-    // switch back to false while a response is in flight. Do not use it as an
-    // effect key: that cancels the request and leaves the placeholder visible.
-    // The stable query/tab [tag] owns this collector; `shouldLoad` only starts
-    // the next page load.
-    LaunchedEffect(tag) {
-        snapshotFlow { shouldLoad }
-            .filter { it }
-            .collect {
-                if (requestInFlight) return@collect
-                val provideItems = updatedProvider ?: return@collect
-                requestInFlight = true
-                val continuation = itemsPage?.continuation
-
-                requestScope.launch {
-                    Log.d("SearchItemsPage", "request started tag=$tag continuation=${continuation != null}")
-                    val result = try {
-                        provideItems(continuation)
-                    } catch (error: Throwable) {
-                        Log.e("SearchItemsPage", "provider threw for tag=$tag", error)
-                        null
-                    }
-                    Log.d("SearchItemsPage", "provider returned tag=$tag result=${result != null}")
-                    withContext(Dispatchers.Main.immediate) {
-                        requestInFlight = false
-                        result?.onSuccess {
-                            Log.d(
-                                "SearchItemsPage",
-                                "loaded tag=$tag items=${it?.items?.size ?: 0} continuation=${it?.continuation != null}"
-                            )
-                            if (it == null) {
-                                itemsPage = (itemsPage ?: YoutubeMusicInnertube.ItemsPage(null, null))
-                                    .copy(continuation = null)
-                            } else itemsPage += it
-                        }?.onFailure {
-                            Log.w("SearchItemsPage", "load failed for tag=$tag", it)
-                            itemsPage = itemsPage?.copy(continuation = null)
-                        }?.exceptionOrNull()?.printStackTrace()
-                    }
+    val providerReady = provider != null
+    val continuation = itemsPage?.continuation
+    LaunchedEffect(tag, providerReady, continuation, retryGeneration) {
+        if (!providerReady || loadStatus is PageLoadStatus.Loading) return@LaunchedEffect
+        snapshotFlow { shouldLoad }.filter { it }.first()
+        val provideItems = updatedProvider ?: return@LaunchedEffect
+        loadStatus = PageLoadStatus.Loading
+        Log.d("SearchItemsPage", "request started tag=$tag continuation=${continuation != null}")
+        val result = try {
+            provideItems(continuation)
+                ?: Result.failure(IllegalStateException("Page provider returned null for $tag"))
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
+            Result.failure(error)
+        }
+        result.fold(
+            onSuccess = { page ->
+                val loadedPage = page ?: YoutubeMusicInnertube.ItemsPage(null, null)
+                itemsPage = if (itemsPage == null) loadedPage else itemsPage + loadedPage
+                loadStatus = if (loadedPage.continuation == null) {
+                    PageLoadStatus.Complete
+                } else {
+                    PageLoadStatus.Idle
                 }
+            },
+            onFailure = { error ->
+                Log.w("SearchItemsPage", "load failed for tag=$tag", error)
+                loadStatus = PageLoadStatus.Error(error)
             }
+        )
     }
 
     Box(modifier = modifier) {
@@ -172,7 +169,7 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
                 )
             }
 
-            if (!(itemsPage != null && itemsPage?.continuation == null)) item(key = "loading") {
+            if (loadStatus !is PageLoadStatus.Error && !(itemsPage != null && itemsPage?.continuation == null)) item(key = "loading") {
                 val isFirstLoad = itemsPage?.items.isNullOrEmpty()
 
                 ShimmerHost(
@@ -182,6 +179,20 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
                         itemPlaceholderContent()
                     }
                 }
+            }
+
+            if (loadStatus is PageLoadStatus.Error) item(key = "load_error") {
+                BasicText(
+                    text = stringResource(R.string.error_message),
+                    style = typography.s.secondary.center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            loadStatus = PageLoadStatus.Idle
+                            retryGeneration++
+                        }
+                        .padding(horizontal = 16.dp, vertical = 32.dp)
+                )
             }
         }
 

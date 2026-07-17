@@ -1511,6 +1511,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             get() = timerJob?.millisLeft
 
         private var radioJob: Job? = null
+        private var radioGeneration = 0L
 
         var isLoadingRadio by mutableStateOf(false)
             private set
@@ -1571,6 +1572,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             startRadio(endpoint = endpoint, justAdd = false)
 
         private fun startRadio(endpoint: NavigationEndpoint.Endpoint.Watch?, justAdd: Boolean) {
+            val generation = ++radioGeneration
             radioJob?.cancel()
             radio = null
 
@@ -1583,24 +1585,29 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             ).let { radioData ->
                 isLoadingRadio = true
                 radioJob = coroutineScope.launch {
-                    val items = radioData.process()
-                        .map { it.withRadioState(radioData) }
-                        .let { playerRepository.filterBlacklistedSongs(it) }
-                    prefetchMediaItems(items)
+                    try {
+                        val items = radioData.process()
+                            .map { it.withRadioState(radioData) }
+                            .let { playerRepository.filterBlacklistedSongs(it) }
+                        prefetchMediaItems(items)
 
-                    withContext(Dispatchers.Main) {
-                        syncCurrentMediaItemRadioState(radioData)
-                        if (justAdd) player.addMediaItems(items.drop(1))
-                        else player.forcePlayFromBeginning(items)
+                        withContext(Dispatchers.Main) {
+                            if (radioGeneration != generation) return@withContext
+                            syncCurrentMediaItemRadioState(radioData)
+                            if (justAdd) player.addMediaItems(items.drop(1))
+                            else player.forcePlayFromBeginning(items)
+                        }
+
+                        if (radioGeneration == generation) radio = radioData
+                    } finally {
+                        if (radioGeneration == generation) isLoadingRadio = false
                     }
-
-                    radio = radioData
-                    isLoadingRadio = false
                 }
             }
         }
 
         fun stopRadio() {
+            radioGeneration++
             isLoadingRadio = false
             radioJob?.cancel()
             radio = null

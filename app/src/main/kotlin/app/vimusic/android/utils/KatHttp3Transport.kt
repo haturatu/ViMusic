@@ -10,6 +10,7 @@ internal fun Throwable.isHttp3TransportFailure(): Boolean =
     generateSequence(this) { it.cause }
         .any { error ->
             error is TimeoutCancellationException ||
+                error is KatHttp3Exception.RequestQueueTimeout ||
                 error is KatHttp3Exception.Dns ||
                 error is KatHttp3Exception.Timeout ||
                 error is QuicTransportException ||

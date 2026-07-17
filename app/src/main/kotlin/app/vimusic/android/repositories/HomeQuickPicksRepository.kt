@@ -46,7 +46,7 @@ object DatabaseHomeQuickPicksRepository : HomeQuickPicksRepository {
     }
 
     override fun cacheQuickPicks(page: YoutubeMusicInnertube.RelatedPage) {
-        DataPreferences.cachedQuickPicks = page
+        if (DataPreferences.shouldCacheQuickPicks) DataPreferences.cachedQuickPicks = page
     }
 
     override fun clearCachedQuickPicks() {
