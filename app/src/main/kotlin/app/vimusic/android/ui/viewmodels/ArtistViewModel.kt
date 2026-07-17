@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.vimusic.android.models.Artist
 import app.vimusic.android.repositories.ArtistRepository
+import app.vimusic.android.utils.requireValue
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -68,20 +69,14 @@ class ArtistViewModel(
         mutableUiState.value = ArtistUiState.Loading
         loadJob = viewModelScope.launch {
             try {
-                val result = repository.fetchArtistPage(browseId)
-                    ?: Result.failure(IllegalStateException("Artist provider returned null"))
+                val result = repository.fetchArtistPage(browseId).requireValue(
+                    nullResultMessage = "Artist request was not executed",
+                    nullValueMessage = "Artist page was empty",
+                )
                 result.fold(
                     onSuccess = { page ->
-                        if (page == null) {
-                            mutableUiState.value = ArtistUiState.Error(
-                                currentArtist,
-                                IllegalStateException("Artist page was empty"),
-                                stalePage,
-                            )
-                        } else {
-                            mutableUiState.value = ArtistUiState.Content(currentArtist, page)
-                            upsertArtistFromPage(currentArtist, page)
-                        }
+                        mutableUiState.value = ArtistUiState.Content(currentArtist, page)
+                        upsertArtistFromPage(currentArtist, page)
                     },
                     onFailure = { error ->
                         mutableUiState.value = ArtistUiState.Error(currentArtist, error, stalePage)

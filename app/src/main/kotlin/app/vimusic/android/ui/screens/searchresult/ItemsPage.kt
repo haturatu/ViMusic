@@ -34,6 +34,7 @@ import app.vimusic.android.ui.components.ShimmerHost
 import app.vimusic.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import app.vimusic.android.utils.center
 import app.vimusic.android.utils.secondary
+import app.vimusic.android.utils.requireValue
 import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
@@ -114,16 +115,17 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
         loadStatus = PageLoadStatus.Loading
         Log.d("SearchItemsPage", "request started tag=$tag continuation=${continuation != null}")
         val result = try {
-            provideItems(continuation)
-                ?: Result.failure(IllegalStateException("Page provider returned null for $tag"))
+            provideItems(continuation).requireValue(
+                nullResultMessage = "Page request was not executed for $tag",
+                nullValueMessage = "Page response was empty for $tag",
+            )
         } catch (error: CancellationException) {
             throw error
         } catch (error: Throwable) {
             Result.failure(error)
         }
         result.fold(
-            onSuccess = { page ->
-                val loadedPage = page ?: YoutubeMusicInnertube.ItemsPage(null, null)
+            onSuccess = { loadedPage ->
                 itemsPage = if (itemsPage == null) loadedPage else itemsPage + loadedPage
                 loadStatus = if (loadedPage.continuation == null) {
                     PageLoadStatus.Complete
