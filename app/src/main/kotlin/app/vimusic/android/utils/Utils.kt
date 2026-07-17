@@ -99,7 +99,7 @@ object YoutubeThumbnailHostResolver {
         }
     }
 
-    fun recordFailure(url: String, error: Throwable, elapsedMillis: Long) {
+    fun recordFailure(url: String, error: Throwable) {
         val host = Uri.parse(url).host?.lowercase()?.takeIf { it in supportedHosts } ?: return
         synchronized(lock) {
             val state = stats.getOrPut(host, ::HostStats)

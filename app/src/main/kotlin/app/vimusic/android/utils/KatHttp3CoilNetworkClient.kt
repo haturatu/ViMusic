@@ -55,12 +55,12 @@ class KatHttp3CoilNetworkClient(
             // YouTube's image CDNs expose a large number of small resources
             // at one origin. Bound concurrent streams until kathttp3's native
             // HTTP/3 multiplexing path is fully stable under Coil churn.
-            maxActiveStreamsPerOrigin = 8,
+            maxActiveStreamsPerOrigin = 6,
             // The response body is currently materialized before Coil starts
             // decoding it. Keep queued image work bounded as well as active
             // streams so many large artwork requests cannot accumulate three
             // copies (native buffer, ByteArray, decoder) at once.
-            maxQueuedRequestsPerOrigin = 48,
+            maxQueuedRequestsPerOrigin = 24,
             queueTimeoutMillis = 120_000,
             responseHeadersTimeoutMillis = 45_000, // 45_00
             readTimeoutMillis = 90_000, // 90_000
@@ -114,10 +114,9 @@ class KatHttp3CoilNetworkClient(
         ) {
             try {
                 return executeBufferedRequest(resolvedRequest, block, request.url)
+            } catch (_: IncompatibleThumbnailHostException) {
+                return executeBufferedRequest(request, block)
             } catch (failure: Throwable) {
-                if (failure is IncompatibleThumbnailHostException) {
-                    return executeBufferedRequest(request, block)
-                }
                 if (!failure.isHttp3TransportFailure()) throw failure
                 Http3OriginPolicy.recordHttp3Failure(resolvedRequest.url, failure)
                 Log.i(LOG_TAG, "HTTP/3 unavailable; using OkHttp fallback: ${resolvedRequest.url}")
@@ -136,72 +135,75 @@ class KatHttp3CoilNetworkClient(
     ): T {
         val fallbackStartedAt = SystemClock.elapsedRealtime()
         val response = try {
-            withContext(Dispatchers.IO) {
-                val requestMillis = System.currentTimeMillis()
-                val method = request.method.uppercase()
-                val contentType = request.headers.asMap()
-                    .entries
-                    .firstOrNull { (name, _) -> name.equals("content-type", ignoreCase = true) }
-                    ?.value
-                    ?.firstOrNull()
-                    ?.toMediaTypeOrNull()
-                val requestBody = when (method) {
-                    "GET", "HEAD" -> null
-                    else -> (request.body?.toByteArray() ?: ByteArray(0)).toRequestBody(contentType)
-                }
-                val httpRequest = Request.Builder()
-                    .url(request.url)
-                    .apply {
-                        request.headers.asMap().forEach { (name, values) ->
-                            values.forEach { value -> addHeader(name, value) }
-                        }
-                        method(method, requestBody)
-                    }
-                    .build()
-                fallbackClient.newCall(httpRequest).execute().use { httpResponse ->
-                    if (YoutubeThumbnailHostResolver.shouldRetryOriginal(
-                            originalUrl,
-                            request.url,
-                            httpResponse.code,
-                            httpResponse.header("content-type"),
-                            if (httpResponse.body.contentLength() == 0L) 0 else 1,
-                        )
-                    ) throw IncompatibleThumbnailHostException()
-                    YoutubeThumbnailHostResolver.recordResponse(
-                        request.url,
-                        httpResponse.code,
-                        httpResponse.header("content-type"),
-                        SystemClock.elapsedRealtime() - fallbackStartedAt,
-                    )
-                    Http3OriginPolicy.recordOriginResponse(
-                        request.url,
-                        httpResponse.headers.map { (name, value) -> name to value },
-                    )
-                    NetworkResponse(
-                        code = httpResponse.code,
-                        requestMillis = requestMillis,
-                        responseMillis = System.currentTimeMillis(),
-                        headers = NetworkHeaders.Builder().apply {
-                            httpResponse.headers.forEach { (name, value) -> add(name, value) }
-                        }.build(),
-                        body = ByteArrayNetworkResponseBody(httpResponse.body.bytes()),
-                    ).also {
-                        Log.i(LOG_TAG, "OkHttp ${httpResponse.protocol}: ${httpResponse.code} ${request.url}")
-                    }
-                }
-            }
+            executeOkHttpFallback(request, originalUrl, fallbackStartedAt)
+        } catch (incompatibleHost: IncompatibleThumbnailHostException) {
+            originalFailure?.let(incompatibleHost::addSuppressed)
+            throw incompatibleHost
         } catch (fallbackError: Throwable) {
-            if (fallbackError !is IncompatibleThumbnailHostException) {
-                YoutubeThumbnailHostResolver.recordFailure(
-                    request.url,
-                    fallbackError,
-                    SystemClock.elapsedRealtime() - fallbackStartedAt,
-                )
-            }
+            YoutubeThumbnailHostResolver.recordFailure(request.url, fallbackError)
             originalFailure?.let(fallbackError::addSuppressed)
             throw fallbackError
         }
         return block(response)
+    }
+
+    private suspend fun executeOkHttpFallback(
+        request: NetworkRequest,
+        originalUrl: String,
+        startedAt: Long,
+    ): NetworkResponse = withContext(Dispatchers.IO) {
+        val requestMillis = System.currentTimeMillis()
+        val method = request.method.uppercase()
+        val contentType = request.headers.asMap()
+            .entries
+            .firstOrNull { (name, _) -> name.equals("content-type", ignoreCase = true) }
+            ?.value
+            ?.firstOrNull()
+            ?.toMediaTypeOrNull()
+        val requestBody = when (method) {
+            "GET", "HEAD" -> null
+            else -> (request.body?.toByteArray() ?: ByteArray(0)).toRequestBody(contentType)
+        }
+        val httpRequest = Request.Builder()
+            .url(request.url)
+            .apply {
+                request.headers.asMap().forEach { (name, values) ->
+                    values.forEach { value -> addHeader(name, value) }
+                }
+                method(method, requestBody)
+            }
+            .build()
+        fallbackClient.newCall(httpRequest).execute().use { httpResponse ->
+            if (YoutubeThumbnailHostResolver.shouldRetryOriginal(
+                    originalUrl,
+                    request.url,
+                    httpResponse.code,
+                    httpResponse.header("content-type"),
+                    if (httpResponse.body.contentLength() == 0L) 0 else 1,
+                )
+            ) throw IncompatibleThumbnailHostException()
+            YoutubeThumbnailHostResolver.recordResponse(
+                request.url,
+                httpResponse.code,
+                httpResponse.header("content-type"),
+                SystemClock.elapsedRealtime() - startedAt,
+            )
+            Http3OriginPolicy.recordOriginResponse(
+                request.url,
+                httpResponse.headers.map { (name, value) -> name to value },
+            )
+            NetworkResponse(
+                code = httpResponse.code,
+                requestMillis = requestMillis,
+                responseMillis = System.currentTimeMillis(),
+                headers = NetworkHeaders.Builder().apply {
+                    httpResponse.headers.forEach { (name, value) -> add(name, value) }
+                }.build(),
+                body = ByteArrayNetworkResponseBody(httpResponse.body.bytes()),
+            ).also {
+                Log.i(LOG_TAG, "OkHttp ${httpResponse.protocol}: ${httpResponse.code} ${request.url}")
+            }
+        }
     }
 
     private suspend fun <T> executeBufferedRequest(
@@ -266,9 +268,9 @@ private class IncompatibleThumbnailHostException : IOException("Thumbnail host r
 @OptIn(coil3.annotation.ExperimentalCoilApi::class)
 object KatHttp3CoilConcurrentRequestStrategy : ConcurrentRequestStrategy {
     // NetworkResponseBody is backed by a complete ByteArray until Coil has
-    // decoded it. Twelve concurrent requests balances scrolling throughput
-    // with peak memory on high-resolution artwork.
-    private val permits = Semaphore(12)
+    // decoded it. Limit complete in-memory responses so high-resolution
+    // artwork cannot create a large burst of ByteArrays and decoded bitmaps.
+    private val permits = Semaphore(6)
 
     override suspend fun apply(
         key: String,
