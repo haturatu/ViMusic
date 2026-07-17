@@ -26,6 +26,7 @@ import okio.BufferedSink
 import okio.FileSystem
 import okio.Path
 import okio.buffer
+import java.io.IOException
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
