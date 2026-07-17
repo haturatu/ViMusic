@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.LocalPlayerServiceBinder
@@ -56,12 +57,15 @@ import app.vimusic.android.ui.components.ShimmerHost
 import app.vimusic.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
+import app.vimusic.android.ui.components.themed.RetryMessage
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
 import app.vimusic.android.ui.components.themed.TextPlaceholder
 import app.vimusic.android.ui.items.AlbumItem
 import app.vimusic.android.ui.items.AlbumItemPlaceholder
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.screens.Route
+import app.vimusic.android.ui.state.LoadState
+import app.vimusic.android.ui.state.contentOrNull
 import app.vimusic.android.ui.viewmodels.HomeDiscoveryViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.asMediaItem
@@ -111,10 +115,15 @@ fun HomeDiscovery(
         .padding(top = 24.dp, bottom = 8.dp)
         .padding(endPaddingValues)
 
-    var discoverPage by persist<Result<YoutubeMusicInnertube.DiscoverPage>>("home/discovery")
+    var cachedDiscoverPage by persist<YoutubeMusicInnertube.DiscoverPage?>("home/discovery")
+    val discoverState by viewModel.uiState.collectAsStateWithLifecycle()
+    val discoverPage = discoverState.contentOrNull() ?: cachedDiscoverPage
 
     LaunchedEffect(Unit) {
-        if (discoverPage?.isSuccess != true) discoverPage = viewModel.fetchDiscoverPage()
+        viewModel.load(cachedPage = cachedDiscoverPage)
+    }
+    LaunchedEffect(discoverState) {
+        (discoverState as? LoadState.Content)?.value?.let { cachedDiscoverPage = it }
     }
 
     BoxWithConstraints {
@@ -143,7 +152,7 @@ fun HomeDiscovery(
                 modifier = Modifier.padding(endPaddingValues)
             )
 
-            discoverPage?.getOrNull()?.let { page ->
+            discoverPage?.let { page ->
                 if (page.moods.isNotEmpty()) {
                     DiscoverySectionHeader(
                         title = stringResource(R.string.moods_and_genres),
@@ -252,13 +261,11 @@ fun HomeDiscovery(
                         }
                     }
                 }
-            } ?: discoverPage?.exceptionOrNull()?.let {
-                BasicText(
-                    text = stringResource(R.string.error_message),
-                    style = typography.s.secondary.center,
+            } ?: (discoverState as? LoadState.Error)?.let {
+                RetryMessage(
+                    onRetry = { viewModel.load(force = true) },
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
-                        .padding(all = 16.dp)
                 )
             } ?: ShimmerHost {
                 TextPlaceholder(modifier = sectionTextModifier)

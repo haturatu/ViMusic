@@ -1,7 +1,6 @@
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import app.vimusic.android.repositories.PlaylistRepository
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 
@@ -33,11 +32,8 @@ class PlaylistSongListViewModel(
     )
 
     companion object {
-        fun factory(repository: PlaylistRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    PlaylistSongListViewModel(repository = repository) as T
-            }
+        fun factory(repository: PlaylistRepository) = viewModelFactory {
+            PlaylistSongListViewModel(repository = repository)
+        }
     }
 }
