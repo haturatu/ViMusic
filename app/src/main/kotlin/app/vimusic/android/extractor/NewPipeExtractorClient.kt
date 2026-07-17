@@ -17,6 +17,7 @@ import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.VideoStream
 import org.schabi.newpipe.extractor.downloader.Downloader
 import java.io.IOException
+import java.io.InterruptedIOException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -109,6 +110,10 @@ object NewPipeExtractorClient {
                 }
                 return result
             }.onFailure { error ->
+                if (error.isInterruption()) {
+                    Thread.currentThread().interrupt()
+                    throw error
+                }
                 Log.w(TAG, "Audio stream resolve failed videoId=$videoId dnsTarget=${dnsTarget.label}", error)
                 if (firstError == null) firstError = error
                 lastError = error
@@ -121,6 +126,15 @@ object NewPipeExtractorClient {
         }
 
         throw ExtractionException("No DNS fallback targets configured")
+    }
+
+    private fun Throwable.isInterruption(): Boolean {
+        var current: Throwable? = this
+        while (current != null) {
+            if (current is InterruptedException || current is InterruptedIOException) return true
+            current = current.cause
+        }
+        return false
     }
 
     @Throws(IOException::class, ExtractionException::class)
