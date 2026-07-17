@@ -1,5 +1,3 @@
-@file:Suppress("TooGenericExceptionCaught") // Provider implementations may throw library-specific failures.
-
 package app.vimusic.android.ui.screens.searchresult
 
 import androidx.compose.foundation.layout.Box
@@ -35,11 +33,11 @@ import app.vimusic.android.ui.components.themed.FloatingActionsContainerWithScro
 import app.vimusic.android.utils.center
 import app.vimusic.android.utils.secondary
 import app.vimusic.android.utils.requireValue
+import app.vimusic.android.utils.runSuspendCatching
 import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import app.vimusic.providers.youtubemusic.innertube.utils.plus
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 
@@ -114,15 +112,11 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
         val provideItems = updatedProvider ?: return@LaunchedEffect
         loadStatus = PageLoadStatus.Loading
         Log.d("SearchItemsPage", "request started tag=$tag continuation=${continuation != null}")
-        val result = try {
+        val result = runSuspendCatching {
             provideItems(continuation).requireValue(
                 nullResultMessage = "Page request was not executed for $tag",
                 nullValueMessage = "Page response was empty for $tag",
-            )
-        } catch (error: CancellationException) {
-            throw error
-        } catch (error: Throwable) {
-            Result.failure(error)
+            ).getOrThrow()
         }
         result.fold(
             onSuccess = { loadedPage ->

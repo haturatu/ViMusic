@@ -1,5 +1,3 @@
-@file:Suppress("TooGenericExceptionCaught") // UI state must terminate for every non-cancellation failure.
-
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
@@ -7,9 +5,9 @@ import androidx.lifecycle.viewModelScope
 import app.vimusic.android.models.Song
 import app.vimusic.android.repositories.HomeQuickPicksRepository
 import app.vimusic.android.utils.requireValue
+import app.vimusic.android.utils.runSuspendCatching
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,25 +46,20 @@ class HomeQuickPicksViewModel(
         mutableUiState.value = if (cached == null) QuickPicksUiState.Loading
         else QuickPicksUiState.Content(cached, isRefreshing = true)
         loadJob = viewModelScope.launch {
-            try {
-                val result = repository.fetchRelatedPage(videoId).requireValue(
+            runSuspendCatching {
+                repository.fetchRelatedPage(videoId).requireValue(
                     nullResultMessage = "Related page request was not executed",
                     nullValueMessage = "Related page was empty",
-                )
-                result.fold(
-                    onSuccess = { page ->
-                        repository.cacheQuickPicks(page)
-                        mutableUiState.value = QuickPicksUiState.Content(page)
-                    },
-                    onFailure = { error ->
-                        mutableUiState.value = QuickPicksUiState.Error(error, cached)
-                    },
-                )
-            } catch (error: CancellationException) {
-                throw error
-            } catch (error: Throwable) {
-                mutableUiState.value = QuickPicksUiState.Error(error, cached)
-            }
+                ).getOrThrow()
+            }.fold(
+                onSuccess = { page ->
+                    repository.cacheQuickPicks(page)
+                    mutableUiState.value = QuickPicksUiState.Content(page)
+                },
+                onFailure = { error ->
+                    mutableUiState.value = QuickPicksUiState.Error(error, cached)
+                },
+            )
         }
     }
 

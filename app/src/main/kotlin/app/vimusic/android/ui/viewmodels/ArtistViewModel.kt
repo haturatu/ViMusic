@@ -1,5 +1,3 @@
-@file:Suppress("TooGenericExceptionCaught") // UI state must terminate for every non-cancellation failure.
-
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
@@ -7,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import app.vimusic.android.models.Artist
 import app.vimusic.android.repositories.ArtistRepository
 import app.vimusic.android.utils.requireValue
+import app.vimusic.android.utils.runSuspendCatching
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -68,25 +66,20 @@ class ArtistViewModel(
         }
         mutableUiState.value = ArtistUiState.Loading
         loadJob = viewModelScope.launch {
-            try {
-                val result = repository.fetchArtistPage(browseId).requireValue(
+            runSuspendCatching {
+                repository.fetchArtistPage(browseId).requireValue(
                     nullResultMessage = "Artist request was not executed",
                     nullValueMessage = "Artist page was empty",
-                )
-                result.fold(
-                    onSuccess = { page ->
-                        mutableUiState.value = ArtistUiState.Content(currentArtist, page)
-                        upsertArtistFromPage(currentArtist, page)
-                    },
-                    onFailure = { error ->
-                        mutableUiState.value = ArtistUiState.Error(currentArtist, error, stalePage)
-                    },
-                )
-            } catch (error: CancellationException) {
-                throw error
-            } catch (error: Throwable) {
-                mutableUiState.value = ArtistUiState.Error(currentArtist, error, stalePage)
-            }
+                ).getOrThrow()
+            }.fold(
+                onSuccess = { page ->
+                    mutableUiState.value = ArtistUiState.Content(currentArtist, page)
+                    upsertArtistFromPage(currentArtist, page)
+                },
+                onFailure = { error ->
+                    mutableUiState.value = ArtistUiState.Error(currentArtist, error, stalePage)
+                },
+            )
         }
     }
 
