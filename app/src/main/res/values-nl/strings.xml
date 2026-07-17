@@ -178,7 +178,7 @@
     <string name="view_playlist">Toon afspeellijst</string>
 
     <string name="search_placeholder">Zoek…</string>
-    <string name="format_version_credits">v%1$s door  vfsfitvnm</string>
+    <string name="format_version_credits">v%1$s • Forked from vfsfitvnm by haturatu</string>
     <string name="social">Sociaal</string>
     <string name="contact">Contact</string>
     <string name="github">GitHub</string>

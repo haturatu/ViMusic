@@ -176,7 +176,7 @@
     <string name="view_playlist">プレイリストを見る</string>
 
     <string name="search_placeholder">キーワードを入力</string>
-    <string name="format_version_credits">v%1$s by  vfsfitvnm</string>
+    <string name="format_version_credits">v%1$s • Forked from vfsfitvnm by haturatu</string>
     <string name="social">知る</string>
     <string name="contact">つながる</string>
     <string name="github">GitHub</string>

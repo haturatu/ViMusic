@@ -178,7 +178,7 @@
     <string name="view_playlist">Voir la playlist</string>
     
     <string name="search_placeholder">Chercher…</string>
-    <string name="format_version_credits">v%1$s par Huizengek &amp; vfsfitvnm</string>
+    <string name="format_version_credits">v%1$s • Forked from vfsfitvnm by haturatu</string>
     <string name="social">Social</string>
     <string name="contact">Contact</string>
     <string name="github">GitHub</string>

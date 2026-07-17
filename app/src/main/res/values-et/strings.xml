@@ -176,7 +176,7 @@
     <string name="view_playlist">Vaata Playlist`i</string>
 
     <string name="search_placeholder">Sisesta nimi</string>
-    <string name="format_version_credits">v%1$s autoriks  vfsfitvnm</string>
+    <string name="format_version_credits">v%1$s • Forked from vfsfitvnm by haturatu</string>
     <string name="social">Sotsiaalmeedia</string>
     <string name="contact">Kontakt</string>
     <string name="github">GitHub</string>

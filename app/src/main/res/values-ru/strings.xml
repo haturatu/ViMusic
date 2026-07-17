@@ -176,7 +176,7 @@
     <string name="view_playlist">Просмотр плейлиста</string>
 
     <string name="search_placeholder">Введите имя</string>
-    <string name="format_version_credits">v%1$s от  vfsfitvnm</string>
+    <string name="format_version_credits">v%1$s • Forked from vfsfitvnm by haturatu</string>
     <string name="social">Социальные сети</string>
     <string name="contact">Контакты</string>
     <string name="github">GitHub</string>

@@ -177,7 +177,7 @@
     <string name="view_playlist">查看播放列表</string>
 
     <string name="search_placeholder">输入名称</string>
-    <string name="format_version_credits">v%1$s 由  vfsfitvnm 制作</string>
+    <string name="format_version_credits">v%1$s • Forked from vfsfitvnm by haturatu</string>
     <string name="social">社交</string>
     <string name="contact">联系</string>
     <string name="github">GitHub</string>
