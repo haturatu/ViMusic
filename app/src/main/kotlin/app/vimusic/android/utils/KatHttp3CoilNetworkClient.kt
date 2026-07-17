@@ -87,6 +87,9 @@ class KatHttp3CoilNetworkClient(
         request: NetworkRequest,
         block: suspend (NetworkResponse) -> T,
     ): T {
+        if (!Http3OriginPolicy.shouldAttemptHttp3(request.url)) {
+            return executeRequestWithOkHttpFallback(request, block, null)
+        }
         // PolicyRetryInterceptor retries idempotent requests once for a
         // timeout, DNS failure, or QUIC transport failure. Once its attempt
         // budget is exhausted, retain HTTPS as the availability fallback.
@@ -97,6 +100,7 @@ class KatHttp3CoilNetworkClient(
                 return executeBufferedRequest(request, block)
             } catch (failure: Throwable) {
                 if (!failure.isHttp3TransportFailure()) throw failure
+                Http3OriginPolicy.recordHttp3Failure(request.url, failure)
                 Log.i(LOG_TAG, "HTTP/3 unavailable; using OkHttp fallback: ${request.url}")
                 Log.d(LOG_TAG, "HTTP/3 image fallback cause", failure)
                 return executeRequestWithOkHttpFallback(request, block, failure)
@@ -108,7 +112,7 @@ class KatHttp3CoilNetworkClient(
     private suspend fun <T> executeRequestWithOkHttpFallback(
         request: NetworkRequest,
         block: suspend (NetworkResponse) -> T,
-        originalFailure: Throwable,
+        originalFailure: Throwable?,
     ): T {
         val response = try {
             withContext(Dispatchers.IO) {
@@ -123,6 +127,11 @@ class KatHttp3CoilNetworkClient(
                     }
                     .build()
                 fallbackClient.newCall(httpRequest).execute().use { httpResponse ->
+                    Http3OriginPolicy.recordHttpResponse(
+                        request.url,
+                        httpResponse.code,
+                        httpResponse.headers.map { (name, value) -> name to value },
+                    )
                     NetworkResponse(
                         code = httpResponse.code,
                         requestMillis = requestMillis,
@@ -137,7 +146,7 @@ class KatHttp3CoilNetworkClient(
                 }
             }
         } catch (fallbackError: Throwable) {
-            fallbackError.addSuppressed(originalFailure)
+            originalFailure?.let(fallbackError::addSuppressed)
             throw fallbackError
         }
         return block(response)
@@ -157,6 +166,11 @@ class KatHttp3CoilNetworkClient(
                 ),
                 body = request.body?.toByteArray(),
             ),
+        )
+        Http3OriginPolicy.recordHttp3Success(
+            request.url,
+            response.status,
+            response.headers.map { it.name to it.value },
         )
         Log.i(LOG_TAG, "${response.protocol.uppercase()}: ${response.status} ${request.url}")
         return block(

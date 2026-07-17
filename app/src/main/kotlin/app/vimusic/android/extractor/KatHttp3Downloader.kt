@@ -4,6 +4,7 @@ package app.vimusic.android.extractor
 
 import android.util.Log
 import app.vimusic.android.utils.isHttp3TransportFailure
+import app.vimusic.android.utils.Http3OriginPolicy
 import app.vimusic.android.utils.sanitizeHttp3Headers
 import dev.kathttp3.KatHttp3Client
 import dev.kathttp3.KatHttp3ClientConfig
@@ -62,6 +63,9 @@ class KatHttp3Downloader(
     )
 
     override fun execute(request: Request): Response {
+        if (!Http3OriginPolicy.shouldAttemptHttp3(request.url())) {
+            return executeStandard(request)
+        }
         return try {
             Log.d(TAG, "HTTP/3 request ${request.httpMethod()} ${request.url()}")
             val headers = requestHeaders(request)
@@ -72,6 +76,11 @@ class KatHttp3Downloader(
                 body = request.dataToSend(),
             )
             val rawResponse = executeHttp3(katRequest)
+            Http3OriginPolicy.recordHttp3Success(
+                request.url(),
+                rawResponse.status,
+                rawResponse.headers.map { it.name to it.value },
+            )
             // Do not repeat a rate-limited request over HTTP/2. NewPipe needs
             // this exact exception to handle its ReCaptcha flow.
             if (rawResponse.status == HTTP_TOO_MANY_REQUESTS) {
@@ -88,10 +97,19 @@ class KatHttp3Downloader(
             throw error
         } catch (error: Exception) {
             if (!error.isHttp3TransportFailure()) throw error
+            Http3OriginPolicy.recordHttp3Failure(request.url(), error)
             Log.i(TAG, "HTTP/3 unavailable; using the standard downloader: ${request.url()}")
             Log.d(TAG, "HTTP/3 fallback cause", error)
-            fallback.execute(request)
+            executeStandard(request)
         }
+    }
+
+    private fun executeStandard(request: Request): Response = fallback.execute(request).also { response ->
+        Http3OriginPolicy.recordHttpResponse(
+            request.url(),
+            response.responseCode(),
+            response.responseHeaders().flatMap { (name, values) -> values.map { name to it } },
+        )
     }
 
     private fun executeHttp3(request: KatHttp3Request): KatHttp3Response {

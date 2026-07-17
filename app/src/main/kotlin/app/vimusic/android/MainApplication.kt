@@ -88,6 +88,7 @@ import app.vimusic.android.repositories.YoutubeMusicInnertubeDeepLinkRepository
 import app.vimusic.android.repositories.YoutubeMusicInnertubeSearchResultRepository
 import app.vimusic.android.repositories.YoutubeMusicInnertubeHomeDiscoveryRepository
 import app.vimusic.android.repositories.YoutubeMusicInnertubeMoodRepository
+import app.vimusic.android.utils.Http3OriginPolicy
 import app.vimusic.android.repositories.HomeQuickPicksRepository
 import app.vimusic.android.repositories.LibraryRepository
 import app.vimusic.android.repositories.HomePlaylistsRepository
@@ -619,6 +620,7 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         super.onCreate()
 
         MainApplicationProvider.application = this
+        Http3OriginPolicy.initialize(this)
         appContainer = AppContainer(this).also(AppContainer::initialize)
         MonetCompat.enablePaletteCompat()
         ServiceNotifications.createAll(this)

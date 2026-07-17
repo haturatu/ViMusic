@@ -15,3 +15,6 @@ internal fun Throwable.isHttp3TransportFailure(): Boolean =
                 error is QuicTransportException ||
                 error is TlsHandshakeException
         }
+
+internal fun Throwable.hasTlsHandshakeFailure(): Boolean =
+    generateSequence(this) { it.cause }.any { it is TlsHandshakeException }

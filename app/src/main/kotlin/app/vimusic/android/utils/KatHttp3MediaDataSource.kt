@@ -93,6 +93,9 @@ class KatHttp3MediaDataSource(
                 "source=$sourceId opening HTTP/3 method=${dataSpec.httpMethodString} " +
                     "position=${dataSpec.position} length=${dataSpec.length}: ${dataSpec.uri}",
             )
+            if (!Http3OriginPolicy.shouldAttemptHttp3(dataSpec.uri.toString())) {
+                return openFallback(dataSpec, null)
+            }
             var lastError: IOException? = null
             repeat(H3_OPEN_ATTEMPTS) { attempt ->
                 // Do not publish an attempt to the DataSource until both its
@@ -167,6 +170,11 @@ class KatHttp3MediaDataSource(
                     activeAttempt = h3Attempt
                     responseCode = headers.status
                     responseHeaders = headers.headers.groupBy(KatHttp3Header::name, KatHttp3Header::value)
+                    Http3OriginPolicy.recordHttp3Success(
+                        dataSpec.uri.toString(),
+                        headers.status,
+                        headers.headers.map { it.name to it.value },
+                    )
                     bytesRemaining = requestedLength(dataSpec)
                     opened = true
                     transferStarted(dataSpec)
@@ -204,9 +212,13 @@ class KatHttp3MediaDataSource(
                     Thread.sleep(h3OpenRetryBackoffMillis(attempt))
                 }
             }
+            val failure = checkNotNull(lastError) {
+                "HTTP/3 media open attempts exhausted without an error"
+            }
+            Http3OriginPolicy.recordHttp3Failure(dataSpec.uri.toString(), failure)
             return openFallback(
                 dataSpec,
-                checkNotNull(lastError) { "HTTP/3 media open attempts exhausted without an error" },
+                failure,
             )
         } catch (error: Throwable) {
             stopStreaming()
@@ -288,15 +300,22 @@ class KatHttp3MediaDataSource(
         }
     }
 
-    private fun openFallback(dataSpec: DataSpec, error: IOException): Long {
-        Log.i(TAG, "HTTP/3 media unavailable; using standard HTTP fallback: ${dataSpec.uri}")
-        Log.d(TAG, "HTTP/3 media fallback cause", error)
+    private fun openFallback(dataSpec: DataSpec, error: IOException?): Long {
+        if (error != null) {
+            Log.i(TAG, "HTTP/3 media unavailable; using standard HTTP fallback: ${dataSpec.uri}")
+            Log.d(TAG, "HTTP/3 media fallback cause", error)
+        }
         stopStreaming()
         val source = fallbackFactory.createDataSource().also { fallback ->
             requestProperties.forEach(fallback::setRequestProperty)
         }
         return try {
             val length = source.open(dataSpec)
+            Http3OriginPolicy.recordHttpResponse(
+                dataSpec.uri.toString(),
+                source.responseCode,
+                source.responseHeaders.flatMap { (name, values) -> values.map { name to it } },
+            )
             fallback = source
             opened = true
             transferStarted(dataSpec)
