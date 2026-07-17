@@ -233,7 +233,7 @@ class KatHttp3MediaDataSource(
 
     override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
         if (length == 0) return 0
-        fallback?.let { return it.read(buffer, offset, length) }
+        if (fallback != null) return fallback!!.read(buffer, offset, length)
         if (bytesRemaining == 0L) {
             stopStreaming()
             return C.RESULT_END_OF_INPUT
@@ -241,26 +241,18 @@ class KatHttp3MediaDataSource(
         val spec = dataSpec ?: throw IOException("DataSource is not open")
         val state = stream ?: return C.RESULT_END_OF_INPUT
         while (true) {
-            val chunk = currentChunk
-            if (chunk != null && currentChunkOffset < chunk.size) {
-                val requestedLength = if (bytesRemaining == C.LENGTH_UNSET.toLong()) {
-                    length
-                } else {
-                    minOf(length.toLong(), bytesRemaining).toInt()
+            if (currentChunk != null && currentChunkOffset < currentChunk!!.size) {
+                val count = readCurrentChunk(buffer, offset, length)
+                if (currentChunkOffset == currentChunk!!.size) {
+                    currentChunk = null
+                    currentChunkOffset = 0
                 }
-                val count = minOf(requestedLength, chunk.size - currentChunkOffset)
-                chunk.copyInto(buffer, offset, currentChunkOffset, currentChunkOffset + count)
-                currentChunkOffset += count
-                if (bytesRemaining != C.LENGTH_UNSET.toLong()) bytesRemaining -= count
-                bytesTransferred(count)
                 return count
             }
-            currentChunk = null
-            currentChunkOffset = 0
             when (val next = state.take()) {
                 is StreamItem.Body -> {
                     currentChunk = next.bytes
-                    continue
+                    currentChunkOffset = 0
                 }
                 StreamItem.End -> {
                     if (bytesRemaining > 0L) {
@@ -279,6 +271,21 @@ class KatHttp3MediaDataSource(
                 )
             }
         }
+    }
+
+    private fun readCurrentChunk(buffer: ByteArray, offset: Int, length: Int): Int {
+        val chunk = currentChunk ?: return C.RESULT_END_OF_INPUT
+        val requestedLength = if (bytesRemaining == C.LENGTH_UNSET.toLong()) {
+            length
+        } else {
+            minOf(length.toLong(), bytesRemaining).toInt()
+        }
+        val count = minOf(requestedLength, chunk.size - currentChunkOffset)
+        chunk.copyInto(buffer, offset, currentChunkOffset, currentChunkOffset + count)
+        currentChunkOffset += count
+        if (bytesRemaining != C.LENGTH_UNSET.toLong()) bytesRemaining -= count
+        bytesTransferred(count)
+        return count
     }
 
     override fun close() {
