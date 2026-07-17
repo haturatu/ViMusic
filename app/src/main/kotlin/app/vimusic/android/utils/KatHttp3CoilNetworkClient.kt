@@ -27,6 +27,8 @@ import okio.Path
 import okio.buffer
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.brotli.BrotliInterceptor
 
 /**
@@ -117,13 +119,24 @@ class KatHttp3CoilNetworkClient(
         val response = try {
             withContext(Dispatchers.IO) {
                 val requestMillis = System.currentTimeMillis()
+                val method = request.method.uppercase()
+                val contentType = request.headers.asMap()
+                    .entries
+                    .firstOrNull { (name, _) -> name.equals("content-type", ignoreCase = true) }
+                    ?.value
+                    ?.firstOrNull()
+                    ?.toMediaTypeOrNull()
+                val requestBody = when (method) {
+                    "GET", "HEAD" -> null
+                    else -> (request.body?.toByteArray() ?: ByteArray(0)).toRequestBody(contentType)
+                }
                 val httpRequest = Request.Builder()
                     .url(request.url)
                     .apply {
                         request.headers.asMap().forEach { (name, values) ->
                             values.forEach { value -> addHeader(name, value) }
                         }
-                        method(request.method.uppercase(), null)
+                        method(method, requestBody)
                     }
                     .build()
                 fallbackClient.newCall(httpRequest).execute().use { httpResponse ->
