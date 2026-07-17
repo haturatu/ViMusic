@@ -62,6 +62,7 @@ import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaStyleNotificationHelper
 import androidx.media3.session.SessionError
+import java.io.ByteArrayOutputStream
 import app.vimusic.android.MainActivity
 import app.vimusic.android.R
 import app.vimusic.android.appContainer
@@ -1053,6 +1054,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         val mediaMetadata = player.mediaMetadata
 
         bitmapProvider.load(mediaMetadata.artworkUri) {
+            updateSessionArtworkData(mediaMetadata.artworkUri, it)
             maybeShowSongCoverInLockScreen()
             updateNotification()
         }
@@ -1108,6 +1110,27 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                     notificationActionReceiver.like.pendingIntent
                 )
         }
+    }
+
+    /**
+     * SystemUI does not fetch arbitrary HTTPS artwork URIs from another
+     * process. Keep the URI for in-app Coil rendering, but publish the fetched
+     * and downsized bitmap as Media3 artworkData for notification/lockscreen.
+     */
+    private fun updateSessionArtworkData(artworkUri: Uri?, bitmap: Bitmap) {
+        val currentItem = player.currentMediaItem ?: return
+        if (currentItem.mediaMetadata.artworkUri != artworkUri || bitmapProvider.lastUri != artworkUri) return
+        val artworkData = ByteArrayOutputStream().use { output ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, ARTWORK_JPEG_QUALITY, output)
+            output.toByteArray()
+        }
+        if (currentItem.mediaMetadata.artworkData?.contentEquals(artworkData) == true) return
+        player.replaceMediaItem(
+            player.currentMediaItemIndex,
+            currentItem.buildUpon()
+                .setMediaMetadata(currentItem.mediaMetadata.buildUpon().setArtworkData(artworkData).build())
+                .build(),
+        )
     }
 
     private fun updateNotification() = runCatching {
@@ -1745,6 +1768,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         private const val PLAYBACK_MAX_BUFFER_MS = 300_000
         private const val PLAYBACK_START_BUFFER_MS = 2_500
         private const val PLAYBACK_REBUFFER_MS = 5_000
+        private const val ARTWORK_JPEG_QUALITY = 85
         private val youtubeIdRegex = Regex("^[A-Za-z0-9_-]{11}$")
 
         fun extractYouTubeVideoId(raw: String): String {
