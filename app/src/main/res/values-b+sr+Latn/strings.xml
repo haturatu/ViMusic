@@ -176,7 +176,7 @@
     <string name="view_playlist">Pogledaj plejlistu</string>
 
     <string name="search_placeholder">Unesite ime</string>
-    <string name="format_version_credits">v%1$s • Forked from vfsfitvnm by haturatu</string>
+    <string name="format_version_credits">v%1$s • Forkovano sa vfsfitvnm od strane haturatu</string>
     <string name="social">Društveno</string>
     <string name="contact">Kontakt</string>
     <string name="github">GitHub</string>

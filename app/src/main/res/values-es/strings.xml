@@ -177,7 +177,7 @@
     <string name="view_playlist">Ver lista de reproducción</string>
 
     <string name="search_placeholder">Introduce un nombre</string>
-    <string name="format_version_credits">v%1$s • Forked from vfsfitvnm by haturatu</string>
+    <string name="format_version_credits">v%1$s • Bifurcado de vfsfitvnm por haturatu</string>
     <string name="social">Social</string>
     <string name="contact">Contacto</string>
     <string name="github">GitHub</string>
