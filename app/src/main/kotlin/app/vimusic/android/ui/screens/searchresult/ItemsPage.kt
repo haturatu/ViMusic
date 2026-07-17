@@ -30,6 +30,8 @@ import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.R
 import app.vimusic.android.ui.components.ShimmerHost
 import app.vimusic.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
+import app.vimusic.android.ui.state.LoadPhase
+import app.vimusic.android.ui.state.PagedLoadState
 import app.vimusic.android.utils.center
 import app.vimusic.android.utils.secondary
 import app.vimusic.android.utils.requireValue
@@ -37,16 +39,8 @@ import app.vimusic.android.utils.runSuspendCatching
 import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
-import app.vimusic.providers.youtubemusic.innertube.utils.plus
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-
-sealed interface PageLoadStatus {
-    data object Idle : PageLoadStatus
-    data object Loading : PageLoadStatus
-    data object Complete : PageLoadStatus
-    data class Error(val throwable: Throwable) : PageLoadStatus
-}
 
 @Composable
 inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
@@ -90,10 +84,18 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
     val updatedProvider by rememberUpdatedState(provider)
     val lazyListState = rememberLazyListState()
     var itemsPage by persist<YoutubeMusicInnertube.ItemsPage<T>?>(tag)
-    var loadStatus by remember(tag) {
-        mutableStateOf<PageLoadStatus>(
-            if (itemsPage?.continuation == null && itemsPage != null) PageLoadStatus.Complete
-            else PageLoadStatus.Idle
+    var pageState by remember(tag) {
+        mutableStateOf(
+            PagedLoadState(
+                items = itemsPage?.items.orEmpty(),
+                continuation = itemsPage?.continuation,
+                initialLoad = if (itemsPage == null) LoadPhase.Idle else LoadPhase.Complete,
+                appendLoad = if (itemsPage != null && itemsPage?.continuation == null) {
+                    LoadPhase.Complete
+                } else {
+                    LoadPhase.Idle
+                },
+            )
         )
     }
     var retryGeneration by remember(tag) { mutableStateOf(0) }
@@ -105,12 +107,12 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
     }
 
     val providerReady = provider != null
-    val continuation = itemsPage?.continuation
+    val continuation = pageState.continuation
     LaunchedEffect(tag, providerReady, continuation, retryGeneration) {
-        if (!providerReady || loadStatus is PageLoadStatus.Loading) return@LaunchedEffect
+        if (!providerReady || pageState.isLoading || pageState.isComplete) return@LaunchedEffect
         snapshotFlow { shouldLoad }.filter { it }.first()
         val provideItems = updatedProvider ?: return@LaunchedEffect
-        loadStatus = PageLoadStatus.Loading
+        pageState = pageState.startLoading()
         Log.d("SearchItemsPage", "request started tag=$tag continuation=${continuation != null}")
         val result = runSuspendCatching {
             provideItems(continuation).requireValue(
@@ -120,16 +122,18 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
         }
         result.fold(
             onSuccess = { loadedPage ->
-                itemsPage = if (itemsPage == null) loadedPage else itemsPage + loadedPage
-                loadStatus = if (loadedPage.continuation == null) {
-                    PageLoadStatus.Complete
-                } else {
-                    PageLoadStatus.Idle
-                }
+                pageState = pageState.append(
+                    newItems = loadedPage.items.orEmpty(),
+                    nextContinuation = loadedPage.continuation,
+                )
+                itemsPage = YoutubeMusicInnertube.ItemsPage(
+                    items = pageState.items,
+                    continuation = pageState.continuation,
+                )
             },
             onFailure = { error ->
                 Log.w("SearchItemsPage", "load failed for tag=$tag", error)
-                loadStatus = PageLoadStatus.Error(error)
+                pageState = pageState.fail(error)
             }
         )
     }
@@ -150,12 +154,12 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
             }
 
             items(
-                items = itemsPage?.items ?: emptyList(),
+                items = pageState.items,
                 key = YoutubeMusicInnertube.Item::key,
                 itemContent = itemContent
             )
 
-            if (itemsPage != null && itemsPage?.items.isNullOrEmpty()) item(key = "empty") {
+            if (pageState.initialLoad == LoadPhase.Complete && pageState.items.isEmpty()) item(key = "empty") {
                 BasicText(
                     text = emptyItemsText,
                     style = typography.xs.secondary.center,
@@ -165,8 +169,8 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
                 )
             }
 
-            if (loadStatus !is PageLoadStatus.Error && !(itemsPage != null && itemsPage?.continuation == null)) item(key = "loading") {
-                val isFirstLoad = itemsPage?.items.isNullOrEmpty()
+            if (!pageState.hasError && !pageState.isComplete) item(key = "loading") {
+                val isFirstLoad = pageState.items.isEmpty()
 
                 ShimmerHost(
                     modifier = if (isFirstLoad) Modifier.fillParentMaxSize() else Modifier
@@ -177,14 +181,14 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
                 }
             }
 
-            if (loadStatus is PageLoadStatus.Error) item(key = "load_error") {
+            if (pageState.hasError) item(key = "load_error") {
                 BasicText(
                     text = stringResource(R.string.error_message),
                     style = typography.s.secondary.center,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            loadStatus = PageLoadStatus.Idle
+                            pageState = pageState.retry()
                             retryGeneration++
                         }
                         .padding(horizontal = 16.dp, vertical = 32.dp)
