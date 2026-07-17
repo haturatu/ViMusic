@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.SystemClock
 import androidx.annotation.RequiresApi
+import java.math.BigInteger
 import java.util.Locale
 
 /**
@@ -195,18 +196,26 @@ internal object Http3OriginPolicy {
         val protocolId = match.groupValues[1]
         val authority = parseAuthority(match.groupValues[2]) ?: return null
         val parameters = match.groupValues[3]
-        val maxAgeSeconds = parameterValue(parameters, "ma")
-            ?.toLongOrNull()
-            ?: DEFAULT_ALT_SVC_MAX_AGE_SECONDS
-        if (maxAgeSeconds <= 0) return null
+        val expiresAtElapsedMillis = expiryFromMaxAge(parameterValue(parameters, "ma")) ?: return null
         return AlternativeService(
             protocolId = protocolId,
             host = authority.host,
             port = authority.port,
-            expiresAtElapsedMillis = SystemClock.elapsedRealtime() +
-                maxAgeSeconds.coerceAtMost(MAX_ALT_SVC_MAX_AGE_SECONDS) * 1_000,
+            expiresAtElapsedMillis = expiresAtElapsedMillis,
             persist = parameterValue(parameters, "persist") == "1",
         )
+    }
+
+    /** Uses the server's ma while saturating before unit conversion/addition. */
+    private fun expiryFromMaxAge(value: String?): Long? {
+        val seconds = runCatching {
+            BigInteger(value ?: DEFAULT_ALT_SVC_MAX_AGE_SECONDS.toString())
+        }.getOrNull() ?: return null
+        if (seconds <= BigInteger.ZERO) return null
+        val now = SystemClock.elapsedRealtime()
+        val maxDurationMillis = BigInteger.valueOf(Long.MAX_VALUE - now)
+        val durationMillis = seconds.multiply(MILLIS_PER_SECOND).min(maxDurationMillis)
+        return now + durationMillis.toLong()
     }
 
     private fun parseAuthority(value: String): AlternativeAuthority? {
@@ -262,9 +271,9 @@ internal object Http3OriginPolicy {
     private const val HTTP3_ALPN = "h3"
     private const val HTTP_MISDIRECTED_REQUEST = 421
     private const val DEFAULT_ALT_SVC_MAX_AGE_SECONDS = 86_400L
-    private const val MAX_ALT_SVC_MAX_AGE_SECONDS = 86_400L
     private const val TLS_FAILURE_COOLDOWN_MILLIS = 30 * 60 * 1_000L
     private const val MAX_FAILURES = 4
+    private val MILLIS_PER_SECOND = BigInteger.valueOf(1_000L)
     private val FAILURE_COOLDOWNS_MILLIS = longArrayOf(
         5_000L,
         30_000L,
