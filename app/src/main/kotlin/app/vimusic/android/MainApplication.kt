@@ -619,10 +619,16 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         MonetCompat.debugLog = BuildConfig.DEBUG
         super.onCreate()
 
+        // MonetCompat registers its process-wide wallpaper receiver with the
+        // context passed to the first setup call. Initialize the singleton
+        // here so it never retains a MainActivity after configuration changes
+        // or process teardown.
+        MonetCompat.enablePaletteCompat()
+        MonetCompat.setup(applicationContext)
+
         MainApplicationProvider.application = this
         Http3OriginPolicy.initialize(this)
         appContainer = AppContainer(this).also(AppContainer::initialize)
-        MonetCompat.enablePaletteCompat()
         ServiceNotifications.createAll(this)
         DatabaseAutoBackupWorker.upsert(this)
     }
