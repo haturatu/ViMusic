@@ -424,7 +424,12 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             getBitmapSize = {
                 (512 * resources.displayMetrics.density)
                     .roundToInt()
-                    .coerceAtMost(AppearancePreferences.maxThumbnailSize)
+                    .coerceAtMost(
+                        minOf(
+                            AppearancePreferences.maxThumbnailSize,
+                            PLAYER_ARTWORK_MAX_PIXELS,
+                        )
+                    )
             },
             getColor = { isSystemInDarkMode ->
                 if (isSystemInDarkMode) Color.BLACK else Color.WHITE
@@ -1789,6 +1794,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         private const val PLAYBACK_REBUFFER_MS = 5_000
         private const val ARTWORK_JPEG_QUALITY = 85
         private const val SYSTEM_ARTWORK_MAX_PIXELS = 320
+        private const val PLAYER_ARTWORK_MAX_PIXELS = 768
         private val youtubeIdRegex = Regex("^[A-Za-z0-9_-]{11}$")
 
         fun extractYouTubeVideoId(raw: String): String {

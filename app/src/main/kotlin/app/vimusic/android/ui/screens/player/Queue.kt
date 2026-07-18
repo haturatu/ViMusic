@@ -43,6 +43,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -110,6 +111,8 @@ import app.vimusic.core.ui.onOverlay
 import app.vimusic.core.ui.utils.roundedShape
 import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -173,11 +176,15 @@ fun Queue(
         }
     }
 
-    LaunchedEffect(mediaItemIndex, shouldLoadSuggestions) {
+    LaunchedEffect(mediaItemIndex) {
         viewModel.clearSuggestions()
-        if (shouldLoadSuggestions && mediaItemIndex in windows.indices) {
-            viewModel.loadSuggestions(videoId = windows[mediaItemIndex].mediaItem.mediaId)
-        }
+        if (mediaItemIndex !in windows.indices) return@LaunchedEffect
+
+        snapshotFlow { shouldLoadSuggestions }
+            .filter { it }
+            .first()
+
+        viewModel.loadSuggestions(videoId = windows[mediaItemIndex].mediaItem.mediaId)
     }
 
     binder.player.DisposableListener {

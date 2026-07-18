@@ -81,7 +81,7 @@ class GlyphInterface(context: Context) : AutoCloseable {
     }
 
     private fun closeSession() {
-        if (!isBound || manager == null || shouldOpenSession.getAndSet(false)) return
+        if (!isBound || manager == null || !shouldOpenSession.getAndSet(false)) return
 
         runCatching { manager?.closeSession() }.exceptionOrNull()?.let {
             if (it is GlyphException) Log.e(TAG, it.message.orEmpty())
