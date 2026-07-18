@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -153,11 +153,12 @@ inline fun <T : YoutubeMusicInnertube.Item> ItemsPage(
                 header(null, null)
             }
 
-            items(
+            itemsIndexed(
                 items = pageState.items,
-                key = YoutubeMusicInnertube.Item::key,
-                itemContent = itemContent
-            )
+                key = { index, item -> "item:$index,${item.key}" },
+            ) { _, item ->
+                itemContent(item)
+            }
 
             if (pageState.initialLoad == LoadPhase.Complete && pageState.items.isEmpty()) item(key = "empty") {
                 BasicText(
