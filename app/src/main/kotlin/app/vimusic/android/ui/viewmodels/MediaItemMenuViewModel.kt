@@ -1,7 +1,6 @@
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.MediaItem
 import app.vimusic.android.models.Playlist
 import app.vimusic.android.repositories.MediaItemMenuRepository
@@ -38,11 +37,8 @@ class MediaItemMenuViewModel(
         repository.observePlaylistPreviews(sortBy = sortBy, sortOrder = sortOrder)
 
     companion object {
-        fun factory(repository: MediaItemMenuRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    MediaItemMenuViewModel(repository = repository) as T
-            }
+        fun factory(repository: MediaItemMenuRepository) = viewModelFactory {
+            MediaItemMenuViewModel(repository = repository)
+        }
     }
 }

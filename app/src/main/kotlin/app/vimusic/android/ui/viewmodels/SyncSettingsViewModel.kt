@@ -1,7 +1,6 @@
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import app.vimusic.android.models.PipedSession
 import app.vimusic.android.repositories.SyncSettingsRepository
 import app.vimusic.providers.piped.models.Instance
@@ -23,11 +22,8 @@ class SyncSettingsViewModel(
     fun deleteSession(session: PipedSession) = repository.deleteSession(session)
 
     companion object {
-        fun factory(repository: SyncSettingsRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    SyncSettingsViewModel(repository = repository) as T
-            }
+        fun factory(repository: SyncSettingsRepository) = viewModelFactory {
+            SyncSettingsViewModel(repository = repository)
+        }
     }
 }

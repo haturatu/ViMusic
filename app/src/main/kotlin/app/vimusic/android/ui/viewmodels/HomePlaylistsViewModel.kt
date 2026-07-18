@@ -1,7 +1,6 @@
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import app.vimusic.android.repositories.HomePlaylistsRepository
 import app.vimusic.core.data.enums.PlaylistSortBy
 import app.vimusic.core.data.enums.SortOrder
@@ -17,11 +16,8 @@ class HomePlaylistsViewModel(
     fun createPlaylist(name: String) = repository.createPlaylist(name)
 
     companion object {
-        fun factory(repository: HomePlaylistsRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    HomePlaylistsViewModel(repository = repository) as T
-            }
+        fun factory(repository: HomePlaylistsRepository) = viewModelFactory {
+            HomePlaylistsViewModel(repository = repository)
+        }
     }
 }

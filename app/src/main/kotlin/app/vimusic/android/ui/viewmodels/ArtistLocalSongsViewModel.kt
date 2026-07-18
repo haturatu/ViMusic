@@ -1,7 +1,6 @@
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import app.vimusic.android.repositories.LibraryRepository
 
 class ArtistLocalSongsViewModel(
@@ -14,10 +13,8 @@ class ArtistLocalSongsViewModel(
         fun factory(
             browseId: String,
             repository: LibraryRepository
-        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                ArtistLocalSongsViewModel(repository = repository, browseId = browseId) as T
+        ) = viewModelFactory {
+            ArtistLocalSongsViewModel(repository = repository, browseId = browseId)
         }
     }
 }

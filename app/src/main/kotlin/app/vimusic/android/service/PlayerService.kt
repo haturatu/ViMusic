@@ -96,6 +96,7 @@ import app.vimusic.android.utils.InvalidPlaybackResponseException
 import app.vimusic.android.utils.intent
 import app.vimusic.android.utils.mediaItems
 import app.vimusic.android.utils.PlaybackRetryManager
+import app.vimusic.android.utils.RequestGeneration
 import app.vimusic.android.utils.progress
 import app.vimusic.android.utils.safeUnregisterReceiver
 import app.vimusic.android.utils.setPlaybackPitch
@@ -1516,7 +1517,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             get() = timerJob?.millisLeft
 
         private var radioJob: Job? = null
-        private var radioGeneration = 0L
+        private val radioGeneration = RequestGeneration()
 
         var isLoadingRadio by mutableStateOf(false)
             private set
@@ -1577,7 +1578,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             startRadio(endpoint = endpoint, justAdd = false)
 
         private fun startRadio(endpoint: NavigationEndpoint.Endpoint.Watch?, justAdd: Boolean) {
-            val generation = ++radioGeneration
+            val generation = radioGeneration.next()
             radioJob?.cancel()
             radio = null
 
@@ -1597,22 +1598,22 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                         prefetchMediaItems(items)
 
                         withContext(Dispatchers.Main) {
-                            if (radioGeneration != generation) return@withContext
+                            if (!radioGeneration.isCurrent(generation)) return@withContext
                             syncCurrentMediaItemRadioState(radioData)
                             if (justAdd) player.addMediaItems(items.drop(1))
                             else player.forcePlayFromBeginning(items)
                         }
 
-                        if (radioGeneration == generation) radio = radioData
+                        if (radioGeneration.isCurrent(generation)) radio = radioData
                     } finally {
-                        if (radioGeneration == generation) isLoadingRadio = false
+                        if (radioGeneration.isCurrent(generation)) isLoadingRadio = false
                     }
                 }
             }
         }
 
         fun stopRadio() {
-            radioGeneration++
+            radioGeneration.invalidate()
             isLoadingRadio = false
             radioJob?.cancel()
             radio = null

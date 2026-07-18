@@ -1,7 +1,6 @@
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import app.vimusic.android.models.Lyrics
 import app.vimusic.android.repositories.PlayerLyricsRepository
 import app.vimusic.providers.lrclib.models.Track
@@ -41,11 +40,8 @@ class PlayerLyricsViewModel(
         repository.searchSyncedLrcLib(query)
 
     companion object {
-        fun factory(repository: PlayerLyricsRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    PlayerLyricsViewModel(repository = repository) as T
-            }
+        fun factory(repository: PlayerLyricsRepository) = viewModelFactory {
+            PlayerLyricsViewModel(repository = repository)
+        }
     }
 }

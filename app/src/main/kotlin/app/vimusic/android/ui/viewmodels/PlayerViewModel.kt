@@ -1,7 +1,6 @@
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.MediaItem
 import app.vimusic.android.repositories.PlayerRepository
 
@@ -27,11 +26,8 @@ class PlayerViewModel(
         repository.setLoudnessBoost(songId = songId, loudnessBoost = loudnessBoost)
 
     companion object {
-        fun factory(repository: PlayerRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    PlayerViewModel(repository = repository) as T
-            }
+        fun factory(repository: PlayerRepository) = viewModelFactory {
+            PlayerViewModel(repository = repository)
+        }
     }
 }

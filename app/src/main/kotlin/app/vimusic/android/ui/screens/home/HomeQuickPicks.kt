@@ -50,6 +50,7 @@ import app.vimusic.android.ui.components.ShimmerHost
 import app.vimusic.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
+import app.vimusic.android.ui.components.themed.RetryMessage
 import app.vimusic.android.ui.components.themed.TextPlaceholder
 import app.vimusic.android.ui.items.AlbumItem
 import app.vimusic.android.ui.items.AlbumItemPlaceholder
@@ -60,8 +61,9 @@ import app.vimusic.android.ui.items.PlaylistItemPlaceholder
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.screens.Route
+import app.vimusic.android.ui.state.LoadState
+import app.vimusic.android.ui.state.contentOrNull
 import app.vimusic.android.ui.viewmodels.HomeQuickPicksViewModel
-import app.vimusic.android.ui.viewmodels.QuickPicksUiState
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.center
 import app.vimusic.android.utils.forcePlay
@@ -97,11 +99,7 @@ fun QuickPicks(
     var trending by persist<Song?>("home/trending")
 
     val quickPicksState by viewModel.uiState.collectAsStateWithLifecycle()
-    val relatedPage = when (val state = quickPicksState) {
-        QuickPicksUiState.Loading -> null
-        is QuickPicksUiState.Content -> state.page
-        is QuickPicksUiState.Error -> state.stalePage
-    }
+    val relatedPage = quickPicksState.contentOrNull()
 
     LaunchedEffect(DataPreferences.shouldCacheQuickPicks) {
         if (!DataPreferences.shouldCacheQuickPicks) viewModel.clearCachedQuickPicks()
@@ -109,7 +107,7 @@ fun QuickPicks(
 
     LaunchedEffect(DataPreferences.quickPicksSource) {
         suspend fun handleSong(song: Song?) {
-            if (trending?.id != song?.id || quickPicksState is QuickPicksUiState.Loading) {
+            if (trending?.id != song?.id || quickPicksState is LoadState.Loading) {
                 viewModel.load(videoId = song?.id ?: "J7p4bzqLvCw")
             }
             trending = song
@@ -324,14 +322,11 @@ fun QuickPicks(
                 }
 
                 Unit
-            } ?: (quickPicksState as? QuickPicksUiState.Error)?.let {
-                BasicText(
-                    text = stringResource(R.string.error_message),
-                    style = typography.s.secondary.center,
+            } ?: (quickPicksState as? LoadState.Error)?.let {
+                RetryMessage(
+                    onRetry = viewModel::retry,
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
-                        .clickable { viewModel.retry() }
-                        .padding(all = 16.dp)
                 )
             } ?: ShimmerHost {
                 repeat(4) {

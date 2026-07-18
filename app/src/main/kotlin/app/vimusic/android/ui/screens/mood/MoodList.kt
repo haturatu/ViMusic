@@ -20,9 +20,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.R
@@ -30,6 +30,7 @@ import app.vimusic.android.models.Mood
 import app.vimusic.android.ui.components.ShimmerHost
 import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.HeaderPlaceholder
+import app.vimusic.android.ui.components.themed.RetryMessage
 import app.vimusic.android.ui.components.themed.TextPlaceholder
 import app.vimusic.android.ui.items.AlbumItem
 import app.vimusic.android.ui.items.AlbumItemPlaceholder
@@ -38,9 +39,9 @@ import app.vimusic.android.ui.items.PlaylistItem
 import app.vimusic.android.ui.screens.albumRoute
 import app.vimusic.android.ui.screens.artistRoute
 import app.vimusic.android.ui.screens.playlistRoute
+import app.vimusic.android.ui.state.LoadState
+import app.vimusic.android.ui.state.contentOrNull
 import app.vimusic.android.ui.viewmodels.MoodListViewModel
-import app.vimusic.android.utils.center
-import app.vimusic.android.utils.secondary
 import app.vimusic.android.utils.semiBold
 import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.Dimensions
@@ -64,14 +65,17 @@ fun MoodList(
     val windowInsets = LocalPlayerAwareWindowInsets.current
 
     val browseId = mood.browseId ?: DEFAULT_BROWSE_ID
-    var moodPage by persist<Result<BrowseResult>>(
+    var cachedMoodPage by persist<BrowseResult?>(
         tag = "playlist/mood/$browseId${mood.params?.let { "/$it" }.orEmpty()}"
     )
+    val moodState by viewModel.uiState.collectAsStateWithLifecycle()
+    val moodPage = moodState.contentOrNull() ?: cachedMoodPage
 
     LaunchedEffect(Unit) {
-        if (moodPage?.isSuccess == true) return@LaunchedEffect
-
-        moodPage = viewModel.fetchMoodPage(browseId = browseId, params = mood.params)
+        viewModel.load(browseId, mood.params, cachedPage = cachedMoodPage)
+    }
+    LaunchedEffect(moodState) {
+        (moodState as? LoadState.Content)?.value?.let { cachedMoodPage = it }
     }
 
     val lazyListState = rememberLazyListState()
@@ -89,7 +93,7 @@ fun MoodList(
         .padding(top = 24.dp, bottom = 8.dp)
         .padding(endPaddingValues)
 
-    moodPage?.getOrNull()?.let { moodResult ->
+    moodPage?.let { moodResult ->
         LazyColumn(
             state = lazyListState,
             contentPadding = contentPadding,
@@ -168,13 +172,11 @@ fun MoodList(
                 }
             }
         }
-    } ?: moodPage?.exceptionOrNull()?.let {
-        BasicText(
-            text = stringResource(R.string.error_message),
-            style = typography.s.secondary.center,
+    } ?: (moodState as? LoadState.Error)?.let {
+        RetryMessage(
+            onRetry = { viewModel.load(browseId, mood.params, force = true) },
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-                .padding(all = 16.dp)
         )
     } ?: ShimmerHost(modifier = Modifier.padding(contentPadding)) {
         HeaderPlaceholder(modifier = Modifier.shimmer())

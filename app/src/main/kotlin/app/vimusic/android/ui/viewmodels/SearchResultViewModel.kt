@@ -1,7 +1,6 @@
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import app.vimusic.android.repositories.SearchResultRepository
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 
@@ -28,10 +27,8 @@ class SearchResultViewModel(
         fun factory(
             query: String,
             repository: SearchResultRepository
-        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                SearchResultViewModel(query = query, repository = repository) as T
+        ) = viewModelFactory {
+            SearchResultViewModel(query = query, repository = repository)
         }
     }
 }

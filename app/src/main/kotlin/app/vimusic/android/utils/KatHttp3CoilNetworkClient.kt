@@ -153,39 +153,22 @@ class KatHttp3CoilNetworkClient(
         startedAt: Long,
     ): NetworkResponse = withContext(Dispatchers.IO) {
         val requestMillis = System.currentTimeMillis()
-        val method = request.method.uppercase()
-        val contentType = request.headers.asMap()
-            .entries
-            .firstOrNull { (name, _) -> name.equals("content-type", ignoreCase = true) }
-            ?.value
-            ?.firstOrNull()
-            ?.toMediaTypeOrNull()
-        val requestBody = when (method) {
-            "GET", "HEAD" -> null
-            else -> (request.body?.toByteArray() ?: ByteArray(0)).toRequestBody(contentType)
-        }
-        val httpRequest = Request.Builder()
-            .url(request.url)
-            .apply {
-                request.headers.asMap().forEach { (name, values) ->
-                    values.forEach { value -> addHeader(name, value) }
-                }
-                method(method, requestBody)
-            }
-            .build()
+        val httpRequest = request.toOkHttpRequest()
         fallbackClient.newCall(httpRequest).execute().use { httpResponse ->
+            val contentType = httpResponse.header("content-type")
             if (YoutubeThumbnailHostResolver.shouldRetryOriginal(
-                    originalUrl,
-                    request.url,
-                    httpResponse.code,
-                    httpResponse.header("content-type"),
-                    if (httpResponse.body.contentLength() == 0L) 0 else 1,
+                    originalUrl = originalUrl,
+                    resolvedUrl = request.url,
+                    status = httpResponse.code,
+                    contentType = contentType,
+                    bodySize = if (httpResponse.body.contentLength() == 0L) 0 else 1,
                 )
             ) throw IncompatibleThumbnailHostException()
+
             YoutubeThumbnailHostResolver.recordResponse(
                 request.url,
                 httpResponse.code,
-                httpResponse.header("content-type"),
+                contentType,
                 SystemClock.elapsedRealtime() - startedAt,
             )
             Http3OriginPolicy.recordOriginResponse(
@@ -204,6 +187,29 @@ class KatHttp3CoilNetworkClient(
                 Log.i(LOG_TAG, "OkHttp ${httpResponse.protocol}: ${httpResponse.code} ${request.url}")
             }
         }
+    }
+
+    private suspend fun NetworkRequest.toOkHttpRequest(): Request {
+        val requestMethod = method.uppercase()
+        val contentType = headers.asMap()
+            .entries
+            .firstOrNull { (name, _) -> name.equals("content-type", ignoreCase = true) }
+            ?.value
+            ?.firstOrNull()
+            ?.toMediaTypeOrNull()
+        val requestBody = when (requestMethod) {
+            "GET", "HEAD" -> null
+            else -> (body?.toByteArray() ?: ByteArray(0)).toRequestBody(contentType)
+        }
+        return Request.Builder()
+            .url(url)
+            .apply {
+                headers.asMap().forEach { (name, values) ->
+                    values.forEach { value -> addHeader(name, value) }
+                }
+                method(requestMethod, requestBody)
+            }
+            .build()
     }
 
     private suspend fun <T> executeBufferedRequest(

@@ -44,6 +44,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.R
@@ -52,13 +53,14 @@ import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
+import app.vimusic.android.ui.state.LoadState
+import app.vimusic.android.ui.state.contentOrNull
 import app.vimusic.android.ui.viewmodels.OnlineSearchViewModel
 import app.vimusic.android.utils.align
 import app.vimusic.android.utils.center
 import app.vimusic.android.utils.disabled
 import app.vimusic.android.utils.medium
 import app.vimusic.android.utils.secondary
-import app.vimusic.compose.persist.persist
 import app.vimusic.compose.persist.persistList
 import app.vimusic.core.ui.LocalAppearance
 import io.ktor.http.Url
@@ -81,7 +83,7 @@ fun OnlineSearch(
     val (colorPalette, typography) = LocalAppearance.current
 
     var history by persistList<SearchQuery>("search/online/history")
-    var suggestionsResult by persist<Result<List<String>?>?>("search/online/suggestionsResult")
+    val suggestionsState by viewModel.suggestions.collectAsStateWithLifecycle()
 
     LaunchedEffect(textFieldValue.text) {
         if (DataPreferences.pauseSearchHistory) return@LaunchedEffect
@@ -91,10 +93,7 @@ fun OnlineSearch(
     }
 
     LaunchedEffect(textFieldValue.text) {
-        if (textFieldValue.text.isEmpty()) return@LaunchedEffect
-
-        delay(500)
-        suggestionsResult = viewModel.fetchSuggestions(textFieldValue.text)
+        viewModel.loadSuggestions(textFieldValue.text)
     }
 
     val playlistId = remember(textFieldValue.text) {
@@ -245,7 +244,7 @@ fun OnlineSearch(
             }
         }
 
-        suggestionsResult?.getOrNull()?.let { suggestions ->
+        suggestionsState.contentOrNull()?.let { suggestions ->
             items(items = suggestions) { suggestion ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -295,7 +294,7 @@ fun OnlineSearch(
                     )
                 }
             }
-        } ?: suggestionsResult?.exceptionOrNull()?.let {
+        } ?: (suggestionsState as? LoadState.Error)?.let {
             item {
                 Box(modifier = Modifier.fillMaxSize()) {
                     BasicText(
