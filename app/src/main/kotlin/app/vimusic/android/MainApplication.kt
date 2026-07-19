@@ -74,8 +74,7 @@ import app.vimusic.android.repositories.ApiPipedPlaylistRepository
 import app.vimusic.android.repositories.DatabaseAlbumRepository
 import app.vimusic.android.repositories.DatabaseArtistRepository
 import app.vimusic.android.repositories.DatabaseBuiltInPlaylistRepository
-import app.vimusic.android.repositories.DatabaseHomePlaylistsRepository
-import app.vimusic.android.repositories.DatabaseHomeQuickPicksRepository
+import app.vimusic.android.repositories.DefaultHomeRepository
 import app.vimusic.android.repositories.DatabaseLibraryRepository
 import app.vimusic.android.repositories.DatabaseOnlineSearchRepository
 import app.vimusic.android.repositories.DatabasePlaylistRepository
@@ -83,15 +82,12 @@ import app.vimusic.android.repositories.DatabaseSongsRepository
 import app.vimusic.android.repositories.DatabaseSettingsRepository
 import app.vimusic.android.repositories.DatabaseMediaItemMenuRepository
 import app.vimusic.android.repositories.DeepLinkRepository
-import app.vimusic.android.repositories.HomeDiscoveryRepository
+import app.vimusic.android.repositories.HomeRepository
 import app.vimusic.android.repositories.YoutubeMusicInnertubeDeepLinkRepository
 import app.vimusic.android.repositories.YoutubeMusicInnertubeSearchResultRepository
-import app.vimusic.android.repositories.YoutubeMusicInnertubeHomeDiscoveryRepository
 import app.vimusic.android.repositories.YoutubeMusicInnertubeMoodRepository
 import app.vimusic.android.utils.Http3OriginPolicy
-import app.vimusic.android.repositories.HomeQuickPicksRepository
 import app.vimusic.android.repositories.LibraryRepository
-import app.vimusic.android.repositories.HomePlaylistsRepository
 import app.vimusic.android.repositories.MoodRepository
 import app.vimusic.android.repositories.LocalPlaylistRepository
 import app.vimusic.android.repositories.DatabaseLocalPlaylistRepository
@@ -567,13 +563,11 @@ class AppContainer(
     val artistRepository: ArtistRepository by lazy { DatabaseArtistRepository }
     val libraryRepository: LibraryRepository by lazy { DatabaseLibraryRepository }
     val onlineSearchRepository: OnlineSearchRepository by lazy { DatabaseOnlineSearchRepository }
-    val homePlaylistsRepository: HomePlaylistsRepository by lazy { DatabaseHomePlaylistsRepository }
-    val homeQuickPicksRepository: HomeQuickPicksRepository by lazy { DatabaseHomeQuickPicksRepository }
+    val homeRepository: HomeRepository by lazy { DefaultHomeRepository }
     val builtInPlaylistRepository: BuiltInPlaylistRepository by lazy { DatabaseBuiltInPlaylistRepository }
     val albumRepository: AlbumRepository by lazy { DatabaseAlbumRepository }
     val playlistRepository: PlaylistRepository by lazy { DatabasePlaylistRepository }
     val pipedPlaylistRepository: PipedPlaylistRepository by lazy { ApiPipedPlaylistRepository }
-    val homeDiscoveryRepository: HomeDiscoveryRepository by lazy { YoutubeMusicInnertubeHomeDiscoveryRepository }
     val moodRepository: MoodRepository by lazy { YoutubeMusicInnertubeMoodRepository }
     val localPlaylistRepository: LocalPlaylistRepository by lazy { DatabaseLocalPlaylistRepository }
     val syncSettingsRepository: SyncSettingsRepository by lazy { DatabaseSyncSettingsRepository }

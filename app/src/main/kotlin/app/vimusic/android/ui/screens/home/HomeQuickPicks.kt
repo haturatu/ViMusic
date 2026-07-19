@@ -89,7 +89,7 @@ fun QuickPicks(
 ) {
     val viewModel: HomeQuickPicksViewModel = viewModel(
         key = "home_quick_picks",
-        factory = HomeQuickPicksViewModel.factory(LocalAppContainer.current.homeQuickPicksRepository)
+        factory = HomeQuickPicksViewModel.factory(LocalAppContainer.current.homeRepository)
     )
     val (colorPalette, typography) = LocalAppearance.current
     val binder = LocalPlayerServiceBinder.current

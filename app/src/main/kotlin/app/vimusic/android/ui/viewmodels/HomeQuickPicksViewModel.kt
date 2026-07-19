@@ -3,7 +3,7 @@ package app.vimusic.android.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.vimusic.android.models.Song
-import app.vimusic.android.repositories.HomeQuickPicksRepository
+import app.vimusic.android.repositories.HomeRepository
 import app.vimusic.android.ui.state.LoadState
 import app.vimusic.android.ui.state.launchLoad
 import app.vimusic.android.utils.requireValue
@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class HomeQuickPicksViewModel(
-    private val repository: HomeQuickPicksRepository
+    private val repository: HomeRepository
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow<LoadState<YoutubeMusicInnertube.RelatedPage>>(
         LoadState.Loading
@@ -57,7 +57,7 @@ class HomeQuickPicksViewModel(
     fun clearCachedQuickPicks() = repository.clearCachedQuickPicks()
 
     companion object {
-        fun factory(repository: HomeQuickPicksRepository) = viewModelFactory {
+        fun factory(repository: HomeRepository) = viewModelFactory {
             HomeQuickPicksViewModel(repository = repository)
         }
     }
