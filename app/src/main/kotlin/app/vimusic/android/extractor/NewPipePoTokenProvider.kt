@@ -34,9 +34,8 @@ object NewPipePoTokenProvider : PoTokenProvider {
     private val appContext = AtomicReference<Context?>()
     private val generatorLock = Any()
     private var generator: PoTokenGenerator? = null
-    private var visitorData: String? = null
-    private var streamingPoToken: String? = null
-    private var webViewUnavailable = false
+    private val clientTokens = mutableMapOf<PoTokenClient, ClientTokenState>()
+    private var retryAfterMs = 0L
 
     fun initialize(context: Context) {
         appContext.set(context.applicationContext)
@@ -44,17 +43,7 @@ object NewPipePoTokenProvider : PoTokenProvider {
 
     override fun getWebClientPoToken(videoId: String): PoTokenResult? {
         Log.d(TAG, "getWebClientPoToken requested videoId=$videoId")
-        if (webViewUnavailable) return null
-
-        return runCatching {
-            getWebClientPoToken(videoId, forceRecreate = false)
-        }.recoverCatching { error ->
-            Log.w(TAG, "Failed to create poToken, retrying with a new WebView", error)
-            getWebClientPoToken(videoId, forceRecreate = true)
-        }.onFailure { error ->
-            Log.w(TAG, "poToken generation disabled for this process", error)
-            webViewUnavailable = true
-        }.getOrNull()
+        return getPoToken(videoId, PoTokenClient.Web)
     }
 
     override fun getWebEmbedClientPoToken(videoId: String): PoTokenResult? {
@@ -63,8 +52,8 @@ object NewPipePoTokenProvider : PoTokenProvider {
     }
 
     override fun getAndroidClientPoToken(videoId: String): PoTokenResult? {
-        Log.d(TAG, "getAndroidClientPoToken requested videoId=$videoId; returning null like NewPipe")
-        return null
+        Log.d(TAG, "getAndroidClientPoToken requested videoId=$videoId")
+        return getPoToken(videoId, PoTokenClient.Android)
     }
 
     override fun getIosClientPoToken(videoId: String): PoTokenResult? {
@@ -72,23 +61,51 @@ object NewPipePoTokenProvider : PoTokenProvider {
         return null
     }
 
-    private fun getWebClientPoToken(videoId: String, forceRecreate: Boolean): PoTokenResult {
+    private fun getPoToken(videoId: String, client: PoTokenClient): PoTokenResult? {
+        synchronized(generatorLock) {
+            if (System.currentTimeMillis() < retryAfterMs) return null
+        }
+
+        return runCatching {
+            generatePoToken(videoId, client, forceRecreate = false)
+        }.recoverCatching { error ->
+            Log.w(TAG, "Failed to create ${client.label} poToken; retrying with a new WebView", error)
+            generatePoToken(videoId, client, forceRecreate = true)
+        }.onFailure { error ->
+            synchronized(generatorLock) {
+                retryAfterMs = System.currentTimeMillis() + RETRY_COOLDOWN_MILLIS
+            }
+            Log.w(TAG, "${client.label} poToken unavailable; retrying after cooldown", error)
+        }.getOrNull()
+    }
+
+    private fun generatePoToken(
+        videoId: String,
+        client: PoTokenClient,
+        forceRecreate: Boolean,
+    ): PoTokenResult {
         val currentContext = requireNotNull(appContext.get()) {
             "NewPipePoTokenProvider is not initialized"
         }
 
         val activeGenerator: PoTokenGenerator
-        val activeVisitorData: String
-        val activeStreamingPoToken: String
+        val activeTokens: ClientTokenState
 
         synchronized(generatorLock) {
             if (forceRecreate || generator == null || generator?.isExpired() == true) {
                 generator?.close()
+                generator = WebViewPoTokenGenerator.create(currentContext, this.client)
+                clientTokens.clear()
+            }
 
-                val requestInfo = InnertubeClientRequestInfo.ofWebClient()
-                requestInfo.clientInfo.clientVersion = YoutubeParsingHelper.getClientVersion()
-
-                visitorData = YoutubeParsingHelper.getVisitorDataFromInnertube(
+            activeGenerator = generator!!
+            activeTokens = clientTokens.getOrPut(client) {
+                val requestInfo = client.requestInfo().also {
+                    if (client == PoTokenClient.Web) {
+                        it.clientInfo.clientVersion = YoutubeParsingHelper.getClientVersion()
+                    }
+                }
+                val visitorData = YoutubeParsingHelper.getVisitorDataFromInnertube(
                     requestInfo,
                     NewPipe.getPreferredLocalization(),
                     NewPipe.getPreferredContentCountry(),
@@ -97,23 +114,41 @@ object NewPipePoTokenProvider : PoTokenProvider {
                     null,
                     false
                 )
-                generator = WebViewPoTokenGenerator.create(currentContext, client)
-                streamingPoToken = generator!!.generatePoToken(visitorData!!)
+                ClientTokenState(
+                    visitorData = visitorData,
+                    streamingPoToken = if (client.requiresStreamingToken) {
+                        activeGenerator.generatePoToken(visitorData)
+                    } else {
+                        null
+                    },
+                )
             }
-
-            activeGenerator = generator!!
-            activeVisitorData = visitorData!!
-            activeStreamingPoToken = streamingPoToken!!
+            retryAfterMs = 0L
         }
 
         return PoTokenResult(
-            activeVisitorData,
+            activeTokens.visitorData,
             activeGenerator.generatePoToken(videoId),
-            activeStreamingPoToken
+            activeTokens.streamingPoToken,
         )
     }
 
+    private enum class PoTokenClient(
+        val label: String,
+        val requiresStreamingToken: Boolean,
+        val requestInfo: () -> InnertubeClientRequestInfo,
+    ) {
+        Web("Web", true, InnertubeClientRequestInfo::ofWebClient),
+        Android("Android", false, InnertubeClientRequestInfo::ofAndroidClient),
+    }
+
+    private data class ClientTokenState(
+        val visitorData: String,
+        val streamingPoToken: String?,
+    )
+
     private const val TAG = "NewPipePoTokenProvider"
+    private const val RETRY_COOLDOWN_MILLIS = 30_000L
 }
 
 private interface PoTokenGenerator : Closeable {
@@ -129,6 +164,7 @@ private class WebViewPoTokenGenerator private constructor(
     private var expiresAtMs = 0L
     private val initLatch = CountDownLatch(1)
     private val initError = AtomicReference<Throwable?>()
+    private val generationLock = Any()
     private val tokenLock = Any()
     private var tokenLatch: CountDownLatch? = null
     private var tokenResult: String? = null
@@ -228,7 +264,11 @@ private class WebViewPoTokenGenerator private constructor(
         }
     }
 
-    override fun generatePoToken(identifier: String): String {
+    override fun generatePoToken(identifier: String): String = synchronized(generationLock) {
+        generatePoTokenLocked(identifier)
+    }
+
+    private fun generatePoTokenLocked(identifier: String): String {
         val latch = CountDownLatch(1)
         synchronized(tokenLock) {
             tokenLatch = latch
