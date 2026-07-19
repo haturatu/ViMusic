@@ -5,6 +5,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,6 +45,20 @@ fun RetryingAsyncImage(
     colorFilter: ColorFilter? = null,
     filterQuality: FilterQuality = FilterQuality.Low,
 ) {
+    if (model.isLocalImageSource()) {
+        AsyncImage(
+            model = model,
+            contentDescription = contentDescription,
+            modifier = modifier,
+            contentScale = contentScale,
+            error = error,
+            alpha = alpha,
+            colorFilter = colorFilter,
+            filterQuality = filterQuality,
+        )
+        return
+    }
+
     val context = LocalContext.current
     val networkGeneration by NetworkRetrySignal.generations(context).collectAsState()
     var retryKey by remember(model) { mutableIntStateOf(0) }
@@ -93,6 +108,14 @@ fun RetryingAsyncImage(
         )
     }
 }
+
+private fun Any?.isLocalImageSource(): Boolean = when (this) {
+    is Uri -> scheme in LOCAL_URI_SCHEMES
+    is String -> LOCAL_URI_SCHEMES.any { startsWith("$it://", ignoreCase = true) }
+    else -> false
+}
+
+private val LOCAL_URI_SCHEMES = setOf("content", "file", "android.resource")
 
 private object NetworkRetrySignal {
     private val lock = Any()
