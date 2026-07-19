@@ -15,7 +15,6 @@ import dev.kathttp3.KatHttp3RetryPolicy
 import dev.kathttp3.PolicyRetryInterceptor
 import dev.kathttp3.decodeContent
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
@@ -67,6 +66,15 @@ class KatHttp3Downloader(
     )
 
     override fun execute(request: Request): Response {
+        // NewPipe uses this POST to bootstrap visitor data before it can make
+        // player requests. Do not hedge or replay it: a timed-out native H3
+        // request cannot currently be awaited until cancellation completes.
+        // OkHttp provides a single, bounded attempt instead.
+        if (request.isVisitorIdRequest()) {
+            Log.d(TAG, "Using the standard downloader for visitor data: ${request.url()}")
+            return executeStandard(request)
+        }
+
         if (!Http3OriginPolicy.shouldAttemptHttp3(request.url())) {
             return executeStandard(request)
         }
@@ -117,15 +125,13 @@ class KatHttp3Downloader(
 
     private fun executeHttp3(request: KatHttp3Request): KatHttp3Response {
         return runBlocking {
-            // Keep extraction responsive even if native cancellation or an
-            // HTTP/3 response callback stalls. TimeoutCancellationException
-            // is classified as a transport failure and immediately falls
-            // back to the standard downloader.
-            withTimeout(HTTP3_ATTEMPT_TIMEOUT_MILLIS) {
-                client.execute(request)
-            }
+            client.execute(request)
         }
     }
+
+    private fun Request.isVisitorIdRequest(): Boolean =
+        httpMethod().equals("POST", ignoreCase = true) &&
+            url().substringBefore('?').endsWith("/visitor_id")
 
     private fun requestHeaders(request: Request): List<KatHttp3Header> {
         val headers = linkedMapOf(
@@ -168,6 +174,5 @@ class KatHttp3Downloader(
     private companion object {
         const val TAG = "KatHttp3Downloader"
         const val HTTP_TOO_MANY_REQUESTS = 429
-        const val HTTP3_ATTEMPT_TIMEOUT_MILLIS = 5_000L
     }
 }
