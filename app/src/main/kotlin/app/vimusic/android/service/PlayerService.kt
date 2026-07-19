@@ -571,6 +571,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         runCatching {
             maybeSavePlayerQueue(immediately = true)
 
+            unregisterAudioDeviceCallback()
             player.removeListener(this)
             player.stop()
             player.release()
@@ -960,13 +961,13 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         if (!isAtLeastAndroid6) return
 
         if (!PlayerPreferences.resumePlaybackWhenDeviceConnected) {
-            audioManager?.unregisterAudioDeviceCallback(audioDeviceCallback)
-            audioDeviceCallback = null
+            unregisterAudioDeviceCallback()
             return
         }
-        if (audioManager == null) audioManager = getSystemService<AudioManager>()
+        if (audioDeviceCallback != null) return
+        val manager = audioManager ?: getSystemService<AudioManager>().also { audioManager = it } ?: return
 
-        audioDeviceCallback =
+        val callback =
             @SuppressLint("NewApi")
             object : AudioDeviceCallback() {
                 private fun canPlayMusic(audioDeviceInfo: AudioDeviceInfo) =
@@ -987,7 +988,15 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
                 override fun onAudioDevicesRemoved(removedDevices: Array<AudioDeviceInfo>) = Unit
             }
 
-        audioManager?.registerAudioDeviceCallback(audioDeviceCallback, handler)
+        manager.registerAudioDeviceCallback(callback, handler)
+        audioDeviceCallback = callback
+    }
+
+    private fun unregisterAudioDeviceCallback() {
+        audioDeviceCallback?.let { callback ->
+            audioManager?.unregisterAudioDeviceCallback(callback)
+        }
+        audioDeviceCallback = null
     }
 
     private fun sendOpenEqualizerIntent() = sendBroadcast(
