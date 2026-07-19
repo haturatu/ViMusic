@@ -54,6 +54,7 @@ class NewPipeDownloader(
             .retryOnConnectionFailure(dnsTarget == NewPipeDnsTarget.System)
             .connectTimeout(if (dnsTarget == NewPipeDnsTarget.System) 10 else 4, TimeUnit.SECONDS)
             .readTimeout(if (dnsTarget == NewPipeDnsTarget.System) 10 else 8, TimeUnit.SECONDS)
+            .callTimeout(15, TimeUnit.SECONDS)
             .dns { hostname ->
                 when (dnsTarget) {
                     NewPipeDnsTarget.System -> InetAddress.getAllByName(hostname).toList()

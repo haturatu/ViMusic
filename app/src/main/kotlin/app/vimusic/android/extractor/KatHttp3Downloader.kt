@@ -66,6 +66,15 @@ class KatHttp3Downloader(
     )
 
     override fun execute(request: Request): Response {
+        // NewPipe uses this POST to bootstrap visitor data before it can make
+        // player requests. Do not hedge or replay it: a timed-out native H3
+        // request cannot currently be awaited until cancellation completes.
+        // OkHttp provides a single, bounded attempt instead.
+        if (request.isVisitorIdRequest()) {
+            Log.d(TAG, "Using the standard downloader for visitor data: ${request.url()}")
+            return executeStandard(request)
+        }
+
         if (!Http3OriginPolicy.shouldAttemptHttp3(request.url())) {
             return executeStandard(request)
         }
@@ -116,12 +125,13 @@ class KatHttp3Downloader(
 
     private fun executeHttp3(request: KatHttp3Request): KatHttp3Response {
         return runBlocking {
-            // Kathttp3 owns the request deadline. Keeping a second, shorter
-            // coroutine watchdog would make its configured timeout budget
-            // unreachable and obscure the native failure classification.
             client.execute(request)
         }
     }
+
+    private fun Request.isVisitorIdRequest(): Boolean =
+        httpMethod().equals("POST", ignoreCase = true) &&
+            url().substringBefore('?').endsWith("/visitor_id")
 
     private fun requestHeaders(request: Request): List<KatHttp3Header> {
         val headers = linkedMapOf(
