@@ -37,6 +37,7 @@ import app.vimusic.android.ui.components.themed.HideSongDialog
 import app.vimusic.android.ui.components.themed.InPlaylistMediaItemMenu
 import app.vimusic.android.ui.components.themed.Menu
 import app.vimusic.android.ui.components.themed.MenuEntry
+import app.vimusic.android.ui.components.themed.PrimaryButton
 import app.vimusic.android.ui.components.themed.ReorderHandle
 import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.SongCollectionScreen
@@ -47,6 +48,7 @@ import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.viewmodels.LocalPlaylistViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
+import app.vimusic.android.utils.PlaylistDownloadFloatingButton
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.enqueue
 import app.vimusic.android.utils.launchYouTubeMusic
@@ -61,6 +63,7 @@ import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.isLandscape
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -139,6 +142,13 @@ fun LocalPlaylistSongs(
             listBackground = colorPalette.background0,
             shuffleVisible = !reorderingState.isDragging,
             onShuffle = { playbackActions.shufflePlay(mediaItems) },
+            floatingActionsContent = {
+                PlaylistDownloadFloatingButton(mediaItems.toImmutableList())
+                PrimaryButton(
+                    icon = R.drawable.enqueue,
+                    onClick = { playbackActions.enqueue(mediaItems) }
+                )
+            },
             headerContent = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Header(

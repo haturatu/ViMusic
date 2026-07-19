@@ -20,6 +20,7 @@ import app.vimusic.android.ui.components.LocalMenuState
 import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.HeaderPlaceholder
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
+import app.vimusic.android.ui.components.themed.PrimaryButton
 import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.components.themed.songCollectionItems
@@ -29,6 +30,7 @@ import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.viewmodels.PipedPlaylistViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
+import app.vimusic.android.utils.PlaylistDownloadFloatingButton
 import app.vimusic.android.utils.PipedPlaylistVideoMediaItemMapper
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.enqueue
@@ -91,6 +93,15 @@ fun PipedPlaylistSongList(
         listState = lazyListState,
         listBackground = colorPalette.background0,
         onShuffle = { mediaItems?.let(playbackActions::shufflePlay) },
+        floatingActionsContent = {
+            mediaItems?.let { items ->
+                PlaylistDownloadFloatingButton(items.toImmutableList())
+                PrimaryButton(
+                    icon = R.drawable.enqueue,
+                    onClick = { playbackActions.enqueue(items) }
+                )
+            }
+        },
         headerContent = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 if (playlist == null) HeaderPlaceholder(modifier = Modifier.shimmer())

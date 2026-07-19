@@ -35,6 +35,7 @@ import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.HideSongDialog
 import app.vimusic.android.ui.components.themed.InHistoryMediaItemMenu
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
+import app.vimusic.android.ui.components.themed.PrimaryButton
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
 import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.ValueSelectorDialog
@@ -44,6 +45,7 @@ import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.screens.home.HeaderSongSortBy
 import app.vimusic.android.ui.viewmodels.BuiltInPlaylistSongsViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
+import app.vimusic.android.utils.PlaylistDownloadFloatingButton
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.rememberMediaItems
 import app.vimusic.compose.persist.persistList
@@ -211,6 +213,15 @@ fun BuiltInPlaylistSongs(
         FloatingActionsContainerWithScrollToTop(
             lazyListState = lazyListState,
             icon = R.drawable.shuffle,
+            actionsContent = {
+                if (builtInPlaylist != BuiltInPlaylist.Offline) {
+                    PlaylistDownloadFloatingButton(mediaItems.toImmutableList())
+                }
+                PrimaryButton(
+                    icon = R.drawable.enqueue,
+                    onClick = { playbackActions.enqueue(mediaItems) }
+                )
+            },
             onClick = {
                 playbackActions.shufflePlay(mediaItems)
             }

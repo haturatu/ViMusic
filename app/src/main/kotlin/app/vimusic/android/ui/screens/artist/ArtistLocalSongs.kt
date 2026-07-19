@@ -20,6 +20,7 @@ import app.vimusic.android.ui.components.LocalMenuState
 import app.vimusic.android.ui.components.rememberSongListState
 import app.vimusic.android.ui.components.themed.HideSongDialog
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
+import app.vimusic.android.ui.components.themed.PrimaryButton
 import app.vimusic.android.ui.components.themed.HeaderIconButton
 import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.components.themed.songCollectionItems
@@ -27,12 +28,14 @@ import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.viewmodels.ArtistLocalSongsViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
+import app.vimusic.android.utils.PlaylistDownloadFloatingButton
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.rememberMediaItems
 import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.isLandscape
+import kotlinx.collections.immutable.toImmutableList
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -70,6 +73,15 @@ fun ArtistLocalSongs(
         listState = lazyListState,
         listBackground = colorPalette.background0,
         onShuffle = { mediaItems?.let(playbackActions::shufflePlay) },
+        floatingActionsContent = {
+            mediaItems?.let { items ->
+                PlaylistDownloadFloatingButton(items.toImmutableList())
+                PrimaryButton(
+                    icon = R.drawable.enqueue,
+                    onClick = { playbackActions.enqueue(items) }
+                )
+            }
+        },
         headerContent = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 headerContent {

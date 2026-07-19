@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -34,6 +35,7 @@ import app.vimusic.android.service.PrecacheService
 import app.vimusic.android.service.downloadState
 import app.vimusic.android.ui.components.themed.CircularProgressIndicator
 import app.vimusic.android.ui.components.themed.HeaderIconButton
+import app.vimusic.android.ui.components.themed.PrimaryButton
 import app.vimusic.core.ui.LocalAppearance
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -74,6 +76,27 @@ fun PlaylistDownloadIcon(
             )
         }
     }
+}
+
+@Composable
+fun RowScope.PlaylistDownloadFloatingButton(songs: ImmutableList<MediaItem>) {
+    val context = LocalContext.current
+    val isDownloading by downloadState.collectAsStateWithLifecycle()
+    val isFullyCached = songs.map { it.mediaId }.fastAll {
+        isCached(
+            mediaId = it,
+            key = isDownloading
+        )
+    }
+
+    if (!isDownloading && !isFullyCached) PrimaryButton(
+        icon = R.drawable.download,
+        onClick = {
+            songs.forEach {
+                PrecacheService.scheduleCache(context.applicationContext, it)
+            }
+        }
+    )
 }
 
 @OptIn(UnstableApi::class)

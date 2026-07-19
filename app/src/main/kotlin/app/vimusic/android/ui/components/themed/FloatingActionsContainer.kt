@@ -10,6 +10,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
@@ -37,6 +38,7 @@ fun BoxScope.FloatingActionsContainerWithScrollToTop(
     @DrawableRes icon: Int? = null,
     @DrawableRes scrollIcon: Int? = R.drawable.chevron_up,
     onClick: (() -> Unit)? = null,
+    actionsContent: (@Composable RowScope.() -> Unit)? = null,
     onScrollToTop: (suspend () -> Unit)? = lazyGridState::smoothScrollToTop,
     reverse: Boolean = false,
     insets: WindowInsets = LocalPlayerAwareWindowInsets.current
@@ -47,6 +49,7 @@ fun BoxScope.FloatingActionsContainerWithScrollToTop(
     icon = icon,
     scrollIcon = scrollIcon,
     onClick = onClick,
+    actionsContent = actionsContent,
     insets = insets,
     modifier = modifier
 )
@@ -59,6 +62,7 @@ fun BoxScope.FloatingActionsContainerWithScrollToTop(
     @DrawableRes icon: Int? = null,
     @DrawableRes scrollIcon: Int? = R.drawable.chevron_up,
     onClick: (() -> Unit)? = null,
+    actionsContent: (@Composable RowScope.() -> Unit)? = null,
     onScrollToTop: (suspend () -> Unit)? = lazyListState::smoothScrollToTop,
     reverse: Boolean = false,
     insets: WindowInsets = LocalPlayerAwareWindowInsets.current
@@ -69,6 +73,7 @@ fun BoxScope.FloatingActionsContainerWithScrollToTop(
     icon = icon,
     scrollIcon = scrollIcon,
     onClick = onClick,
+    actionsContent = actionsContent,
     insets = insets,
     modifier = modifier
 )
@@ -81,6 +86,7 @@ fun BoxScope.FloatingActionsContainerWithScrollToTop(
     @DrawableRes icon: Int? = null,
     @DrawableRes scrollIcon: Int? = R.drawable.chevron_up,
     onClick: (() -> Unit)? = null,
+    actionsContent: (@Composable RowScope.() -> Unit)? = null,
     onScrollToTop: (suspend () -> Unit)? = scrollState::smoothScrollToTop,
     reverse: Boolean = false,
     insets: WindowInsets = LocalPlayerAwareWindowInsets.current
@@ -91,6 +97,7 @@ fun BoxScope.FloatingActionsContainerWithScrollToTop(
     icon = icon,
     scrollIcon = scrollIcon,
     onClick = onClick,
+    actionsContent = actionsContent,
     insets = insets,
     modifier = modifier
 )
@@ -104,7 +111,8 @@ private fun BoxScope.FloatingActions(
     reverse: Boolean = false,
     @DrawableRes icon: Int? = null,
     @DrawableRes scrollIcon: Int? = R.drawable.chevron_up,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    actionsContent: (@Composable RowScope.() -> Unit)? = null
 ) = Row(
     horizontalArrangement = Arrangement.spacedBy(16.dp),
     verticalAlignment = Alignment.Bottom,
@@ -124,7 +132,7 @@ private fun BoxScope.FloatingActions(
     onScrollToTop?.let {
         transition.AnimatedVisibility(
             visible = { it != null && it.isScrollingDown == reverse && it.isFar },
-            enter = slideInVertically(tween(500, if (icon == null) 0 else 100)) { it },
+            enter = slideInVertically(tween(500, if (icon == null && actionsContent == null) 0 else 100)) { it },
             exit = slideOutVertically(tween(500, 0)) { it }
         ) {
             SecondaryButton(
@@ -139,27 +147,32 @@ private fun BoxScope.FloatingActions(
         }
     }
 
-    icon?.let {
-        onClick?.let {
-            transition.AnimatedVisibility(
-                visible = { it?.isScrollingDown == false },
-                enter = slideInVertically(
-                    animationSpec = tween(durationMillis = 500, delayMillis = 0),
-                    initialOffsetY = { it }
-                ),
-                exit = slideOutVertically(
-                    animationSpec = tween(durationMillis = 500, delayMillis = 100),
-                    targetOffsetY = { it }
-                )
+    if (actionsContent != null || icon != null && onClick != null) {
+        transition.AnimatedVisibility(
+            visible = { it?.isScrollingDown == false },
+            enter = slideInVertically(
+                animationSpec = tween(durationMillis = 500, delayMillis = 0),
+                initialOffsetY = { it }
+            ),
+            exit = slideOutVertically(
+                animationSpec = tween(durationMillis = 500, delayMillis = 100),
+                targetOffsetY = { it }
+            )
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier
+                    .padding(bottom = 16.dp)
+                    .padding(bottomPaddingValues)
             ) {
-                PrimaryButton(
-                    icon = icon,
-                    onClick = onClick,
-                    enabled = transition.targetState?.isScrollingDown == false,
-                    modifier = Modifier
-                        .padding(bottom = 16.dp)
-                        .padding(bottomPaddingValues)
-                )
+                actionsContent?.invoke(this)
+                if (icon != null && onClick != null) {
+                    PrimaryButton(
+                        icon = icon,
+                        onClick = onClick,
+                        enabled = transition.targetState?.isScrollingDown == false
+                    )
+                }
             }
         }
     }
