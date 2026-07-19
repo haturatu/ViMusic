@@ -5,50 +5,86 @@ import dev.kathttp3.ResolvedAddress
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
-import java.util.concurrent.ConcurrentHashMap
+import java.net.UnknownHostException
 
-/** Resolves one address family at a time and allows an unreachable route to flip the family. */
+/** Resolves one family at a time and retries an unreachable route on the opposite family. */
 internal class AddressFamilyFallbackDnsResolver : DnsResolver {
-    private enum class AddressFamily { Ipv4, Ipv6 }
+    enum class AddressFamily { Ipv4, Ipv6 }
 
-    private val preferredFamilies = ConcurrentHashMap<String, AddressFamily>()
+    private data class HostState(
+        var preferredFamily: AddressFamily,
+        val addresses: MutableMap<AddressFamily, List<String>>,
+    )
+
+    private val states = mutableMapOf<String, HostState>()
 
     override fun resolve(host: String, port: Int): List<ResolvedAddress> {
-        val addresses = InetAddress.getAllByName(host).toList()
-        val availableFamilies = addresses.mapNotNull { it.addressFamily() }.toSet()
-        val preferred = preferredFamilies.compute(host) { _, current ->
-            current?.takeIf(availableFamilies::contains)
-                ?: addresses.firstNotNullOfOrNull { it.addressFamily() }
-        } ?: return emptyList()
+        val platformAddresses = InetAddress.getAllByName(host).toList()
+        return synchronized(states) {
+            val currentAddresses = platformAddresses.byFamily()
+            val state = states[host]?.also { cached ->
+                currentAddresses.forEach { (family, addresses) ->
+                    if (addresses.isNotEmpty()) cached.addresses[family] = addresses
+                }
+            } ?: HostState(
+                preferredFamily = platformAddresses.firstNotNullOfOrNull { it.addressFamily() }
+                    ?: return@synchronized emptyList(),
+                addresses = currentAddresses.toMutableMap(),
+            ).also { states[host] = it }
 
-        return addresses
-            .filter { it.addressFamily() == preferred }
-            .mapNotNull { address ->
-                address.hostAddress?.let { ResolvedAddress(it, port) }
+            state.addresses[state.preferredFamily].orEmpty().map { ip ->
+                ResolvedAddress(ip, port)
             }
+        }
     }
 
-    fun switchFamily(host: String): Boolean {
-        val addresses = InetAddress.getAllByName(host).toList()
-        val availableFamilies = addresses.mapNotNull { it.addressFamily() }.toSet()
-        if (availableFamilies.size < 2) return false
-
-        var switched = false
-        preferredFamilies.compute(host) { _, current ->
-            val active = current ?: addresses.firstNotNullOfOrNull { it.addressFamily() }
-            val opposite = when (active) {
-                AddressFamily.Ipv4 -> AddressFamily.Ipv6
-                AddressFamily.Ipv6 -> AddressFamily.Ipv4
-                null -> null
+    fun switchFamily(host: String, failedFamily: AddressFamily?): Boolean {
+        val platformAddresses = InetAddress.getAllByName(host).toList()
+        return synchronized(states) {
+            val currentAddresses = platformAddresses.byFamily()
+            val state = states[host]?.also { cached ->
+                currentAddresses.forEach { (family, addresses) ->
+                    if (addresses.isNotEmpty()) cached.addresses[family] = addresses
+                }
+            } ?: HostState(
+                preferredFamily = platformAddresses.firstNotNullOfOrNull { it.addressFamily() }
+                    ?: return@synchronized false,
+                addresses = currentAddresses.toMutableMap(),
+            ).also { states[host] = it }
+            val oppositeFamily = (failedFamily ?: state.preferredFamily).opposite()
+            if (state.addresses[oppositeFamily].isNullOrEmpty()) {
+                return@synchronized false
             }
-            opposite?.takeIf(availableFamilies::contains)?.also { switched = true } ?: active
+            state.preferredFamily = oppositeFamily
+            true
         }
-        return switched
+    }
+
+    fun lookup(host: String): List<InetAddress> {
+        val addresses = resolve(host, HTTPS_PORT).map { InetAddress.getByName(it.ip) }
+        if (addresses.isEmpty()) throw UnknownHostException("No addresses for $host")
+        return addresses
+    }
+
+    private fun List<InetAddress>.byFamily(): Map<AddressFamily, List<String>> =
+        mapNotNull { address ->
+            val family = address.addressFamily() ?: return@mapNotNull null
+            val ip = address.hostAddress ?: return@mapNotNull null
+            family to ip
+        }.groupBy({ it.first }, { it.second })
+
+    private fun AddressFamily.opposite(): AddressFamily = when (this) {
+        AddressFamily.Ipv4 -> AddressFamily.Ipv6
+        AddressFamily.Ipv6 -> AddressFamily.Ipv4
     }
 
     private fun InetAddress.addressFamily(): AddressFamily? = when (this) {
         is Inet4Address -> AddressFamily.Ipv4
         is Inet6Address -> AddressFamily.Ipv6
         else -> null
+    }
+
+    private companion object {
+        const val HTTPS_PORT = 443
     }
 }
