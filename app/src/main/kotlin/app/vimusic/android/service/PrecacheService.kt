@@ -191,17 +191,22 @@ class PrecacheService : DownloadService(
                     ) {
                         if (download.state == Download.STATE_COMPLETED && download.contentLength > 0L) {
                             val songId = download.request.id
-                            runCatching {
-                                val updated = Database.updateFormatContentLength(songId, download.contentLength)
-                                if (updated == 0) {
-                                    Database.insert(
-                                        Format(
-                                            songId = songId,
-                                            contentLength = download.contentLength
+                            val contentLength = download.contentLength
+
+                            coroutineScope.launch {
+                                runCatching {
+                                    val updated = Database.updateFormatContentLength(songId, contentLength)
+                                    if (updated == 0) {
+                                        Database.insert(
+                                            Format(
+                                                songId = songId,
+                                                contentLength = contentLength
+                                            )
                                         )
-                                    )
+                                    }
                                 }
-                            }.onFailure(Throwable::printStackTrace)
+                                    .onFailure(Throwable::printStackTrace)
+                            }
                         }
 
                         downloadQueue.trySend(downloadManager).let { }
