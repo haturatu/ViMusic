@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import app.vimusic.android.models.SearchQuery
 import app.vimusic.android.repositories.OnlineSearchRepository
 import app.vimusic.android.ui.state.LoadState
+import app.vimusic.android.ui.state.launchLoad
 import app.vimusic.android.utils.requireValue
-import app.vimusic.android.utils.runSuspendCatching
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,18 +31,12 @@ class OnlineSearchViewModel(
             return
         }
 
-        suggestionsJob = viewModelScope.launch {
-            mutableSuggestions.value = LoadState.Loading
+        suggestionsJob = mutableSuggestions.launchLoad(viewModelScope) {
             delay(500)
-            runSuspendCatching {
-                repository.fetchSuggestions(input).requireValue(
-                    nullResultMessage = "Suggestions request was not executed",
-                    nullValueMessage = "Suggestions response was empty",
-                ).getOrThrow()
-            }.fold(
-                onSuccess = { mutableSuggestions.value = LoadState.Content(it) },
-                onFailure = { mutableSuggestions.value = LoadState.Error(it) },
-            )
+            repository.fetchSuggestions(input).requireValue(
+                nullResultMessage = "Suggestions request was not executed",
+                nullValueMessage = "Suggestions response was empty",
+            ).getOrThrow()
         }
     }
 

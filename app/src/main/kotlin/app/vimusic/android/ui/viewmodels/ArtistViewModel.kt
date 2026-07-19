@@ -6,8 +6,8 @@ import app.vimusic.android.models.Artist
 import app.vimusic.android.repositories.ArtistRepository
 import app.vimusic.android.ui.state.LoadState
 import app.vimusic.android.ui.state.contentOrNull
+import app.vimusic.android.ui.state.launchLoad
 import app.vimusic.android.utils.requireValue
-import app.vimusic.android.utils.runSuspendCatching
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,23 +52,17 @@ class ArtistViewModel(
         if (loadJob?.isActive == true) return
         val previous = mutableUiState.value.contentOrNull()
             ?: cachedPage?.let { ArtistContent(currentArtist, it) }
-        mutableUiState.value = previous?.let { LoadState.Content(it) } ?: LoadState.Loading
-        loadJob = viewModelScope.launch {
-            runSuspendCatching {
+        loadJob = mutableUiState.launchLoad(
+            scope = viewModelScope,
+            previous = previous,
+            showPreviousWhileLoading = true,
+            keepPreviousOnFailure = true,
+            onSuccess = { content -> upsertArtistFromPage(currentArtist, content.page) },
+        ) {
                 repository.fetchArtistPage(browseId).requireValue(
                     nullResultMessage = "Artist request was not executed",
                     nullValueMessage = "Artist page was empty",
-                ).getOrThrow()
-            }.fold(
-                onSuccess = { page ->
-                    mutableUiState.value = LoadState.Content(ArtistContent(currentArtist, page))
-                    upsertArtistFromPage(currentArtist, page)
-                },
-                onFailure = { error ->
-                    mutableUiState.value = previous?.let { LoadState.Content(it) }
-                        ?: LoadState.Error(error)
-                },
-            )
+                ).getOrThrow().let { page -> ArtistContent(currentArtist, page) }
         }
     }
 

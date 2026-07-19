@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import app.vimusic.android.models.Song
 import app.vimusic.android.repositories.HomeQuickPicksRepository
 import app.vimusic.android.ui.state.LoadState
+import app.vimusic.android.ui.state.launchLoad
 import app.vimusic.android.utils.requireValue
-import app.vimusic.android.utils.runSuspendCatching
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.Job
@@ -35,22 +35,16 @@ class HomeQuickPicksViewModel(
         currentVideoId = videoId
         loadJob?.cancel()
         val cached = repository.getCachedQuickPicksIfAvailable()
-        mutableUiState.value = if (cached == null) LoadState.Loading else LoadState.Content(cached)
-        loadJob = viewModelScope.launch {
-            runSuspendCatching {
+        loadJob = mutableUiState.launchLoad(
+            scope = viewModelScope,
+            previous = cached,
+            showPreviousWhileLoading = true,
+            onSuccess = repository::cacheQuickPicks,
+        ) {
                 repository.fetchRelatedPage(videoId).requireValue(
                     nullResultMessage = "Related page request was not executed",
                     nullValueMessage = "Related page was empty",
                 ).getOrThrow()
-            }.fold(
-                onSuccess = { page ->
-                    repository.cacheQuickPicks(page)
-                    mutableUiState.value = LoadState.Content(page)
-                },
-                onFailure = { error ->
-                    mutableUiState.value = LoadState.Error(error, cached)
-                },
-            )
         }
     }
 
