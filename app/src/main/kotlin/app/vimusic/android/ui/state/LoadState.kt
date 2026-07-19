@@ -8,7 +8,7 @@ import kotlinx.coroutines.launch
 
 sealed interface LoadState<out T> {
     data object Idle : LoadState<Nothing>
-    data object Loading : LoadState<Nothing>
+    data class Loading<T>(val previous: T? = null) : LoadState<T>
     data class Content<T>(val value: T) : LoadState<T>
     data class Error<T>(
         val throwable: Throwable,
@@ -21,37 +21,31 @@ val LoadState<*>.isLoading: Boolean
 
 fun <T> LoadState<T>.contentOrNull(): T? = when (this) {
     is LoadState.Content -> value
+    is LoadState.Loading -> previous
     is LoadState.Error -> previous
-    LoadState.Idle,
-    LoadState.Loading -> null
+    LoadState.Idle -> null
 }
 
 fun <T> MutableStateFlow<LoadState<T>>.launchLoad(
     scope: CoroutineScope,
-    previous: T? = value.contentOrNull(),
-    showPreviousWhileLoading: Boolean = false,
     keepPreviousOnFailure: Boolean = false,
     onSuccess: (T) -> Unit = {},
     block: suspend () -> T,
 ): Job {
-    value = if (showPreviousWhileLoading && previous != null) {
-        LoadState.Content(previous)
-    } else {
-        LoadState.Loading
-    }
+    val previous = value.contentOrNull()
+    value = LoadState.Loading(previous)
 
     return scope.launch {
         runSuspendCatching(block).fold(
             onSuccess = { result ->
-                onSuccess(result)
                 value = LoadState.Content(result)
+                onSuccess(result)
             },
             onFailure = { error ->
-                value = if (keepPreviousOnFailure && previous != null) {
-                    LoadState.Content(previous)
-                } else {
-                    LoadState.Error(error, previous)
-                }
+                value = LoadState.Error(
+                    throwable = error,
+                    previous = previous.takeIf { keepPreviousOnFailure },
+                )
             },
         )
     }

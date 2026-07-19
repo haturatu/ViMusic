@@ -19,7 +19,7 @@ class HomeQuickPicksViewModel(
     private val repository: HomeRepository
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow<LoadState<YoutubeMusicInnertube.RelatedPage>>(
-        LoadState.Loading
+        LoadState.Loading()
     )
     val uiState: StateFlow<LoadState<YoutubeMusicInnertube.RelatedPage>> =
         mutableUiState.asStateFlow()
@@ -35,10 +35,10 @@ class HomeQuickPicksViewModel(
         currentVideoId = videoId
         loadJob?.cancel()
         val cached = repository.getCachedQuickPicksIfAvailable()
+        mutableUiState.value = cached?.let { LoadState.Content(it) } ?: LoadState.Idle
         loadJob = mutableUiState.launchLoad(
             scope = viewModelScope,
-            previous = cached,
-            showPreviousWhileLoading = true,
+            keepPreviousOnFailure = true,
             onSuccess = repository::cacheQuickPicks,
         ) {
                 repository.fetchRelatedPage(videoId).requireValue(

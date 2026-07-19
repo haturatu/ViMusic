@@ -25,7 +25,7 @@ class ArtistViewModel(
     private val browseId: String,
     private val repository: ArtistRepository
 ) : ViewModel() {
-    private val mutableUiState = MutableStateFlow<LoadState<ArtistContent>>(LoadState.Loading)
+    private val mutableUiState = MutableStateFlow<LoadState<ArtistContent>>(LoadState.Loading())
     val uiState: StateFlow<LoadState<ArtistContent>> = mutableUiState.asStateFlow()
     private var currentArtist: Artist? = null
     private var loadJob: Job? = null
@@ -38,7 +38,7 @@ class ArtistViewModel(
                     is LoadState.Content -> state.copy(value = state.value.copy(artist = artist))
                     is LoadState.Error -> state.copy(previous = state.previous?.copy(artist = artist))
                     LoadState.Idle,
-                    LoadState.Loading -> state
+                    is LoadState.Loading -> state
                 }
             }
         }
@@ -52,10 +52,9 @@ class ArtistViewModel(
         if (loadJob?.isActive == true) return
         val previous = mutableUiState.value.contentOrNull()
             ?: cachedPage?.let { ArtistContent(currentArtist, it) }
+        previous?.let { mutableUiState.value = LoadState.Content(it) }
         loadJob = mutableUiState.launchLoad(
             scope = viewModelScope,
-            previous = previous,
-            showPreviousWhileLoading = true,
             keepPreviousOnFailure = true,
             onSuccess = { content -> upsertArtistFromPage(currentArtist, content.page) },
         ) {
