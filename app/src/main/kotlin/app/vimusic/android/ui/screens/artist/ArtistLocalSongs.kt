@@ -3,7 +3,6 @@ package app.vimusic.android.ui.screens.artist
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,14 +18,13 @@ import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.R
 import app.vimusic.android.models.Song
 import app.vimusic.android.ui.components.LocalMenuState
-import app.vimusic.android.ui.components.ShimmerHost
 import app.vimusic.android.ui.components.rememberSongListState
 import app.vimusic.android.ui.components.themed.HideSongDialog
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
 import app.vimusic.android.ui.components.themed.SongCollectionScreen
+import app.vimusic.android.ui.components.themed.songCollectionItems
 import app.vimusic.android.ui.items.SongItem
-import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.viewmodels.ArtistLocalSongsViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
@@ -89,11 +87,11 @@ fun ArtistLocalSongs(
             }
         }
     ) {
-        if (!listState.isLoading) {
-            itemsIndexed(
-                items = listState.items,
-                key = { _, song -> song.id }
-            ) { index, song ->
+        songCollectionItems(
+            items = listState.items,
+            isLoading = listState.isLoading,
+            key = { _, song -> song.id },
+        ) { index, song ->
                 if (hidingSong == song.id) HideSongDialog(
                     song = song,
                     onDismiss = { hidingSong = null },
@@ -126,13 +124,6 @@ fun ArtistLocalSongs(
                     song = song,
                     thumbnailSize = Dimensions.thumbnails.song
                 )
-            }
-        } else item(key = "loading") {
-            ShimmerHost {
-                repeat(4) {
-                    SongItemPlaceholder(thumbnailSize = Dimensions.thumbnails.song)
-                }
-            }
         }
     }
 }

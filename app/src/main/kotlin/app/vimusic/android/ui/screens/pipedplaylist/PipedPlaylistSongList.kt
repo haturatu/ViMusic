@@ -3,7 +3,6 @@ package app.vimusic.android.ui.screens.pipedplaylist
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,15 +15,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.R
 import app.vimusic.android.ui.components.LocalMenuState
-import app.vimusic.android.ui.components.ShimmerHost
 import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.HeaderPlaceholder
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.SongCollectionScreen
+import app.vimusic.android.ui.components.themed.songCollectionItems
 import app.vimusic.android.ui.components.themed.adaptiveThumbnailContent
 import app.vimusic.android.ui.items.SongItem
-import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.viewmodels.PipedPlaylistViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
@@ -100,7 +98,10 @@ fun PipedPlaylistSongList(
             }
         }
     ) {
-        itemsIndexed(items = playlist?.videos ?: emptyList()) { index, song ->
+        songCollectionItems(
+            items = playlist?.videos.orEmpty(),
+            isLoading = playlist == null,
+        ) { index, song ->
             song.asMediaItem?.let { mediaItem ->
                 SongItem(
                     song = mediaItem,
@@ -126,14 +127,6 @@ fun PipedPlaylistSongList(
                             mediaItem = mediaItem
                         )
                 )
-            }
-        }
-
-        if (playlist == null) item(key = "loading") {
-            ShimmerHost(modifier = Modifier.fillParentMaxSize()) {
-                repeat(4) {
-                    SongItemPlaceholder(thumbnailSize = Dimensions.thumbnails.song)
-                }
             }
         }
     }
