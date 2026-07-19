@@ -17,7 +17,6 @@ import dev.kathttp3.KatHttp3ClientConfig
 import dev.kathttp3.KatHttp3Header
 import dev.kathttp3.KatHttp3Request
 import dev.kathttp3.KatHttp3StreamEvent
-import dev.kathttp3.PlatformDnsResolver
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +47,7 @@ class KatHttp3MediaDataSource(
     private val clientFactory: () -> KatHttp3Client,
     private val clientInvalidator: ((KatHttp3Client) -> Unit)? = null,
     private val clientReleaser: (KatHttp3Client) -> Unit = {},
+    private val addressFamilyFallback: ((String, Throwable) -> Boolean)? = null,
     private val fallbackFactory: HttpDataSource.Factory = DefaultHttpDataSource.Factory(),
 ) : BaseDataSource(true), HttpDataSource {
     private val sourceId = NEXT_SOURCE_ID.incrementAndGet()
@@ -97,7 +97,7 @@ class KatHttp3MediaDataSource(
                 return openFallback(dataSpec, null)
             }
             var lastError: IOException? = null
-            repeat(H3_OPEN_ATTEMPTS) { attempt ->
+            for (attempt in 0 until H3_OPEN_ATTEMPTS) {
                 // Do not publish an attempt to the DataSource until both its
                 // headers and first body chunk have arrived. A watchdog-cancelled
                 // attempt may otherwise resume later and overwrite the stream
@@ -200,16 +200,26 @@ class KatHttp3MediaDataSource(
                 }
                 h3Attempt.cancel()
                 if (attempt + 1 < H3_OPEN_ATTEMPTS) {
-                    if (lastError.isHttp3TransportFailure()) {
+                    val switchedFamily = lastError.isNetworkUnreachable() &&
+                        addressFamilyFallback?.invoke(dataSpec.uri.toString(), lastError) == true
+                    if (switchedFamily) {
+                        clientInvalidator?.let { invalidator -> h3Attempt.client?.let(invalidator) }
+                        Log.w(
+                            TAG,
+                            "HTTP/3 address family unreachable; retrying with the opposite family",
+                            lastError,
+                        )
+                    } else if (lastError.isHttp3TransportFailure()) {
                         // Retire only a connection-level failure. Existing
                         // streams retain their lease and drain before its
                         // native client is closed; new requests use a fresh
                         // generation.
                         clientInvalidator?.let { invalidator -> h3Attempt.client?.let(invalidator) }
-                        Log.w(TAG, "HTTP/3 media open attempt ${attempt + 1} failed; retrying with a fresh client", lastError)
+                        Log.w(TAG, "HTTP/3 media open attempt ${attempt + 1} failed", lastError)
                     } else {
-                        Log.w(TAG, "HTTP/3 media open attempt ${attempt + 1} failed; retrying", lastError)
+                        Log.w(TAG, "HTTP/3 media open attempt ${attempt + 1} failed", lastError)
                     }
+                    if (!switchedFamily) break
                     Thread.sleep(h3OpenRetryBackoffMillis(attempt))
                 }
             }
@@ -461,6 +471,7 @@ class KatHttp3MediaDataSource(
             clientFactory = { KatHttp3PlaybackClient.acquire(applicationContext) },
             clientInvalidator = KatHttp3PlaybackClient::invalidate,
             clientReleaser = KatHttp3PlaybackClient::release,
+            addressFamilyFallback = KatHttp3PlaybackClient::switchAddressFamily,
         ).also { source -> defaultRequestProperties.forEach(source::setRequestProperty) }
 
         override fun setDefaultRequestProperties(defaultRequestProperties: Map<String, String>): Factory = apply {
@@ -596,7 +607,7 @@ class KatHttp3MediaDataSource(
         const val TAG = "KatHttp3Media"
         // An Alt-Svc route that is unusable must not add a multi-second retry
         // chain before Media3 can start the standard HTTP fallback.
-        const val H3_OPEN_ATTEMPTS = 1
+        const val H3_OPEN_ATTEMPTS = 2
         const val H3_OPEN_INITIAL_RETRY_BACKOFF_MILLIS = 100L
         const val H3_OPEN_MAX_RETRY_BACKOFF_MILLIS = 100L
         const val H3_ATTEMPT_DEADLINE_MILLIS = 6_000L
@@ -628,6 +639,7 @@ object KatHttp3PlaybackClient {
 
     private var current: ClientGeneration? = null
     private val generations = IdentityHashMap<KatHttp3Client, ClientGeneration>()
+    private val resolver = AddressFamilyFallbackDnsResolver()
 
     /** Acquires one request lease from the current client generation. */
     fun acquire(context: Context): KatHttp3Client = synchronized(this) {
@@ -676,6 +688,14 @@ object KatHttp3PlaybackClient {
         }
     }
 
+    fun switchAddressFamily(url: String, failure: Throwable): Boolean {
+        if (!failure.isNetworkUnreachable()) return false
+        val host = Uri.parse(url).host ?: return false
+        return runCatching { resolver.switchFamily(host) }
+            .onFailure { Log.w("KatHttp3Media", "Failed to resolve opposite address family for $host", it) }
+            .getOrDefault(false)
+    }
+
     /** Call when the owning process is deliberately torn down in tests/tools. */
     fun close() {
         val closeClients = synchronized(this) {
@@ -709,7 +729,7 @@ object KatHttp3PlaybackClient {
                 maxStreamingBufferedBytesPerStream = 16L * 1024 * 1024,
                 maxStreamingBufferedBytesPerConnection = 32L * 1024 * 1024,
                 enable0Rtt = true,
-                resolver = PlatformDnsResolver(),
+                resolver = resolver,
             ),
             applicationContext = context,
         )

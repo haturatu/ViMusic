@@ -19,3 +19,12 @@ internal fun Throwable.isHttp3TransportFailure(): Boolean =
 
 internal fun Throwable.hasTlsHandshakeFailure(): Boolean =
     generateSequence(this) { it.cause }.any { it is TlsHandshakeException }
+
+/** Linux ENETUNREACH, surfaced either as errno -101 or native error text. */
+internal fun Throwable.isNetworkUnreachable(): Boolean =
+    generateSequence(this) { it.cause }.any { error ->
+        (error is KatHttp3Exception.Native && kotlin.math.abs(error.code) == ENETUNREACH) ||
+            error.message?.contains("Network is unreachable", ignoreCase = true) == true
+    }
+
+private const val ENETUNREACH = 101
