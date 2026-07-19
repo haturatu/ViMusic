@@ -27,7 +27,7 @@ internal fun List<KatHttp3Header>.asPairs(): List<Pair<String, String>> =
 
 /** Failures for which retrying the same request through HTTP/2 is appropriate. */
 internal fun Throwable.isHttp3TransportFailure(): Boolean =
-    generateSequence(this) { it.cause }
+    isNetworkUnreachable() || generateSequence(this) { it.cause }
         .any { error ->
             error is TimeoutCancellationException ||
                 error is KatHttp3Exception.RequestQueueTimeout ||
