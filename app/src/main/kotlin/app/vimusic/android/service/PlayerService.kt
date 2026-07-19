@@ -436,7 +436,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             }
         )
 
-        cache = createCache(this)
+        cache = sharedCache(this)
         player = ExoPlayer.Builder(this, createRendersFactory(), createMediaSourceFactory())
             .setLoadControl(
                 DefaultLoadControl.Builder()
@@ -579,8 +579,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             safeUnregisterReceiver(notificationActionReceiver)
 
             mediaSession.release()
-            cache.release()
-
             loudnessEnhancer?.release()
             preferenceUpdaterJob?.cancel()
 
@@ -1850,7 +1848,20 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             return cache.isCached(mediaId, 0L, contentLength)
         }
 
+        @Volatile
+        private var processCache: SimpleCache? = null
+
         fun createDatabaseProvider(context: Context) = StandaloneDatabaseProvider(context)
+
+        /**
+         * The player and DownloadService must use the same SimpleCache instance. Creating a
+         * second instance for the same directory leaves the download worker waiting on the cache
+         * directory lock, most visibly when pre-cache is started again after the first batch.
+         */
+        @Synchronized
+        fun sharedCache(context: Context): SimpleCache =
+            processCache ?: createCache(context.applicationContext).also { processCache = it }
+
         fun createCache(
             context: Context,
             directoryName: String = DEFAULT_CACHE_DIRECTORY,

@@ -1,18 +1,11 @@
 package app.vimusic.android.service
 
-import android.content.ComponentName
 import android.content.Context
-import android.content.ServiceConnection
-import android.os.IBinder
-import android.util.Log
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.cache.Cache
-import androidx.media3.datasource.cache.CacheSpan
-import androidx.media3.datasource.cache.ContentMetadataMutations
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadNotificationHelper
@@ -27,33 +20,17 @@ import app.vimusic.android.models.Format
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.utils.ActionReceiver
 import app.vimusic.android.utils.download
-import app.vimusic.android.utils.intent
 import app.vimusic.android.utils.safeUnregisterReceiver
 import app.vimusic.android.utils.toast
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import java.io.File
 import java.util.concurrent.Executor
-import kotlin.coroutines.resume
-import kotlin.time.Duration.Companion.milliseconds
 
 // While the class is not a singleton (lifecycle), there should only be one download state at a time
 private val mutableDownloadState = MutableStateFlow(false)
@@ -61,6 +38,81 @@ val downloadState = mutableDownloadState.asStateFlow()
 
 private const val DOWNLOAD_NOTIFICATION_UPDATE_INTERVAL = 1000L // default
 private const val DOWNLOAD_WORK_NAME = "precacher-work"
+
+/**
+ * DownloadService keeps the first DownloadManager returned by a service class and reuses it after
+ * that service instance is destroyed. Its executor and listeners therefore need process lifetime,
+ * not PrecacheService lifetime.
+ */
+private val precacheScope = CoroutineScope(
+    Dispatchers.IO + SupervisorJob() + CoroutineName("Precache-Process-Scope")
+)
+private val precacheExecutor = Executor { command -> precacheScope.launch { command.run() } }
+private val downloadManagerLock = Any()
+
+@Volatile
+private var processDownloadManager: DownloadManager? = null
+
+private val downloadListener = object : DownloadManager.Listener {
+    override fun onInitialized(downloadManager: DownloadManager) {
+        mutableDownloadState.value = !downloadManager.isIdle
+    }
+
+    override fun onIdle(downloadManager: DownloadManager) {
+        mutableDownloadState.value = false
+    }
+
+    override fun onDownloadChanged(
+        downloadManager: DownloadManager,
+        download: Download,
+        finalException: Exception?,
+    ) {
+        mutableDownloadState.value = !downloadManager.isIdle
+
+        if (download.state == Download.STATE_COMPLETED && download.contentLength > 0L) {
+            val songId = download.request.id
+            val contentLength = download.contentLength
+
+            precacheScope.launch {
+                runCatching {
+                    val updated = Database.updateFormatContentLength(songId, contentLength)
+                    if (updated == 0) {
+                        Database.insert(Format(songId = songId, contentLength = contentLength))
+                    }
+                }.onFailure(Throwable::printStackTrace)
+            }
+        }
+    }
+
+    override fun onDownloadRemoved(downloadManager: DownloadManager, download: Download) {
+        mutableDownloadState.value = !downloadManager.isIdle
+    }
+}
+
+private fun processDownloadManager(context: Context): DownloadManager =
+    processDownloadManager ?: synchronized(downloadManagerLock) {
+        processDownloadManager ?: run {
+            val applicationContext = context.applicationContext
+            val cache = PlayerService.sharedCache(applicationContext)
+
+            DownloadManager(
+                /* context = */ applicationContext,
+                /* databaseProvider = */ PlayerService.createDatabaseProvider(applicationContext),
+                /* cache = */ cache,
+                /* upstreamFactory = */ NewPipeAudioMediaSourceFactory.createDataSourceFactory(
+                    context = applicationContext,
+                    cache = cache,
+                    resolveDashManifestUri = NewPipeAudioMediaSourceFactory::resolveDashManifestUri,
+                ),
+                /* executor = */ precacheExecutor,
+            ).apply {
+                maxParallelDownloads = 3
+                minRetryCount = 1
+                requirements = Requirements(Requirements.NETWORK)
+                addListener(downloadListener)
+            }.also { processDownloadManager = it }
+        }
+    }
 
 @OptIn(UnstableApi::class)
 class PrecacheService : DownloadService(
@@ -70,18 +122,6 @@ class PrecacheService : DownloadService(
     /* channelNameResourceId                = */ R.string.pre_cache,
     /* channelDescriptionResourceId         = */ 0
 ) {
-    private val coroutineScope = CoroutineScope(
-        Dispatchers.IO +
-                SupervisorJob() +
-                CoroutineName("PrecacheService-Worker-Scope")
-    )
-    private val downloadExecutor = Executor { command ->
-        coroutineScope.launch { command.run() }
-    }
-
-    private val downloadQueue =
-        Channel<DownloadManager>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
     private val downloadNotificationHelper by lazy {
         DownloadNotificationHelper(
             /* context = */ this,
@@ -90,25 +130,6 @@ class PrecacheService : DownloadService(
     }
 
     private val notificationActionReceiver = NotificationActionReceiver()
-
-    /** Serializes service-bind completion and registration of cache waiters. */
-    private val bindingLock = Any()
-    private val waiters = mutableListOf<() -> Unit>()
-
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            if (service !is PlayerService.Binder) return
-            bound = true
-            binder = service
-            resumeCacheWaiters()
-        }
-
-        override fun onServiceDisconnected(name: ComponentName?) {
-            bound = false
-            binder = null
-            resumeCacheWaiters()
-        }
-    }
 
     inner class NotificationActionReceiver : ActionReceiver("app.vimusic.android.precache") {
         val cancel by action { context, _ ->
@@ -128,98 +149,13 @@ class PrecacheService : DownloadService(
         }
     }
 
-    @get:Synchronized
-    @set:Synchronized
-    private var bound = false
-    private var binder: PlayerService.Binder? = null
-
-    private var progressUpdaterJob: Job? = null
-
     override fun onCreate() {
         super.onCreate()
 
         notificationActionReceiver.register()
-        mutableDownloadState.update { false }
     }
 
-    @kotlin.OptIn(FlowPreview::class)
-    override fun getDownloadManager(): DownloadManager {
-        runCatching {
-            if (bound) unbindService(serviceConnection)
-            bindService(intent<PlayerService>(), serviceConnection, Context.BIND_AUTO_CREATE)
-        }.exceptionOrNull()?.let {
-            it.printStackTrace()
-            toast(getString(R.string.error_pre_cache))
-        }
-
-        val cache = BlockingDeferredCache(coroutineScope.async { awaitPlayerCache() })
-
-        progressUpdaterJob?.cancel()
-        progressUpdaterJob = coroutineScope.launch {
-            downloadQueue
-                .receiveAsFlow()
-                .debounce(100.milliseconds)
-                .collect { downloadManager ->
-                    mutableDownloadState.update { !downloadManager.isIdle }
-                }
-        }
-
-        return DownloadManager(
-            /* context = */ this,
-            /* databaseProvider = */ PlayerService.createDatabaseProvider(this),
-            /* cache = */ cache,
-            /* upstreamFactory = */ NewPipeAudioMediaSourceFactory.createDataSourceFactory(
-                context = this,
-                cache = cache,
-                resolveDashManifestUri = NewPipeAudioMediaSourceFactory::resolveDashManifestUri
-            ),
-            /* executor = */ downloadExecutor
-        ).apply {
-            maxParallelDownloads = 3
-            minRetryCount = 1
-            requirements = Requirements(Requirements.NETWORK)
-
-            addListener(
-                object : DownloadManager.Listener {
-                    override fun onIdle(downloadManager: DownloadManager) =
-                        mutableDownloadState.update { false }
-
-                    override fun onDownloadChanged(
-                        downloadManager: DownloadManager,
-                        download: Download,
-                        finalException: Exception?
-                    ) {
-                        if (download.state == Download.STATE_COMPLETED && download.contentLength > 0L) {
-                            val songId = download.request.id
-                            val contentLength = download.contentLength
-
-                            coroutineScope.launch {
-                                runCatching {
-                                    val updated = Database.updateFormatContentLength(songId, contentLength)
-                                    if (updated == 0) {
-                                        Database.insert(
-                                            Format(
-                                                songId = songId,
-                                                contentLength = contentLength
-                                            )
-                                        )
-                                    }
-                                }
-                                    .onFailure(Throwable::printStackTrace)
-                            }
-                        }
-
-                        downloadQueue.trySend(downloadManager).let { }
-                    }
-
-                    override fun onDownloadRemoved(
-                        downloadManager: DownloadManager,
-                        download: Download
-                    ) = downloadQueue.trySend(downloadManager).let { }
-                }
-            )
-        }
-    }
+    override fun getDownloadManager(): DownloadManager = processDownloadManager(this)
 
     override fun getScheduler() = WorkManagerScheduler(this, DOWNLOAD_WORK_NAME)
 
@@ -251,52 +187,14 @@ class PrecacheService : DownloadService(
     override fun onDestroy() {
         super.onDestroy()
 
-        runCatching {
-            if (bound) unbindService(serviceConnection)
-        }
-
         safeUnregisterReceiver(notificationActionReceiver)
-        mutableDownloadState.update { false }
-        coroutineScope.cancel()
-    }
-
-    /**
-     * Returns PlayerService's cache once it is available.
-     *
-     * bindService may invoke onServiceConnected before the coroutine starts. The old code always
-     * registered a waiter after that point, leaving the download manager blocked forever. Checking
-     * and registering while holding the same lock closes that race.
-     */
-    private suspend fun awaitPlayerCache(): Cache = suspendCancellableCoroutine { continuation ->
-        val waiter = {
-            val cache = synchronized(bindingLock) { binder?.cache }
-                ?: run {
-                    Log.w("PrecacheService", "PlayerService disconnected; using standalone cache")
-                    PlayerService.createCache(this@PrecacheService)
-                }
-            if (continuation.isActive) continuation.resume(cache)
-        }
-
-        synchronized(bindingLock) {
-            binder?.cache?.let {
-                continuation.resume(it)
-                return@synchronized
-            }
-            waiters += waiter
-        }
-        continuation.invokeOnCancellation {
-            synchronized(bindingLock) { waiters.remove(waiter) }
-        }
-    }
-
-    private fun resumeCacheWaiters() {
-        val pending = synchronized(bindingLock) {
-            waiters.toList().also { waiters.clear() }
-        }
-        pending.forEach { it() }
     }
 
     companion object {
+        fun scheduleCache(context: Context, mediaItems: Iterable<MediaItem>) {
+            mediaItems.distinctBy(MediaItem::mediaId).forEach { scheduleCache(context, it) }
+        }
+
         fun scheduleCache(context: Context, mediaItem: MediaItem) {
             if (mediaItem.isLocal) return
             val repository = context.appContainer.precacheRepository
@@ -324,48 +222,4 @@ class PrecacheService : DownloadService(
             }
         }
     }
-}
-
-@Suppress("TooManyFunctions")
-@OptIn(UnstableApi::class)
-class BlockingDeferredCache(private val cache: Deferred<Cache>) : Cache {
-    private val resolvedCache by lazy { runBlocking { cache.await() } }
-
-    override fun getUid() = resolvedCache.uid
-    override fun release() = resolvedCache.release()
-    override fun addListener(key: String, listener: Cache.Listener) =
-        resolvedCache.addListener(key, listener)
-
-    override fun removeListener(key: String, listener: Cache.Listener) =
-        resolvedCache.removeListener(key, listener)
-
-    override fun getCachedSpans(key: String) = resolvedCache.getCachedSpans(key)
-    override fun getKeys(): MutableSet<String> = resolvedCache.keys
-    override fun getCacheSpace() = resolvedCache.cacheSpace
-    override fun startReadWrite(key: String, position: Long, length: Long) =
-        resolvedCache.startReadWrite(key, position, length)
-
-    override fun startReadWriteNonBlocking(key: String, position: Long, length: Long) =
-        resolvedCache.startReadWriteNonBlocking(key, position, length)
-
-    override fun startFile(key: String, position: Long, length: Long) =
-        resolvedCache.startFile(key, position, length)
-
-    override fun commitFile(file: File, length: Long) = resolvedCache.commitFile(file, length)
-    override fun releaseHoleSpan(holeSpan: CacheSpan) = resolvedCache.releaseHoleSpan(holeSpan)
-    override fun removeResource(key: String) = resolvedCache.removeResource(key)
-    override fun removeSpan(span: CacheSpan) = resolvedCache.removeSpan(span)
-    override fun isCached(key: String, position: Long, length: Long) =
-        resolvedCache.isCached(key, position, length)
-
-    override fun getCachedLength(key: String, position: Long, length: Long) =
-        resolvedCache.getCachedLength(key, position, length)
-
-    override fun getCachedBytes(key: String, position: Long, length: Long) =
-        resolvedCache.getCachedBytes(key, position, length)
-
-    override fun applyContentMetadataMutations(key: String, mutations: ContentMetadataMutations) =
-        resolvedCache.applyContentMetadataMutations(key, mutations)
-
-    override fun getContentMetadata(key: String) = resolvedCache.getContentMetadata(key)
 }
