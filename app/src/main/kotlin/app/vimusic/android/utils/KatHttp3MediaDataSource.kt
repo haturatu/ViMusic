@@ -11,6 +11,7 @@ import androidx.media3.datasource.BaseDataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
+import androidx.media3.datasource.okhttp.OkHttpDataSource
 import dev.kathttp3.KatHttp3Call
 import dev.kathttp3.KatHttp3Client
 import dev.kathttp3.KatHttp3ClientConfig
@@ -34,6 +35,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
+import okhttp3.OkHttpClient
 
 /**
  * Media3 source backed directly by kathttp3's ordered streaming API.
@@ -472,6 +474,7 @@ class KatHttp3MediaDataSource(
             clientInvalidator = KatHttp3PlaybackClient::invalidate,
             clientReleaser = KatHttp3PlaybackClient::release,
             addressFamilyFallback = KatHttp3PlaybackClient::switchAddressFamily,
+            fallbackFactory = KatHttp3PlaybackClient.fallbackFactory,
         ).also { source -> defaultRequestProperties.forEach(source::setRequestProperty) }
 
         override fun setDefaultRequestProperties(defaultRequestProperties: Map<String, String>): Factory = apply {
@@ -640,6 +643,13 @@ object KatHttp3PlaybackClient {
     private var current: ClientGeneration? = null
     private val generations = IdentityHashMap<KatHttp3Client, ClientGeneration>()
     private val resolver = AddressFamilyFallbackDnsResolver()
+    private val fallbackClient = OkHttpClient.Builder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .callTimeout(2, TimeUnit.HOURS)
+        .dns(resolver::lookup)
+        .build()
+    val fallbackFactory: HttpDataSource.Factory = OkHttpDataSource.Factory(fallbackClient)
 
     /** Acquires one request lease from the current client generation. */
     fun acquire(context: Context): KatHttp3Client = synchronized(this) {
@@ -691,7 +701,7 @@ object KatHttp3PlaybackClient {
     fun switchAddressFamily(url: String, failure: Throwable): Boolean {
         if (!failure.isNetworkUnreachable()) return false
         val host = Uri.parse(url).host ?: return false
-        return runCatching { resolver.switchFamily(host) }
+        return runCatching { resolver.switchFamily(host, failure.unreachableAddressFamily()) }
             .onFailure { Log.w("KatHttp3Media", "Failed to resolve opposite address family for $host", it) }
             .getOrDefault(false)
     }

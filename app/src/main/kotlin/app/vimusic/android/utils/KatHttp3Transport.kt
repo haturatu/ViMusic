@@ -1,5 +1,6 @@
 package app.vimusic.android.utils
 
+import app.vimusic.android.utils.AddressFamilyFallbackDnsResolver.AddressFamily
 import dev.kathttp3.KatHttp3Exception
 import dev.kathttp3.QuicTransportException
 import dev.kathttp3.TlsHandshakeException
@@ -27,4 +28,20 @@ internal fun Throwable.isNetworkUnreachable(): Boolean =
             error.message?.contains("Network is unreachable", ignoreCase = true) == true
     }
 
+internal fun Throwable.unreachableAddressFamily(): AddressFamily? =
+    generateSequence(this) { it.cause }
+        .mapNotNull { error ->
+            val match = UNREACHABLE_ADDRESS_PATTERN.find(error.message.orEmpty()) ?: return@mapNotNull null
+            val address = match.groupValues[1].removeSurrounding("[", "]")
+            when {
+                IPV4_ADDRESS_PATTERN.matches(address) -> AddressFamily.Ipv4
+                ':' in address -> AddressFamily.Ipv6
+                else -> null
+            }
+        }
+        .firstOrNull()
+
 private const val ENETUNREACH = 101
+private val UNREACHABLE_ADDRESS_PATTERN =
+    Regex("connect\\(\\) to (.+):\\d+ failed: Network is unreachable", RegexOption.IGNORE_CASE)
+private val IPV4_ADDRESS_PATTERN = Regex("(?:\\d{1,3}\\.){3}\\d{1,3}")
