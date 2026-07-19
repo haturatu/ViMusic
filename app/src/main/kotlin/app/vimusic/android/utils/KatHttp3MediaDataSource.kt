@@ -16,7 +16,6 @@ import dev.kathttp3.KatHttp3Call
 import dev.kathttp3.KatHttp3Client
 import dev.kathttp3.KatHttp3ClientConfig
 import dev.kathttp3.KatHttp3Header
-import dev.kathttp3.KatHttp3Request
 import dev.kathttp3.KatHttp3StreamEvent
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -111,12 +110,12 @@ class KatHttp3MediaDataSource(
                         val activeClient = client()
                         h3Attempt.client = activeClient
                         val activeCall = activeClient.executeStreaming(
-                            KatHttp3Request(
+                            Http3TransportRequest(
                                 method = dataSpec.httpMethodString,
                                 url = dataSpec.uri.toString(),
                                 headers = requestHeaders(dataSpec),
                                 body = dataSpec.httpBody,
-                            ),
+                            ).toKatRequest(),
                         )
                         h3Attempt.call = activeCall
                         h3Attempt.collector = STREAM_SCOPE.launch {
