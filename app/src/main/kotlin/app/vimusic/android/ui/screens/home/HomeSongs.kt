@@ -15,15 +15,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
@@ -39,14 +36,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
 import app.vimusic.android.LocalAppContainer
@@ -63,30 +57,22 @@ import app.vimusic.android.ui.components.themed.HideSongDialog
 import app.vimusic.android.ui.components.themed.InHistoryMediaItemMenu
 import app.vimusic.android.ui.components.themed.TextField
 import app.vimusic.android.ui.items.SongItem
+import app.vimusic.android.ui.items.SongTotalPlayTimeOverlay
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.screens.Route
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.asMediaItem
-import app.vimusic.android.utils.center
-import app.vimusic.android.utils.color
 import app.vimusic.android.utils.forcePlayAtIndex
-import app.vimusic.android.utils.formatted
-import app.vimusic.android.utils.semiBold
 import app.vimusic.core.data.enums.SongSortBy
 import app.vimusic.core.data.enums.SortOrder
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
-import app.vimusic.core.ui.onOverlay
-import app.vimusic.core.ui.overlay
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
-
-private val Song.formattedTotalPlayTime @Composable get() = totalPlayTimeMs.milliseconds.formatted
 
 @Composable
 fun HomeSongs(
@@ -136,7 +122,7 @@ fun HomeSongs(
     setSortOrder: (SortOrder) -> Unit,
     title: String
 ) {
-    val (colorPalette, typography, _, thumbnailShape) = LocalAppearance.current
+    val (colorPalette) = LocalAppearance.current
 
     val binder = LocalPlayerServiceBinder.current
     val menuState = LocalMenuState.current
@@ -289,27 +275,7 @@ fun HomeSongs(
                     song = song,
                     thumbnailSize = Dimensions.thumbnails.song,
                     onThumbnailContent = if (sortBy == SongSortBy.PlayTime) {
-                        {
-                            BasicText(
-                                text = song.formattedTotalPlayTime,
-                                style = typography.xxs.semiBold.center.color(colorPalette.onOverlay),
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(
-                                        brush = Brush.verticalGradient(
-                                            colors = listOf(Color.Transparent, colorPalette.overlay)
-                                        ),
-                                        shape = thumbnailShape.copy(
-                                            topStart = CornerSize(0.dp),
-                                            topEnd = CornerSize(0.dp)
-                                        )
-                                    )
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                                    .align(Alignment.BottomCenter)
-                            )
-                        }
+                        { SongTotalPlayTimeOverlay(song.totalPlayTimeMs) }
                     } else null
                 )
             }

@@ -41,6 +41,7 @@ import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.ValueSelectorDialog
 import app.vimusic.android.ui.components.themed.matchesSongCollectionQuery
 import app.vimusic.android.ui.items.SongItem
+import app.vimusic.android.ui.items.SongTotalPlayTimeOverlay
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.screens.home.HeaderSongSortBy
 import app.vimusic.android.ui.viewmodels.BuiltInPlaylistSongsViewModel
@@ -202,7 +203,10 @@ fun BuiltInPlaylistSongs(
                         .animateItem(),
                     song = song,
                     index = if (builtInPlaylist == BuiltInPlaylist.Top) index else null,
-                    thumbnailSize = Dimensions.thumbnails.song
+                    thumbnailSize = Dimensions.thumbnails.song,
+                    onThumbnailContent = if (sortBy == SongSortBy.PlayTime) {
+                        { SongTotalPlayTimeOverlay(song.totalPlayTimeMs) }
+                    } else null
                 )
             }
         }
