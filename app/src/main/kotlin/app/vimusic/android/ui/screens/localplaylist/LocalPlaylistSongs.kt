@@ -46,6 +46,7 @@ import app.vimusic.android.ui.components.themed.matchesSongCollectionQuery
 import app.vimusic.android.ui.components.themed.TextFieldDialog
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
+import app.vimusic.android.ui.screens.home.HeaderSongSortBy
 import app.vimusic.android.ui.viewmodels.LocalPlaylistViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.PlaylistDownloadFloatingButton
@@ -61,7 +62,10 @@ import app.vimusic.compose.reordering.draggedItem
 import app.vimusic.compose.reordering.rememberReorderingState
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
+import app.vimusic.core.ui.utils.enumSaver
 import app.vimusic.core.ui.utils.isLandscape
+import app.vimusic.core.data.enums.SongSortBy
+import app.vimusic.core.data.enums.SortOrder
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
@@ -87,9 +91,29 @@ fun LocalPlaylistSongs(
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
     var filterQuery by rememberSaveable { mutableStateOf<String?>(null) }
+    var sortBy by rememberSaveable(stateSaver = enumSaver()) { mutableStateOf(SongSortBy.DateAdded) }
+    var sortOrder by rememberSaveable(stateSaver = enumSaver()) { mutableStateOf(SortOrder.Descending) }
     val displayedSongs = songs.filter {
         matchesSongCollectionQuery(filterQuery, it.title, it.artistsText)
+    }.let { filteredSongs ->
+        when (sortBy) {
+            SongSortBy.DateAdded -> if (sortOrder == SortOrder.Descending) {
+                filteredSongs
+            } else {
+                filteredSongs.asReversed()
+            }
+
+            SongSortBy.PlayTime -> filteredSongs.sortedBy(Song::totalPlayTimeMs).let {
+                if (sortOrder == SortOrder.Ascending) it else it.asReversed()
+            }
+
+            SongSortBy.Title -> filteredSongs.sortedBy(Song::title).let {
+                if (sortOrder == SortOrder.Ascending) it else it.asReversed()
+            }
+        }
     }
+    val canReorder = filterQuery.isNullOrBlank() &&
+        sortBy == SongSortBy.DateAdded && sortOrder == SortOrder.Descending
     val mediaItems = rememberMediaItems(displayedSongs)
 
     var loading by remember { mutableStateOf(false) }
@@ -166,6 +190,13 @@ fun LocalPlaylistSongs(
                                 }
                             },
                             trailingContent = {
+                                HeaderSongSortBy(
+                                    sortBy = sortBy,
+                                    setSortBy = { sortBy = it },
+                                    sortOrder = sortOrder,
+                                    setSortOrder = { sortOrder = it }
+                                )
+
                                 HeaderIconButton(
                                     icon = R.drawable.ellipsis_horizontal,
                                     color = colorPalette.text,
@@ -282,7 +313,7 @@ fun LocalPlaylistSongs(
                             }
                         )
                         .then(
-                            if (filterQuery.isNullOrBlank()) Modifier
+                            if (canReorder) Modifier
                                 .animateItemPlacement(reorderingState)
                                 .draggedItem(
                                     reorderingState = reorderingState,
@@ -300,7 +331,7 @@ fun LocalPlaylistSongs(
                     song = song,
                     thumbnailSize = Dimensions.thumbnails.song,
                     trailingContent = {
-                        if (filterQuery.isNullOrBlank()) ReorderHandle(
+                        if (canReorder) ReorderHandle(
                             reorderingState = reorderingState,
                             index = index
                         )
