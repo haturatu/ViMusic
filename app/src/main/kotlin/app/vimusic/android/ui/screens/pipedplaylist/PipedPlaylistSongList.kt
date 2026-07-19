@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +23,7 @@ import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.components.themed.songCollectionItems
+import app.vimusic.android.ui.components.themed.matchesSongCollectionQuery
 import app.vimusic.android.ui.components.themed.adaptiveThumbnailContent
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
@@ -60,7 +63,11 @@ fun PipedPlaylistSongList(
     val playbackActions = LocalPlaybackActions.current
 
     var playlist by persist<Playlist>(tag = "pipedplaylist/$playlistId/playlistPage")
-    val mediaItems = rememberMediaItemsOrNull(playlist?.videos, PipedPlaylistVideoMediaItemMapper)
+    var filterQuery by rememberSaveable { mutableStateOf<String?>(null) }
+    val displayedVideos = playlist?.videos.orEmpty().filter { video ->
+        matchesSongCollectionQuery(filterQuery, video.title, video.uploaderName)
+    }
+    val mediaItems = rememberMediaItemsOrNull(displayedVideos, PipedPlaylistVideoMediaItemMapper)
 
     LaunchedEffect(Unit) {
         playlist = withContext(Dispatchers.IO) {
@@ -90,7 +97,9 @@ fun PipedPlaylistSongList(
                 else Header(title = playlist?.name ?: stringResource(R.string.unknown)) {
                     SongListActionsRow(
                         mediaItems = mediaItems,
-                        onEnqueue = { mediaItems?.let(playbackActions::enqueue) }
+                        onEnqueue = { mediaItems?.let(playbackActions::enqueue) },
+                        filterQuery = filterQuery,
+                        onFilterQueryChange = { filterQuery = it }
                     )
                 }
 
@@ -99,7 +108,7 @@ fun PipedPlaylistSongList(
         }
     ) {
         songCollectionItems(
-            items = playlist?.videos.orEmpty(),
+            items = displayedVideos,
             isLoading = playlist == null,
         ) { index, song ->
             song.asMediaItem?.let { mediaItem ->

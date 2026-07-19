@@ -65,6 +65,7 @@ import app.vimusic.android.ui.components.themed.TextField
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.screens.Route
+import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.center
 import app.vimusic.android.utils.color
@@ -103,11 +104,12 @@ fun HomeSongs(
                 searchQuery = query
             )
         },
-        allSongsProvider = {
+        allSongsProvider = { query ->
             songsRepository.songs(
                 sortBy = songSortBy,
                 sortOrder = songSortOrder,
-                onlyPlayed = true
+                onlyPlayed = true,
+                searchQuery = query
             )
         },
         onHideSong = songsRepository::deleteSong,
@@ -126,7 +128,7 @@ fun HomeSongs(
 fun HomeSongs(
     onSearchClick: () -> Unit,
     songProvider: (String?) -> Flow<PagingData<Song>>,
-    allSongsProvider: suspend () -> List<Song>,
+    allSongsProvider: suspend (String?) -> List<Song>,
     onHideSong: (Song) -> Unit,
     sortBy: SongSortBy,
     setSortBy: (SongSortBy) -> Unit,
@@ -138,6 +140,7 @@ fun HomeSongs(
 
     val binder = LocalPlayerServiceBinder.current
     val menuState = LocalMenuState.current
+    val playbackActions = LocalPlaybackActions.current
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val coroutineScope = rememberCoroutineScope()
@@ -219,6 +222,17 @@ fun HomeSongs(
 
                     Spacer(modifier = Modifier.weight(1f))
 
+                    if (!searchQuery.isNullOrBlank()) HeaderIconButton(
+                        icon = R.drawable.enqueue,
+                        onClick = {
+                            coroutineScope.launch {
+                                playbackActions.enqueue(
+                                    allSongsProvider(searchQuery).map(Song::asMediaItem)
+                                )
+                            }
+                        }
+                    )
+
                     HeaderSongSortBy(sortBy, setSortBy, sortOrder, setSortOrder)
                 }
             }
@@ -255,7 +269,7 @@ fun HomeSongs(
                                 keyboardController?.hide()
                                 coroutineScope.launch {
                                     binder?.stopRadio()
-                                    val queue = allSongsProvider()
+                                    val queue = allSongsProvider(searchQuery)
                                     val targetIndex = queue.indexOfFirst { it.id == song.id }
                                     if (targetIndex >= 0) binder?.player?.forcePlayAtIndex(
                                         queue.map(Song::asMediaItem),

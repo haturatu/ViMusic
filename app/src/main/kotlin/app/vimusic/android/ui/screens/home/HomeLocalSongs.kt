@@ -86,12 +86,13 @@ fun HomeLocalSongs(onSearchClick: () -> Unit) = with(OrderPreferences) {
                 searchQuery = query
             )
         },
-        allSongsProvider = {
+        allSongsProvider = { query ->
             songsRepository.songs(
                 sortBy = localSongSortBy,
                 sortOrder = localSongSortOrder,
                 isLocal = true,
-                excludeZeroDuration = true
+                excludeZeroDuration = true,
+                searchQuery = query
             )
         },
         onHideSong = songsRepository::deleteSong,

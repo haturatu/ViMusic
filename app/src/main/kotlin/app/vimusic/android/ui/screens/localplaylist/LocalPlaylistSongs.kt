@@ -41,6 +41,7 @@ import app.vimusic.android.ui.components.themed.ReorderHandle
 import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.components.themed.songCollectionItems
+import app.vimusic.android.ui.components.themed.matchesSongCollectionQuery
 import app.vimusic.android.ui.components.themed.TextFieldDialog
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
@@ -82,7 +83,11 @@ fun LocalPlaylistSongs(
 
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
-    val mediaItems = rememberMediaItems(songs)
+    var filterQuery by rememberSaveable { mutableStateOf<String?>(null) }
+    val displayedSongs = songs.filter {
+        matchesSongCollectionQuery(filterQuery, it.title, it.artistsText)
+    }
+    val mediaItems = rememberMediaItems(displayedSongs)
 
     var loading by remember { mutableStateOf(false) }
     var hidingSong by rememberSaveable { mutableStateOf<String?>(null) }
@@ -143,6 +148,8 @@ fun LocalPlaylistSongs(
                         SongListActionsRow(
                             mediaItems = mediaItems,
                             onEnqueue = { playbackActions.enqueue(mediaItems) },
+                            filterQuery = filterQuery,
+                            onFilterQueryChange = { filterQuery = it },
                             leadingContent = {
                                 AnimatedVisibility(loading) {
                                     CircularProgressIndicator(modifier = Modifier.size(18.dp))
@@ -236,7 +243,7 @@ fun LocalPlaylistSongs(
             }
         ) {
             songCollectionItems(
-                items = songs,
+                items = displayedSongs,
                 isLoading = false,
                 key = { _, song -> song.id },
                 contentType = { _, song -> song },
@@ -254,7 +261,7 @@ fun LocalPlaylistSongs(
                                 menuState.display {
                                     InPlaylistMediaItemMenu(
                                         playlistId = playlist.id,
-                                        positionInPlaylist = index,
+                                        positionInPlaylist = songs.indexOf(song),
                                         song = song,
                                         onDismiss = menuState::hide
                                     )
@@ -264,13 +271,17 @@ fun LocalPlaylistSongs(
                                 playbackActions.playAtIndex(mediaItems, index)
                             }
                         )
-                        .animateItemPlacement(reorderingState)
-                        .draggedItem(
-                            reorderingState = reorderingState,
-                            index = index
+                        .then(
+                            if (filterQuery.isNullOrBlank()) Modifier
+                                .animateItemPlacement(reorderingState)
+                                .draggedItem(
+                                    reorderingState = reorderingState,
+                                    index = index
+                                )
+                            else Modifier
                         )
                         .songSwipeActions(
-                            key = songs,
+                            key = displayedSongs,
                             mediaItem = song.asMediaItem,
                             songToHide = song,
                             onSwipeLeftRequested = { hidingSong = it.id }
@@ -279,7 +290,7 @@ fun LocalPlaylistSongs(
                     song = song,
                     thumbnailSize = Dimensions.thumbnails.song,
                     trailingContent = {
-                        ReorderHandle(
+                        if (filterQuery.isNullOrBlank()) ReorderHandle(
                             reorderingState = reorderingState,
                             index = index
                         )

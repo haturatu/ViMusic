@@ -38,6 +38,7 @@ import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
 import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.ValueSelectorDialog
+import app.vimusic.android.ui.components.themed.matchesSongCollectionQuery
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.screens.home.HeaderSongSortBy
@@ -70,7 +71,11 @@ fun BuiltInPlaylistSongs(
 
     var songs by persistList<Song>("${builtInPlaylist.name}/songs")
     var hidingSong by rememberSaveable { mutableStateOf<String?>(null) }
-    val mediaItems = rememberMediaItems(songs)
+    var filterQuery by rememberSaveable { mutableStateOf<String?>(null) }
+    val displayedSongs = songs.filter {
+        matchesSongCollectionQuery(filterQuery, it.title, it.artistsText)
+    }
+    val mediaItems = rememberMediaItems(displayedSongs)
 
     var sortBy by rememberSaveable(stateSaver = enumSaver()) { mutableStateOf(SongSortBy.DateAdded) }
     var sortOrder by rememberSaveable(stateSaver = enumSaver()) { mutableStateOf(SortOrder.Descending) }
@@ -119,6 +124,8 @@ fun BuiltInPlaylistSongs(
                         mediaItems = mediaItems,
                         showDownload = builtInPlaylist != BuiltInPlaylist.Offline,
                         onEnqueue = { playbackActions.enqueue(mediaItems) },
+                        filterQuery = filterQuery,
+                        onFilterQueryChange = { filterQuery = it },
                         trailingContent = {
                             if (builtInPlaylist.sortable) HeaderSongSortBy(
                                 sortBy = sortBy,
@@ -153,7 +160,7 @@ fun BuiltInPlaylistSongs(
             }
 
             itemsIndexed(
-                items = songs,
+                items = displayedSongs,
                 key = { _, song -> song.id },
                 contentType = { _, song -> song }
             ) { index, song ->
@@ -188,7 +195,7 @@ fun BuiltInPlaylistSongs(
                             }
                         )
                         .songSwipeActions(
-                            key = songs,
+                            key = displayedSongs,
                             mediaItem = song.asMediaItem,
                             songToHide = song,
                             onSwipeLeftRequested = { hidingSong = it.id }

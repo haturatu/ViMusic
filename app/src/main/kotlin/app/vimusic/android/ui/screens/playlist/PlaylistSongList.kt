@@ -27,6 +27,7 @@ import app.vimusic.android.ui.components.themed.PlaylistInfo
 import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.components.themed.songCollectionItems
+import app.vimusic.android.ui.components.themed.matchesSongCollectionQuery
 import app.vimusic.android.ui.components.themed.TextFieldDialog
 import app.vimusic.android.ui.components.themed.adaptiveThumbnailContent
 import app.vimusic.android.ui.items.SongItem
@@ -95,7 +96,18 @@ fun PlaylistSongList(
     )
 
     val playlistItems = playlistPage?.songsPage?.items
-    val mediaItems = rememberMediaItemsOrNull(playlistItems, YoutubeMusicInnertubeSongMediaItemMapper)
+    var filterQuery by rememberSaveable { mutableStateOf<String?>(null) }
+    val displayedPlaylistItems = playlistItems.orEmpty().filter { song ->
+        matchesSongCollectionQuery(
+            filterQuery,
+            song.info?.name,
+            song.authors?.joinToString { it.name.orEmpty() }
+        )
+    }
+    val mediaItems = rememberMediaItemsOrNull(
+        displayedPlaylistItems,
+        YoutubeMusicInnertubeSongMediaItemMapper
+    )
 
     val headerContent: @Composable () -> Unit = {
         if (playlistPage == null) HeaderPlaceholder(modifier = Modifier.shimmer())
@@ -103,6 +115,8 @@ fun PlaylistSongList(
             SongListActionsRow(
                 mediaItems = mediaItems,
                 onEnqueue = { mediaItems?.let(playbackActions::enqueue) },
+                filterQuery = filterQuery,
+                onFilterQueryChange = { filterQuery = it },
                 trailingContent = {
                     HeaderIconButton(
                         icon = R.drawable.add,
@@ -159,7 +173,7 @@ fun PlaylistSongList(
         }
     ) {
         songCollectionItems(
-            items = playlistItems.orEmpty(),
+            items = displayedPlaylistItems,
             isLoading = playlistPage == null,
         ) { index, song ->
             SongItem(
@@ -182,7 +196,7 @@ fun PlaylistSongList(
                         }
                     )
                     .songSwipeActions(
-                        key = playlistItems ?: emptyList<YoutubeMusicInnertube.SongItem>(),
+                        key = displayedPlaylistItems,
                         mediaItem = song.asMediaItem
                     )
             )

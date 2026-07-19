@@ -93,3 +93,14 @@ fun <T> LazyListScope.songCollectionItems(
         }
     }
 }
+
+fun matchesSongCollectionQuery(
+    query: String?,
+    vararg values: String?
+): Boolean {
+    val normalizedQuery = query?.trim().orEmpty()
+
+    return normalizedQuery.isEmpty() || values.any {
+        it?.contains(normalizedQuery, ignoreCase = true) == true
+    }
+}

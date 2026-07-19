@@ -11,13 +11,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import app.vimusic.android.R
 import app.vimusic.android.models.Song
 import app.vimusic.android.ui.components.LocalMenuState
 import app.vimusic.android.ui.components.themed.HideSongDialog
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
-import app.vimusic.android.ui.components.themed.SecondaryTextButton
+import app.vimusic.android.ui.components.themed.HeaderIconButton
 import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.components.themed.songCollectionItems
 import app.vimusic.android.ui.items.SongItem
@@ -61,8 +60,8 @@ fun AlbumSongs(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 headerContent(
                     {
-                        SecondaryTextButton(
-                            text = stringResource(R.string.enqueue),
+                        HeaderIconButton(
+                            icon = R.drawable.enqueue,
                             enabled = songs.isNotEmpty(),
                             onClick = {
                                 playbackActions.enqueue(mediaItems)
