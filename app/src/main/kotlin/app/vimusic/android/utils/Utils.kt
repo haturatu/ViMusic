@@ -180,6 +180,7 @@ object YoutubeThumbnailHostResolver {
     }
 
     private val supportedHosts = listOf(
+        "lh3.googleusercontent.com",
         "yt3.googleusercontent.com",
         "yt3.ggpht.com",
         "yt4.ggpht.com",

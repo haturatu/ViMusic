@@ -96,7 +96,7 @@ fun ArtistScreen(browseId: String) {
         Content {
             val thumbnailContent = adaptiveThumbnailContent(
                 isLoading = uiState is LoadState.Loading && displayedPage == null,
-                url = artist?.thumbnailUrl,
+                url = displayedPage?.thumbnail?.url ?: artist?.thumbnailUrl,
                 shape = CircleShape
             )
 
