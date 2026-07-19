@@ -14,7 +14,6 @@ import coil3.network.NetworkResponseBody
 import coil3.fetch.FetchResult
 import dev.kathttp3.KatHttp3Client
 import dev.kathttp3.KatHttp3ClientConfig
-import dev.kathttp3.KatHttp3Request
 import dev.kathttp3.KatHttp3RetryPolicy
 import dev.kathttp3.PolicyRetryInterceptor
 import kotlinx.coroutines.Dispatchers
@@ -220,19 +219,19 @@ class KatHttp3CoilNetworkClient(
         val requestMillis = System.currentTimeMillis()
         val startedAt = SystemClock.elapsedRealtime()
         val response = client.execute(
-            KatHttp3Request(
+            Http3TransportRequest(
                 method = request.method.uppercase(),
                 url = request.url,
                 headers = sanitizeHttp3Headers(
                     headers = request.headers.asMap().flatMap { (name, values) -> values.map { name to it } },
                 ),
                 body = request.body?.toByteArray(),
-            ),
+            ).toKatRequest(),
         )
         Http3OriginPolicy.recordHttp3Response(
             request.url,
             response.status,
-            response.headers.map { it.name to it.value },
+            response.headers.asPairs(),
         )
         YoutubeThumbnailHostResolver.recordResponse(
             request.url,

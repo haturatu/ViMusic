@@ -3,10 +3,10 @@ package app.vimusic.android.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.vimusic.android.models.Song
-import app.vimusic.android.repositories.HomeQuickPicksRepository
+import app.vimusic.android.repositories.HomeRepository
 import app.vimusic.android.ui.state.LoadState
+import app.vimusic.android.ui.state.launchLoad
 import app.vimusic.android.utils.requireValue
-import app.vimusic.android.utils.runSuspendCatching
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.Job
@@ -16,10 +16,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class HomeQuickPicksViewModel(
-    private val repository: HomeQuickPicksRepository
+    private val repository: HomeRepository
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow<LoadState<YoutubeMusicInnertube.RelatedPage>>(
-        LoadState.Loading
+        LoadState.Loading()
     )
     val uiState: StateFlow<LoadState<YoutubeMusicInnertube.RelatedPage>> =
         mutableUiState.asStateFlow()
@@ -35,22 +35,16 @@ class HomeQuickPicksViewModel(
         currentVideoId = videoId
         loadJob?.cancel()
         val cached = repository.getCachedQuickPicksIfAvailable()
-        mutableUiState.value = if (cached == null) LoadState.Loading else LoadState.Content(cached)
-        loadJob = viewModelScope.launch {
-            runSuspendCatching {
+        mutableUiState.value = cached?.let { LoadState.Content(it) } ?: LoadState.Idle
+        loadJob = mutableUiState.launchLoad(
+            scope = viewModelScope,
+            keepPreviousOnFailure = true,
+            onSuccess = repository::cacheQuickPicks,
+        ) {
                 repository.fetchRelatedPage(videoId).requireValue(
                     nullResultMessage = "Related page request was not executed",
                     nullValueMessage = "Related page was empty",
                 ).getOrThrow()
-            }.fold(
-                onSuccess = { page ->
-                    repository.cacheQuickPicks(page)
-                    mutableUiState.value = LoadState.Content(page)
-                },
-                onFailure = { error ->
-                    mutableUiState.value = LoadState.Error(error, cached)
-                },
-            )
         }
     }
 
@@ -63,7 +57,7 @@ class HomeQuickPicksViewModel(
     fun clearCachedQuickPicks() = repository.clearCachedQuickPicks()
 
     companion object {
-        fun factory(repository: HomeQuickPicksRepository) = viewModelFactory {
+        fun factory(repository: HomeRepository) = viewModelFactory {
             HomeQuickPicksViewModel(repository = repository)
         }
     }

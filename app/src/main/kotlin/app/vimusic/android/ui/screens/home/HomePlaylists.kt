@@ -67,7 +67,7 @@ fun HomePlaylists(
     onSearchClick: () -> Unit
 ) = with(OrderPreferences) {
     val viewModel: HomePlaylistsViewModel = viewModel(
-        factory = HomePlaylistsViewModel.factory(LocalAppContainer.current.homePlaylistsRepository)
+        factory = HomePlaylistsViewModel.factory(LocalAppContainer.current.homeRepository)
     )
     val (colorPalette) = LocalAppearance.current
 

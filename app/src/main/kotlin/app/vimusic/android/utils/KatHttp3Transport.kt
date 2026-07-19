@@ -2,9 +2,28 @@ package app.vimusic.android.utils
 
 import app.vimusic.android.utils.AddressFamilyFallbackDnsResolver.AddressFamily
 import dev.kathttp3.KatHttp3Exception
+import dev.kathttp3.KatHttp3Header
+import dev.kathttp3.KatHttp3Request
 import dev.kathttp3.QuicTransportException
 import dev.kathttp3.TlsHandshakeException
 import kotlinx.coroutines.TimeoutCancellationException
+
+internal data class Http3TransportRequest(
+    val method: String,
+    val url: String,
+    val headers: List<KatHttp3Header>,
+    val body: ByteArray? = null,
+) {
+    fun toKatRequest() = KatHttp3Request(
+        method = method,
+        url = url,
+        headers = headers,
+        body = body,
+    )
+}
+
+internal fun List<KatHttp3Header>.asPairs(): List<Pair<String, String>> =
+    map { header -> header.name to header.value }
 
 /** Failures for which retrying the same request through HTTP/2 is appropriate. */
 internal fun Throwable.isHttp3TransportFailure(): Boolean =

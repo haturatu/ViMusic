@@ -6,7 +6,7 @@ import androidx.media3.common.MediaItem
 import app.vimusic.android.models.Playlist
 import app.vimusic.android.repositories.QueueRepository
 import app.vimusic.android.ui.state.LoadState
-import app.vimusic.android.utils.runSuspendCatching
+import app.vimusic.android.ui.state.launchLoad
 import app.vimusic.core.data.enums.PlaylistSortBy
 import app.vimusic.core.data.enums.SortOrder
 import kotlinx.coroutines.Job
@@ -24,16 +24,10 @@ class QueueViewModel(
 
     fun loadSuggestions(videoId: String) {
         suggestionsJob?.cancel()
-        mutableSuggestions.value = LoadState.Loading
-        suggestionsJob = viewModelScope.launch {
-            runSuspendCatching {
+        suggestionsJob = mutableSuggestions.launchLoad(viewModelScope) {
                 requireNotNull(repository.fetchSuggestions(videoId)) {
                     "Queue suggestions response was empty"
                 }
-            }.fold(
-                onSuccess = { mutableSuggestions.value = LoadState.Content(it) },
-                onFailure = { mutableSuggestions.value = LoadState.Error(it) },
-            )
         }
     }
 

@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.vimusic.android.repositories.MoodRepository
 import app.vimusic.android.ui.state.LoadState
+import app.vimusic.android.ui.state.launchLoad
 import app.vimusic.android.utils.requireValue
-import app.vimusic.android.utils.runSuspendCatching
 import app.vimusic.providers.youtubemusic.innertube.requests.BrowseResult
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,17 +33,11 @@ class MoodListViewModel(
         }
         if (loadJob?.isActive == true) return
 
-        mutableUiState.value = LoadState.Loading
-        loadJob = viewModelScope.launch {
-            runSuspendCatching {
+        loadJob = mutableUiState.launchLoad(viewModelScope) {
                 repository.fetchMoodPage(browseId, params).requireValue(
                     nullResultMessage = "Mood request was not executed",
                     nullValueMessage = "Mood response was empty",
                 ).getOrThrow()
-            }.fold(
-                onSuccess = { mutableUiState.value = LoadState.Content(it) },
-                onFailure = { mutableUiState.value = LoadState.Error(it, cachedPage) },
-            )
         }
     }
 

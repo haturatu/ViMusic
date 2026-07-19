@@ -95,7 +95,7 @@ fun HomeDiscovery(
 ) {
     val viewModel: HomeDiscoveryViewModel = viewModel(
         key = "home_discovery",
-        factory = HomeDiscoveryViewModel.factory(LocalAppContainer.current.homeDiscoveryRepository)
+        factory = HomeDiscoveryViewModel.factory(LocalAppContainer.current.homeRepository)
     )
     val (colorPalette, typography) = LocalAppearance.current
     val windowInsets = LocalPlayerAwareWindowInsets.current

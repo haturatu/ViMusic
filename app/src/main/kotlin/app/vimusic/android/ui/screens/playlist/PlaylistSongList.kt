@@ -4,7 +4,6 @@ import android.content.Intent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,18 +19,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.R
 import app.vimusic.android.ui.components.LocalMenuState
-import app.vimusic.android.ui.components.ShimmerHost
 import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.HeaderIconButton
 import app.vimusic.android.ui.components.themed.HeaderPlaceholder
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.vimusic.android.ui.components.themed.PlaylistInfo
 import app.vimusic.android.ui.components.themed.SongListActionsRow
-import app.vimusic.android.ui.components.themed.SongListScaffold
+import app.vimusic.android.ui.components.themed.SongCollectionScreen
+import app.vimusic.android.ui.components.themed.songCollectionItems
 import app.vimusic.android.ui.components.themed.TextFieldDialog
 import app.vimusic.android.ui.components.themed.adaptiveThumbnailContent
 import app.vimusic.android.ui.items.SongItem
-import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.viewmodels.PlaylistSongListViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
@@ -146,7 +144,7 @@ fun PlaylistSongList(
 
     val lazyListState = rememberLazyListState()
 
-    SongListScaffold(
+    SongCollectionScreen(
         thumbnailContent = thumbnailContent,
         modifier = modifier,
         listState = lazyListState,
@@ -160,7 +158,10 @@ fun PlaylistSongList(
             }
         }
     ) {
-        itemsIndexed(items = playlistItems ?: emptyList()) { index, song ->
+        songCollectionItems(
+            items = playlistItems.orEmpty(),
+            isLoading = playlistPage == null,
+        ) { index, song ->
             SongItem(
                 song = song,
                 thumbnailSize = Dimensions.thumbnails.song,
@@ -185,14 +186,6 @@ fun PlaylistSongList(
                         mediaItem = song.asMediaItem
                     )
             )
-        }
-
-        if (playlistPage == null) item(key = "loading") {
-            ShimmerHost(modifier = Modifier.fillParentMaxSize()) {
-                repeat(4) {
-                    SongItemPlaceholder(thumbnailSize = Dimensions.thumbnails.song)
-                }
-            }
         }
     }
 }

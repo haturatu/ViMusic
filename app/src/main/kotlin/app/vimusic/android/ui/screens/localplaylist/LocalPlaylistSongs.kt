@@ -7,7 +7,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,7 +39,8 @@ import app.vimusic.android.ui.components.themed.Menu
 import app.vimusic.android.ui.components.themed.MenuEntry
 import app.vimusic.android.ui.components.themed.ReorderHandle
 import app.vimusic.android.ui.components.themed.SongListActionsRow
-import app.vimusic.android.ui.components.themed.SongListScaffold
+import app.vimusic.android.ui.components.themed.SongCollectionScreen
+import app.vimusic.android.ui.components.themed.songCollectionItems
 import app.vimusic.android.ui.components.themed.TextFieldDialog
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
@@ -127,7 +127,7 @@ fun LocalPlaylistSongs(
     )
 
     LookaheadScope {
-        SongListScaffold(
+        SongCollectionScreen(
             thumbnailContent = thumbnailContent,
             modifier = modifier,
             listState = reorderingState.lazyListState,
@@ -235,10 +235,11 @@ fun LocalPlaylistSongs(
                 }
             }
         ) {
-            itemsIndexed(
+            songCollectionItems(
                 items = songs,
+                isLoading = false,
                 key = { _, song -> song.id },
-                contentType = { _, song -> song }
+                contentType = { _, song -> song },
             ) { index, song ->
                 if (hidingSong == song.id) HideSongDialog(
                     song = song,
