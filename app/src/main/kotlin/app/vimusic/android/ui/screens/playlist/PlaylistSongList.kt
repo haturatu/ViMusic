@@ -27,7 +27,7 @@ import app.vimusic.android.ui.components.themed.HeaderPlaceholder
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.vimusic.android.ui.components.themed.PlaylistInfo
 import app.vimusic.android.ui.components.themed.SongListActionsRow
-import app.vimusic.android.ui.components.themed.SongListScaffold
+import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.components.themed.TextFieldDialog
 import app.vimusic.android.ui.components.themed.adaptiveThumbnailContent
 import app.vimusic.android.ui.items.SongItem
@@ -146,7 +146,7 @@ fun PlaylistSongList(
 
     val lazyListState = rememberLazyListState()
 
-    SongListScaffold(
+    SongCollectionScreen(
         thumbnailContent = thumbnailContent,
         modifier = modifier,
         listState = lazyListState,

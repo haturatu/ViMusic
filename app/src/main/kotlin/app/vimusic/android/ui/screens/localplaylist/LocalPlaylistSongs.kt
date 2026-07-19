@@ -40,7 +40,7 @@ import app.vimusic.android.ui.components.themed.Menu
 import app.vimusic.android.ui.components.themed.MenuEntry
 import app.vimusic.android.ui.components.themed.ReorderHandle
 import app.vimusic.android.ui.components.themed.SongListActionsRow
-import app.vimusic.android.ui.components.themed.SongListScaffold
+import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.components.themed.TextFieldDialog
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
@@ -127,7 +127,7 @@ fun LocalPlaylistSongs(
     )
 
     LookaheadScope {
-        SongListScaffold(
+        SongCollectionScreen(
             thumbnailContent = thumbnailContent,
             modifier = modifier,
             listState = reorderingState.lazyListState,

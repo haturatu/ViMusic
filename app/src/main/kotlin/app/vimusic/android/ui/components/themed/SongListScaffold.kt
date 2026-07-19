@@ -19,7 +19,7 @@ import app.vimusic.android.R
 import app.vimusic.core.ui.LocalAppearance
 
 @Composable
-fun SongListScaffold(
+fun SongCollectionScreen(
     thumbnailContent: @Composable () -> Unit,
     headerContent: @Composable () -> Unit,
     modifier: Modifier = Modifier,

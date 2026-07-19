@@ -20,7 +20,7 @@ import app.vimusic.android.ui.components.ShimmerHost
 import app.vimusic.android.ui.components.themed.HideSongDialog
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
-import app.vimusic.android.ui.components.themed.SongListScaffold
+import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.modifiers.songSwipeActions
@@ -53,7 +53,7 @@ fun AlbumSongs(
     val mediaItems = rememberMediaItems(songs)
     var hidingSong by rememberSaveable { mutableStateOf<String?>(null) }
 
-    SongListScaffold(
+    SongCollectionScreen(
         thumbnailContent = thumbnailContent,
         listState = lazyListState,
         modifier = modifier,

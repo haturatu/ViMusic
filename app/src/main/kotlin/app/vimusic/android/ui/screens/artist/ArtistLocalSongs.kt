@@ -24,7 +24,7 @@ import app.vimusic.android.ui.components.rememberSongListState
 import app.vimusic.android.ui.components.themed.HideSongDialog
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
-import app.vimusic.android.ui.components.themed.SongListScaffold
+import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
 import app.vimusic.android.ui.modifiers.songSwipeActions
@@ -67,7 +67,7 @@ fun ArtistLocalSongs(
     val listState = rememberSongListState(songs, isLoading = songs == null)
     val mediaItems = if (listState.items.isNotEmpty()) rememberMediaItems(listState.items) else null
 
-    SongListScaffold(
+    SongCollectionScreen(
         thumbnailContent = thumbnailContent,
         modifier = modifier,
         listState = lazyListState,

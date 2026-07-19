@@ -21,7 +21,7 @@ import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.HeaderPlaceholder
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.vimusic.android.ui.components.themed.SongListActionsRow
-import app.vimusic.android.ui.components.themed.SongListScaffold
+import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.components.themed.adaptiveThumbnailContent
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
@@ -80,7 +80,7 @@ fun PipedPlaylistSongList(
         url = playlist?.thumbnailUrl?.toString()
     )
 
-    SongListScaffold(
+    SongCollectionScreen(
         thumbnailContent = thumbnailContent,
         modifier = modifier,
         listState = lazyListState,
