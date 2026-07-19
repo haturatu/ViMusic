@@ -123,9 +123,6 @@ fun BuiltInPlaylistSongs(
                     modifier = Modifier.padding(bottom = 8.dp)
                 ) {
                     SongListActionsRow(
-                        mediaItems = mediaItems,
-                        showDownload = builtInPlaylist != BuiltInPlaylist.Offline,
-                        onEnqueue = { playbackActions.enqueue(mediaItems) },
                         filterQuery = filterQuery,
                         onFilterQueryChange = { filterQuery = it },
                         trailingContent = {

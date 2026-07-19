@@ -116,8 +116,6 @@ fun PlaylistSongList(
         if (playlistPage == null) HeaderPlaceholder(modifier = Modifier.shimmer())
         else Header(title = playlistPage?.title ?: stringResource(R.string.unknown)) {
             SongListActionsRow(
-                mediaItems = mediaItems,
-                onEnqueue = { mediaItems?.let(playbackActions::enqueue) },
                 filterQuery = filterQuery,
                 onFilterQueryChange = { filterQuery = it },
                 trailingContent = {

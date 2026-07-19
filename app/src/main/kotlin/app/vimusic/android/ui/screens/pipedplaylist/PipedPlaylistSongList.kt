@@ -107,8 +107,6 @@ fun PipedPlaylistSongList(
                 if (playlist == null) HeaderPlaceholder(modifier = Modifier.shimmer())
                 else Header(title = playlist?.name ?: stringResource(R.string.unknown)) {
                     SongListActionsRow(
-                        mediaItems = mediaItems,
-                        onEnqueue = { mediaItems?.let(playbackActions::enqueue) },
                         filterQuery = filterQuery,
                         onFilterQueryChange = { filterQuery = it }
                     )

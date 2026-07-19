@@ -17,12 +17,10 @@ import app.vimusic.android.ui.components.LocalMenuState
 import app.vimusic.android.ui.components.themed.HideSongDialog
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.vimusic.android.ui.components.themed.PrimaryButton
-import app.vimusic.android.ui.components.themed.HeaderIconButton
 import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.components.themed.songCollectionItems
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
-import app.vimusic.android.utils.PlaylistDownloadIcon
 import app.vimusic.android.utils.PlaylistDownloadFloatingButton
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.asMediaItem
@@ -67,22 +65,7 @@ fun AlbumSongs(
         },
         headerContent = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                headerContent(
-                    {
-                        HeaderIconButton(
-                            icon = R.drawable.enqueue,
-                            enabled = songs.isNotEmpty(),
-                            onClick = {
-                                playbackActions.enqueue(mediaItems)
-                            }
-                        )
-                    },
-                    {
-                        PlaylistDownloadIcon(
-                            songs = mediaItems.toImmutableList()
-                        )
-                    }
-                )
+                headerContent(null, null)
 
                 if (!isLandscape) thumbnailContent()
                 afterHeaderContent?.invoke()

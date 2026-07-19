@@ -180,8 +180,6 @@ fun LocalPlaylistSongs(
                         modifier = Modifier.padding(bottom = 8.dp)
                     ) {
                         SongListActionsRow(
-                            mediaItems = mediaItems,
-                            onEnqueue = { playbackActions.enqueue(mediaItems) },
                             filterQuery = filterQuery,
                             onFilterQueryChange = { filterQuery = it },
                             leadingContent = {
