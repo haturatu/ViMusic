@@ -49,14 +49,10 @@ class ArtistViewModel(
         force: Boolean = false,
     ) {
         if (!force && mutableUiState.value is LoadState.Content) return
-        if (!force && cachedPage != null) {
-            mutableUiState.value = LoadState.Content(ArtistContent(currentArtist, cachedPage))
-            return
-        }
         if (loadJob?.isActive == true) return
         val previous = mutableUiState.value.contentOrNull()
             ?: cachedPage?.let { ArtistContent(currentArtist, it) }
-        mutableUiState.value = LoadState.Loading
+        mutableUiState.value = previous?.let { LoadState.Content(it) } ?: LoadState.Loading
         loadJob = viewModelScope.launch {
             runSuspendCatching {
                 repository.fetchArtistPage(browseId).requireValue(
@@ -69,7 +65,8 @@ class ArtistViewModel(
                     upsertArtistFromPage(currentArtist, page)
                 },
                 onFailure = { error ->
-                    mutableUiState.value = LoadState.Error(error, previous)
+                    mutableUiState.value = previous?.let { LoadState.Content(it) }
+                        ?: LoadState.Error(error)
                 },
             )
         }
