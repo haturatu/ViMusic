@@ -16,7 +16,6 @@ import androidx.media3.exoplayer.workmanager.WorkManagerScheduler
 import app.vimusic.android.Database
 import app.vimusic.android.R
 import app.vimusic.android.appContainer
-import app.vimusic.android.models.Format
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.utils.ActionReceiver
 import app.vimusic.android.utils.download
@@ -75,10 +74,7 @@ private val downloadListener = object : DownloadManager.Listener {
 
             precacheScope.launch {
                 runCatching {
-                    val updated = Database.updateFormatContentLength(songId, contentLength)
-                    if (updated == 0) {
-                        Database.insert(Format(songId = songId, contentLength = contentLength))
-                    }
+                    Database.upsertFormatContentLength(songId, contentLength)
                 }.onFailure(Throwable::printStackTrace)
             }
         }

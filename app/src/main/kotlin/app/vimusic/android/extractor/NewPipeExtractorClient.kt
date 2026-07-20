@@ -20,6 +20,7 @@ import java.io.IOException
 import java.io.InterruptedIOException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
+import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
@@ -30,6 +31,8 @@ object NewPipeExtractorClient {
     private val initializationLock = Any()
     private val lock = ReentrantLock()
     private val downloaderLock = Any()
+    private val inFlightAudioResolutionsLock = Any()
+    private val inFlightAudioResolutions = mutableMapOf<String, FutureTask<NewPipeAudioResult>>()
     private val appContextRef = AtomicReference<Context?>()
     @Volatile private var sharedSystemDownloader: Downloader? = null
     private var lastSuccessfulDnsIndex: Int? = null
@@ -51,50 +54,77 @@ object NewPipeExtractorClient {
     @Throws(IOException::class, ExtractionException::class)
     fun resolveAudioStream(videoId: String): NewPipeAudioResult {
         ensureInitialized()
-        val task = RESOLVER_EXECUTOR.submit<NewPipeAudioResult> {
+        return awaitAudioResolution(
+            videoId = videoId,
+            task = audioResolutionTask(videoId),
+            timeoutSeconds = PLAYBACK_RESOLVE_TIMEOUT_SECONDS,
+        )
+    }
+
+    /** Opportunistic preload that never waits behind an active playback resolve. */
+    fun preloadAudioStream(videoId: String): NewPipeAudioResult? {
+        ensureInitialized()
+        val task = synchronized(inFlightAudioResolutionsLock) {
+            inFlightAudioResolutions[videoId]
+                ?: if (lock.isLocked) null else audioResolutionTaskLocked(videoId)
+        } ?: return null
+
+        return runCatching {
+            awaitAudioResolution(
+                videoId = videoId,
+                task = task,
+                timeoutSeconds = PRELOAD_RESOLVE_TIMEOUT_SECONDS,
+            )
+        }.getOrNull()
+    }
+
+    /**
+     * Shares an in-flight extraction by video ID. A waiting caller timing out or being interrupted
+     * must not cancel the shared NewPipe task: playback or a pre-cache request may still need it.
+     * The task removes itself only after it has actually completed.
+     */
+    private fun audioResolutionTask(videoId: String): FutureTask<NewPipeAudioResult> =
+        synchronized(inFlightAudioResolutionsLock) {
+            audioResolutionTaskLocked(videoId)
+        }
+
+    private fun audioResolutionTaskLocked(videoId: String): FutureTask<NewPipeAudioResult> =
+        inFlightAudioResolutions[videoId] ?: FutureTask {
             lock.lockInterruptibly()
             try {
                 resolveAudioStreamWithFallback(videoId)
             } finally {
                 lock.unlock()
             }
-        }
-        return try {
-            task.get(PLAYBACK_RESOLVE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        } catch (error: TimeoutException) {
-            task.cancel(true)
-            throw IOException("NewPipe stream resolution timed out for $videoId", error)
-        } catch (error: ExecutionException) {
-            val cause = error.cause ?: error
-            when (cause) {
-                is IOException -> throw cause
-                is ExtractionException -> throw cause
-                else -> throw IOException("NewPipe stream resolution failed for $videoId", cause)
+        }.also { task ->
+            inFlightAudioResolutions[videoId] = task
+            RESOLVER_EXECUTOR.execute {
+                task.run()
+                synchronized(inFlightAudioResolutionsLock) {
+                    inFlightAudioResolutions.remove(videoId, task)
+                }
             }
-        } catch (error: InterruptedException) {
-            task.cancel(true)
-            Thread.currentThread().interrupt()
-            throw IOException("NewPipe stream resolution interrupted for $videoId", error)
         }
-    }
 
-    /** Opportunistic preload that never waits behind an active playback resolve. */
-    fun preloadAudioStream(videoId: String): NewPipeAudioResult? {
-        ensureInitialized()
-        val task = RESOLVER_EXECUTOR.submit<NewPipeAudioResult?> {
-            if (!lock.tryLock()) return@submit null
-            try {
-                resolveAudioStreamWithFallback(videoId)
-            } finally {
-                lock.unlock()
-            }
+    @Throws(IOException::class, ExtractionException::class)
+    private fun awaitAudioResolution(
+        videoId: String,
+        task: FutureTask<NewPipeAudioResult>,
+        timeoutSeconds: Long,
+    ): NewPipeAudioResult = try {
+        task.get(timeoutSeconds, TimeUnit.SECONDS)
+    } catch (error: TimeoutException) {
+        throw IOException("NewPipe stream resolution timed out for $videoId", error)
+    } catch (error: ExecutionException) {
+        val cause = error.cause ?: error
+        when (cause) {
+            is IOException -> throw cause
+            is ExtractionException -> throw cause
+            else -> throw IOException("NewPipe stream resolution failed for $videoId", cause)
         }
-        return try {
-            task.get(PRELOAD_RESOLVE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        } catch (_: Exception) {
-            task.cancel(true)
-            null
-        }
+    } catch (error: InterruptedException) {
+        Thread.currentThread().interrupt()
+        throw IOException("NewPipe stream resolution interrupted for $videoId", error)
     }
 
     private fun resolveAudioStreamWithFallback(videoId: String): NewPipeAudioResult {
