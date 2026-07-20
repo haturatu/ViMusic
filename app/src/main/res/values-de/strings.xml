@@ -29,6 +29,7 @@
 
     <string name="favorites">Favoriten</string>
     <string name="offline">Offline</string>
+    <string name="history">Wiedergabeverlauf</string>
     <string name="overview">Übersicht</string>
     <string name="library">Bibliothek</string>
     <string name="discover">Entdecken</string>
@@ -94,10 +95,10 @@
     <string name="remove_from_playlist">Aus der Wiedergabeliste entfernen</string>
 
     <string name="hide_from_quick_picks">Auf Startseite verstecken</string>
-    <string name="confirm_hide_song">Möchten Sie dieses Lied wirklich ausblenden? Die Wiedergabezeit und der Cache werden gelöscht. Diese Aktion ist nicht umkehrbar.</string>
+    <string name="confirm_hide_song">Möchten Sie dieses Lied wirklich löschen? Die Wiedergabezeit und der Cache werden gelöscht. Diese Aktion ist nicht umkehrbar.</string>
     <string name="confirm_delete_playlist">Willst du diese Wiedergabeliste wirklich löschen?</string>
-
     <string name="confirm_delete_piped_session">Willst du diese Piped-Sitzung wirklich löschen?</string>
+    
     <string name="other_versions">Andere Versionen</string>
     <string name="no_alternative_version">Dieses Album hat keine anderen Versionen</string>
 
@@ -108,8 +109,8 @@
 
     <string name="moods_and_genres">Stimmungen und Genres</string>
     <string name="new_released_albums">Neu veröffentlichte Alben</string>
-
     <string name="more">Mehr</string>
+    
     <string name="artist_has_no_albums">Dieser Künstler hat noch kein Album veröffentlicht</string>
     <string name="artist_has_no_singles">Dieser Künstler hat noch keine Single veröffentlicht</string>
 
@@ -171,7 +172,8 @@
     <string name="size">Größe</string>
     <string name="cached">Im Cache</string>
     <string name="loudness">Lautstärke</string>
-
+    <string name="reload">Reload</string>
+    
     <string name="view_album">Album ansehen</string>
     <string name="view_playlist">Wiedergabeliste ansehen</string>
 
@@ -230,9 +232,13 @@
     <string name="show_like_button_description">Anzeigen des Knopfes zum Favorisieren direkt im Player</string>
     <string name="swipe_to_remove_item">Wischen zum Entfernen eines Titels</string>
     <string name="swipe_to_remove_item_description">Wischen Sie nach links, um ein Element aus der Warteschlange zu entfernen</string>
-
     <string name="lyrics_keep_screen_awake">Bildschirm an lassen (Texte)</string>
     <string name="lyrics_keep_screen_awake_description">Lässt den Bildschirm eingeschaltet, wenn Liedtexte angezeigt werden</string>
+    <string name="lyrics_show_system_bars">Systemzeilen anzeigen (Songtexte)</string>
+    <string name="lyrics_show_system_bars_description">Wenn Sie diese Option deaktivieren, wird der systemweite Vollbildmodus aktiviert.</string>
+    <string name="pip">Bild-in-Bild</string>
+    <string name="pip_description">Wechselt automatisch in den Bild-in-Bild-Modus, wenn die App in den Hintergrund verschoben wird</string>
+    
     <string name="cache">Cache</string>
     <string name="cache_description">Wenn der Platz im Cache voll ist, werden die Ressourcen, auf die am längsten nicht mehr zugegriffen wurde, gelöscht.</string>
     <string name="image_cache">Bild-Cache</string>
