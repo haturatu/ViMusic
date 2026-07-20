@@ -90,21 +90,20 @@ object NewPipeExtractorClient {
 
     private fun audioResolutionTaskLocked(videoId: String): FutureTask<NewPipeAudioResult> =
         inFlightAudioResolutions[videoId] ?: FutureTask {
+            lock.lockInterruptibly()
             try {
-                lock.lockInterruptibly()
-                try {
-                    resolveAudioStreamWithFallback(videoId)
-                } finally {
-                    lock.unlock()
-                }
+                resolveAudioStreamWithFallback(videoId)
             } finally {
-                synchronized(inFlightAudioResolutionsLock) {
-                    inFlightAudioResolutions.remove(videoId)
-                }
+                lock.unlock()
             }
         }.also { task ->
             inFlightAudioResolutions[videoId] = task
-            RESOLVER_EXECUTOR.execute(task)
+            RESOLVER_EXECUTOR.execute {
+                task.run()
+                synchronized(inFlightAudioResolutionsLock) {
+                    inFlightAudioResolutions.remove(videoId, task)
+                }
+            }
         }
 
     @Throws(IOException::class, ExtractionException::class)
