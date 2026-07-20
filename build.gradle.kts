@@ -11,7 +11,7 @@ buildscript {
         classpath("com.android.tools.build:gradle:9.3.0")
         // AGP 9.3's BuildConfig task still loads JavaWriter at runtime, but
         // no longer brings it onto the plugin classpath transitively.
-        classpath("com.squareup:javawriter:2.5.0")
+        classpath("com.squareup:javawriter:2.5.1")
     }
 }
 
