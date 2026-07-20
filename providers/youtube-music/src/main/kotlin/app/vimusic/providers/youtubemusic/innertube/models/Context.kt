@@ -65,7 +65,7 @@ data class Context(
         val DefaultWebNoLang = Context(
             client = Client(
                 clientName = "WEB_REMIX",
-                clientVersion = "1.20220606.03.00",
+                clientVersion = "1.20260715.04.00",
                 platform = "DESKTOP",
                 userAgent = UserAgents.DESKTOP,
                 referer = "https://music.youtube.com/"
