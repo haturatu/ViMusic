@@ -35,6 +35,8 @@ import app.vimusic.android.ui.items.AlbumItem
 import app.vimusic.android.ui.items.AlbumItemPlaceholder
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.items.SongItemPlaceholder
+import app.vimusic.android.ui.items.VideoItem
+import app.vimusic.android.ui.items.VideoItemPlaceholder
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.screens.GlobalRoutes
 import app.vimusic.android.ui.screens.Route
@@ -149,7 +151,8 @@ fun ArtistScreen(browseId: String) {
                     tab(1, R.string.songs, R.drawable.musical_notes)
                     tab(2, R.string.albums, R.drawable.disc)
                     tab(3, R.string.singles, R.drawable.disc)
-                    tab(4, R.string.library, R.drawable.library)
+                    tab(4, R.string.videos, R.drawable.film)
+                    tab(5, R.string.library, R.drawable.library)
                 }
             ) { currentTabIndex ->
                 saveableStateHolder.SaveableStateProvider(key = currentTabIndex) {
@@ -246,7 +249,45 @@ fun ArtistScreen(browseId: String) {
                             }
                         )
 
-                        4 -> ArtistLocalSongs(
+                        4 -> ItemsPage(
+                            // v3 replaces the carousel's ten-item snapshot with its complete
+                            // more-content playlist and continuation pages.
+                            tag = "artist/$browseId/videos/v3",
+                            header = headerContent,
+                            provider = displayedPage?.let {
+                                { continuation -> viewModel.videosPage(displayedPage, continuation) }
+                            },
+                            itemContent = { video ->
+                                VideoItem(
+                                    video = video,
+                                    thumbnailWidth = Dimensions.thumbnails.videoWidth,
+                                    thumbnailHeight = Dimensions.thumbnails.videoHeight,
+                                    modifier = Modifier.combinedClickable(
+                                        onLongClick = {
+                                            menuState.display {
+                                                NonQueuedMediaItemMenu(
+                                                    onDismiss = menuState::hide,
+                                                    mediaItem = video.asMediaItem
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            binder?.stopRadio()
+                                            binder?.player?.forcePlay(video.asMediaItem)
+                                            binder?.setupRadio(video.info?.endpoint)
+                                        }
+                                    )
+                                )
+                            },
+                            itemPlaceholderContent = {
+                                VideoItemPlaceholder(
+                                    thumbnailWidth = Dimensions.thumbnails.videoWidth,
+                                    thumbnailHeight = Dimensions.thumbnails.videoHeight,
+                                )
+                            }
+                        )
+
+                        5 -> ArtistLocalSongs(
                             browseId = browseId,
                             headerContent = headerContent,
                             thumbnailContent = thumbnailContent

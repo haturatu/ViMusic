@@ -173,8 +173,8 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
                             itemContent = { video ->
                                 VideoItem(
                                     video = video,
-                                    thumbnailWidth = 128.dp,
-                                    thumbnailHeight = 72.dp,
+                                    thumbnailWidth = Dimensions.thumbnails.videoWidth,
+                                    thumbnailHeight = Dimensions.thumbnails.videoHeight,
                                     modifier = Modifier.combinedClickable(
                                         onLongClick = {
                                             menuState.display {
@@ -194,8 +194,8 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
                             },
                             itemPlaceholderContent = {
                                 VideoItemPlaceholder(
-                                    thumbnailWidth = 128.dp,
-                                    thumbnailHeight = 72.dp
+                                    thumbnailWidth = Dimensions.thumbnails.videoWidth,
+                                    thumbnailHeight = Dimensions.thumbnails.videoHeight
                                 )
                             }
                         )

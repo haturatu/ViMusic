@@ -33,6 +33,11 @@ interface ArtistRepository {
         artistPage: YoutubeMusicInnertube.ArtistPage?,
         continuation: String?
     ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.AlbumItem>?>
+
+    suspend fun artistVideosPage(
+        artistPage: YoutubeMusicInnertube.ArtistPage?,
+        continuation: String?,
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.VideoItem>?>
 }
 
 object DatabaseArtistRepository : ArtistRepository {
@@ -132,6 +137,35 @@ object DatabaseArtistRepository : ArtistRepository {
                 YoutubeMusicInnertube.ItemsPage(
                     items = artistPage?.singles,
                     continuation = null
+                )
+            )
+    }
+
+    override suspend fun artistVideosPage(
+        artistPage: YoutubeMusicInnertube.ArtistPage?,
+        continuation: String?,
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.VideoItem>?> {
+        return continuation?.let {
+            YoutubeMusicInnertube.itemsPage(
+                body = ContinuationBody(continuation = continuation),
+                fromMusicResponsiveListItemRenderer = YoutubeMusicInnertube.VideoItem::from,
+            )
+        } ?: artistPage
+            ?.videosEndpoint
+            ?.takeIf { it.browseId != null }
+            ?.let { endpoint ->
+                YoutubeMusicInnertube.itemsPage(
+                    body = BrowseBody(
+                        browseId = endpoint.browseId!!,
+                        params = endpoint.params,
+                    ),
+                    fromMusicResponsiveListItemRenderer = YoutubeMusicInnertube.VideoItem::from,
+                )
+            }
+            ?: Result.success(
+                YoutubeMusicInnertube.ItemsPage(
+                    items = artistPage?.videos,
+                    continuation = null,
                 )
             )
     }
