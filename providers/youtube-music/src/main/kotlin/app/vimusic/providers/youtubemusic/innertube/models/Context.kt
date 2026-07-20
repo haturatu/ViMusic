@@ -65,7 +65,7 @@ data class Context(
         val DefaultWebNoLang = Context(
             client = Client(
                 clientName = "WEB_REMIX",
-                clientVersion = "1.20220606.03.00",
+                clientVersion = "1.20260715.04.00",
                 platform = "DESKTOP",
                 userAgent = UserAgents.DESKTOP,
                 referer = "https://music.youtube.com/"
@@ -142,7 +142,7 @@ val validCountryCodes =
 
 @Suppress("MaximumLineLength")
 object UserAgents {
-    const val DESKTOP = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.157 Safari/537.36"
+    const val DESKTOP = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
     const val ANDROID = "com.google.android.youtube/17.36.4 (Linux; U; Android 11) gzip"
     const val ANDROID_MUSIC = "com.google.android.youtube/19.29.1  (Linux; U; Android 11) gzip"
     const val PLAYSTATION = "Mozilla/5.0 (PlayStation 4 5.55) AppleWebKit/601.2 (KHTML, like Gecko)"
