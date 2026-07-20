@@ -87,7 +87,15 @@ fun YoutubeMusicInnertube.VideoItem.Companion.from(renderer: MusicResponsiveList
         .orEmpty()
 
     YoutubeMusicInnertube.VideoItem(
-        info = titleRuns
+        // Playlist and continuation rows can put the Watch endpoint on the
+        // renderer rather than the title run. Prefer that stable endpoint so
+        // valid videos are not filtered out below.
+        info = renderer.navigationEndpoint?.watchEndpoint?.let { endpoint ->
+            YoutubeMusicInnertube.Info(
+                name = titleRuns.firstOrNull()?.text,
+                endpoint = endpoint,
+            )
+        } ?: titleRuns
             .firstOrNull()
             ?.let(YoutubeMusicInnertube::Info),
         authors = authorRuns
