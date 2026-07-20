@@ -16,8 +16,14 @@ import org.schabi.newpipe.extractor.stream.Stream
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.VideoStream
 import org.schabi.newpipe.extractor.downloader.Downloader
+import java.io.EOFException
 import java.io.IOException
 import java.io.InterruptedIOException
+import java.net.ConnectException
+import java.net.NoRouteToHostException
+import java.net.SocketException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
@@ -131,22 +137,29 @@ object NewPipeExtractorClient {
         var firstError: Throwable? = null
         var lastError: Throwable? = null
 
+        fun recordRetryableFailure(error: Throwable, dnsTarget: NewPipeDnsTarget) {
+            if (error.isThreadInterruption()) {
+                Thread.currentThread().interrupt()
+                throw error
+            }
+            if (!error.isRetriableNetworkFailure()) throw error
+            Log.w(TAG, "Audio stream resolve failed videoId=$videoId dnsTarget=${dnsTarget.label}", error)
+            if (firstError == null) firstError = error
+            lastError = error
+        }
+
         dnsFallbackTargets().forEach { dnsTarget ->
-            runCatching {
+            try {
                 Log.d(TAG, "Resolving audio stream videoId=$videoId dnsTarget=${dnsTarget.label}")
                 val result = resolveAudioStream(videoId, dnsTarget)
                 if (dnsTarget is NewPipeDnsTarget.Resolved) {
                     lastSuccessfulDnsIndex = dnsTarget.index
                 }
                 return result
-            }.onFailure { error ->
-                if (error.isInterruption()) {
-                    Thread.currentThread().interrupt()
-                    throw error
-                }
-                Log.w(TAG, "Audio stream resolve failed videoId=$videoId dnsTarget=${dnsTarget.label}", error)
-                if (firstError == null) firstError = error
-                lastError = error
+            } catch (error: IOException) {
+                recordRetryableFailure(error, dnsTarget)
+            } catch (error: ExtractionException) {
+                recordRetryableFailure(error, dnsTarget)
             }
         }
 
@@ -158,14 +171,25 @@ object NewPipeExtractorClient {
         throw ExtractionException("No DNS fallback targets configured")
     }
 
-    private fun Throwable.isInterruption(): Boolean {
+    private fun Throwable.isThreadInterruption(): Boolean {
         var current: Throwable? = this
         while (current != null) {
-            if (current is InterruptedException || current is InterruptedIOException) return true
+            if (current is InterruptedException) return true
+            if (current is InterruptedIOException && Thread.currentThread().isInterrupted) return true
             current = current.cause
         }
         return false
     }
+
+    private fun Throwable.isRetriableNetworkFailure(): Boolean =
+        generateSequence(this) { error -> error.cause }.any { error ->
+            error is UnknownHostException ||
+                error is SocketTimeoutException ||
+                error is ConnectException ||
+                error is NoRouteToHostException ||
+                error is SocketException ||
+                error is EOFException
+        }
 
     @Throws(IOException::class, ExtractionException::class)
     private fun resolveAudioStream(videoId: String, dnsTarget: NewPipeDnsTarget): NewPipeAudioResult {

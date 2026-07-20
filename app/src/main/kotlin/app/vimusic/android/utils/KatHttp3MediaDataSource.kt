@@ -66,6 +66,7 @@ class KatHttp3MediaDataSource(
     private var responseUri: Uri? = null
     private var opened = false
     private var bytesRemaining = C.LENGTH_UNSET.toLong()
+    private var bytesRead = 0L
     private val h3Active = AtomicBoolean(false)
 
     /**
@@ -86,6 +87,7 @@ class KatHttp3MediaDataSource(
     @Suppress("CyclomaticComplexMethod") // Attempts must be adopted/cancelled atomically for Media3.
     override fun open(dataSpec: DataSpec): Long {
         this.dataSpec = dataSpec
+        bytesRead = 0L
         transferInitializing(dataSpec)
         responseUri = dataSpec.uri
         try {
@@ -245,12 +247,12 @@ class KatHttp3MediaDataSource(
 
     override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
         if (length == 0) return 0
-        if (fallback != null) return fallback!!.read(buffer, offset, length)
+        fallback?.let { return readFallback(it, buffer, offset, length) }
         if (bytesRemaining == 0L) {
             stopStreaming()
             return C.RESULT_END_OF_INPUT
         }
-        val spec = dataSpec ?: throw IOException("DataSource is not open")
+        if (dataSpec == null) throw IOException("DataSource is not open")
         val state = stream ?: return C.RESULT_END_OF_INPUT
         while (true) {
             if (currentChunk != null && currentChunkOffset < currentChunk!!.size) {
@@ -268,18 +270,22 @@ class KatHttp3MediaDataSource(
                 }
                 StreamItem.End -> {
                     if (bytesRemaining > 0L) {
-                        throw HttpDataSource.HttpDataSourceException.createForIOException(
-                            IOException("HTTP/3 response ended with $bytesRemaining bytes remaining"),
-                            spec,
-                            HttpDataSource.HttpDataSourceException.TYPE_READ,
+                        return resumeWithFallback(
+                            failure = IncompleteHttp3ResponseException(
+                                "HTTP/3 response ended with $bytesRemaining bytes remaining",
+                            ),
+                            buffer = buffer,
+                            offset = offset,
+                            length = length,
                         )
                     }
                     return C.RESULT_END_OF_INPUT
                 }
-                is StreamItem.Failure -> throw HttpDataSource.HttpDataSourceException.createForIOException(
-                    next.error,
-                    spec,
-                    HttpDataSource.HttpDataSourceException.TYPE_READ,
+                is StreamItem.Failure -> return resumeWithFallback(
+                    failure = next.error,
+                    buffer = buffer,
+                    offset = offset,
+                    length = length,
                 )
             }
         }
@@ -296,8 +302,68 @@ class KatHttp3MediaDataSource(
         chunk.copyInto(buffer, offset, currentChunkOffset, currentChunkOffset + count)
         currentChunkOffset += count
         if (bytesRemaining != C.LENGTH_UNSET.toLong()) bytesRemaining -= count
+        bytesRead += count
         bytesTransferred(count)
         return count
+    }
+
+    /**
+     * An HTTP/3 connection can fail after open() has already delivered its
+     * first bytes. Resume the same DataSpec at the exact consumed offset over
+     * the standard HTTP transport instead of making Media3 exhaust its load
+     * retries against the same broken QUIC route.
+     */
+    private fun resumeWithFallback(
+        failure: IOException,
+        buffer: ByteArray,
+        offset: Int,
+        length: Int,
+    ): Int {
+        val originalSpec = dataSpec ?: throw IOException("DataSource is not open", failure)
+        val resumeSpec = originalSpec.subrange(bytesRead)
+        Log.i(
+            TAG,
+            "source=$sourceId HTTP/3 read failed after $bytesRead bytes; " +
+                "resuming with standard HTTP at position=${resumeSpec.position}: ${originalSpec.uri}",
+        )
+        Log.d(TAG, "HTTP/3 media read fallback cause", failure)
+        Http3OriginPolicy.recordHttp3Failure(originalSpec.uri.toString(), failure)
+        stopStreaming()
+
+        val source = fallbackFactory.createDataSource().also { fallbackSource ->
+            requestProperties.forEach(fallbackSource::setRequestProperty)
+        }
+        try {
+            source.open(resumeSpec)
+            Http3OriginPolicy.recordOriginResponse(
+                originalSpec.uri.toString(),
+                source.responseHeaders.flatMap { (name, values) -> values.map { name to it } },
+            )
+            fallback = source
+            return readFallback(source, buffer, offset, length)
+        } catch (fallbackFailure: Throwable) {
+            runCatching { source.close() }
+            fallbackFailure.addSuppressed(failure)
+            val ioError = fallbackFailure as? IOException
+                ?: IOException("Unable to resume HTTP media stream", fallbackFailure)
+            throw HttpDataSource.HttpDataSourceException.createForIOException(
+                ioError,
+                resumeSpec,
+                HttpDataSource.HttpDataSourceException.TYPE_READ,
+            )
+        }
+    }
+
+    private fun readFallback(
+        source: HttpDataSource,
+        buffer: ByteArray,
+        offset: Int,
+        length: Int,
+    ): Int = source.read(buffer, offset, length).also { count ->
+        if (count > 0) {
+            bytesRead += count
+            bytesTransferred(count)
+        }
     }
 
     override fun close() {
@@ -318,6 +384,7 @@ class KatHttp3MediaDataSource(
             responseUri = null
             dataSpec = null
             bytesRemaining = C.LENGTH_UNSET.toLong()
+            bytesRead = 0L
             currentChunk = null
             currentChunkOffset = 0
             if (opened) {

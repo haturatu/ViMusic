@@ -4,6 +4,7 @@ package app.vimusic.android.service
 
 import android.content.Context
 import android.net.Uri
+import android.os.SystemClock
 import android.text.format.DateUtils
 import android.util.Log
 import androidx.core.net.toUri
@@ -86,9 +87,27 @@ class NewPipeAudioMediaSourceFactory(
     }
 
     private fun resolveDashManifestUriForPlayback(mediaId: String): Uri {
-        val result = resolveAudioResult(mediaId)
-        writeStreamMetadata(mediaId, result)
-        return resolvePlaybackUri(result)
+        val startedAt = SystemClock.elapsedRealtime()
+        Log.d(TAG, "Resolving playback URL mediaId=$mediaId")
+        return try {
+            val result = resolveAudioResult(mediaId)
+            writeStreamMetadata(mediaId, result)
+            resolvePlaybackUri(result).also { uri ->
+                Log.i(
+                    TAG,
+                    "Resolved playback URL mediaId=$mediaId host=${uri.host} " +
+                        "elapsedMs=${SystemClock.elapsedRealtime() - startedAt}",
+                )
+            }
+        } catch (error: IOException) {
+            Log.w(
+                TAG,
+                "Playback URL resolution failed mediaId=$mediaId " +
+                    "elapsedMs=${SystemClock.elapsedRealtime() - startedAt}",
+                error,
+            )
+            throw error
+        }
     }
 
     private fun writeStreamMetadata(mediaId: String, result: app.vimusic.android.extractor.NewPipeAudioResult) {
@@ -181,6 +200,12 @@ class NewPipeAudioMediaSourceFactory(
         fun resolveDashManifestUri(mediaId: String): Uri =
             resolvePlaybackUri(resolveAudioResult(mediaId))
 
+        fun invalidatePreloadedAudioResult(mediaId: String) {
+            synchronized(preloadedAudioResults) {
+                preloadedAudioResults.remove(mediaId)
+            }
+        }
+
         fun createDataSourceFactory(
             context: Context,
             cache: Cache,
@@ -195,29 +220,8 @@ class NewPipeAudioMediaSourceFactory(
                 )
             )
 
-            return ResolvingDataSource.Factory(
-                ConditionalCacheDataSourceFactory(
-                    cacheDataSourceFactory = cache.readOnlyWhen { PlayerPreferences.pauseCache }.asDataSource,
-                    upstreamDataSourceFactory = upstreamDataSourceFactory,
-                    shouldCache = { dataSpec ->
-                        if (dataSpec.uri.scheme == "data") return@ConditionalCacheDataSourceFactory false
-
-                        val mediaId = dataSpec.key
-                            ?.let(PlayerService::extractYouTubeVideoId)
-                            ?: PlayerService.extractYouTubeVideoId(dataSpec.uri.toString())
-
-                        val fullyCached = cache.isFullyCached(mediaId)
-                        if (fullyCached) return@ConditionalCacheDataSourceFactory true
-                        // A partial CacheDataSource must acquire a hole and open
-                        // its upstream before it discovers that the sink is
-                        // read-only. Bypass it up front to avoid opening every
-                        // HTTP/3 request twice while cache writes are paused.
-                        if (PlayerPreferences.pauseCache) return@ConditionalCacheDataSourceFactory false
-                        if (!DataPreferences.cacheFavoritesOnly) return@ConditionalCacheDataSourceFactory true
-
-                        playerRepository.isFavoriteNow(mediaId)
-                    }
-                )
+            val resolvingUpstreamDataSourceFactory = ResolvingDataSource.Factory(
+                upstreamDataSourceFactory,
             ) resolver@{ dataSpec ->
                 if (dataSpec.isLocal || dataSpec.uri.isNetworkStream) return@resolver dataSpec
 
@@ -225,17 +229,34 @@ class NewPipeAudioMediaSourceFactory(
                     ?.let(PlayerService::extractYouTubeVideoId)
                     ?: PlayerService.extractYouTubeVideoId(dataSpec.uri.toString())
 
-                val keyedDataSpec = dataSpec.buildUpon()
-                    .setKey(mediaId)
-                    .build()
-
-                if (cache.isFullyCached(mediaId)) return@resolver keyedDataSpec
-
-                keyedDataSpec.buildUpon()
+                dataSpec.buildUpon()
                     .setUri(resolveDashManifestUri(mediaId))
                     .setKey(mediaId)
                     .build()
             }
+
+            return ConditionalCacheDataSourceFactory(
+                cacheDataSourceFactory = cache.readOnlyWhen { PlayerPreferences.pauseCache }.asDataSource,
+                upstreamDataSourceFactory = resolvingUpstreamDataSourceFactory,
+                shouldCache = { dataSpec ->
+                    if (dataSpec.uri.scheme == "data") return@ConditionalCacheDataSourceFactory false
+
+                    val mediaId = dataSpec.key
+                        ?.let(PlayerService::extractYouTubeVideoId)
+                        ?: PlayerService.extractYouTubeVideoId(dataSpec.uri.toString())
+
+                    val fullyCached = cache.isFullyCached(mediaId)
+                    if (fullyCached) return@ConditionalCacheDataSourceFactory true
+                    // A partial CacheDataSource must acquire a hole and open
+                    // its upstream before it discovers that the sink is
+                    // read-only. Bypass it up front to avoid opening every
+                    // HTTP/3 request twice while cache writes are paused.
+                    if (PlayerPreferences.pauseCache) return@ConditionalCacheDataSourceFactory false
+                    if (!DataPreferences.cacheFavoritesOnly) return@ConditionalCacheDataSourceFactory true
+
+                    playerRepository.isFavoriteNow(mediaId)
+                },
+            )
         }
 
         private fun Cache.isFullyCached(mediaId: String): Boolean {
@@ -269,7 +290,7 @@ class NewPipeAudioMediaSourceFactory(
         }
 
         private fun resolvePlaybackUri(result: app.vimusic.android.extractor.NewPipeAudioResult): Uri {
-            result.videoStream?.let { return it.content.toUri() }
+            result.videoStream?.let { return validatePlaybackUri(it.content) }
 
             val audioStream = result.audioStream
                 ?: throw IOException("No audio or muxed video stream available")
@@ -281,7 +302,13 @@ class NewPipeAudioMediaSourceFactory(
                 )
             }
 
-            return audioStream.content.toUri()
+            return validatePlaybackUri(audioStream.content)
+        }
+
+        private fun validatePlaybackUri(value: String): Uri = value.toUri().also { uri ->
+            if (uri.scheme != "https" || uri.host.isNullOrBlank()) {
+                throw IOException("Resolved stream has an invalid network URL")
+            }
         }
 
         private val Uri.isNetworkStream: Boolean

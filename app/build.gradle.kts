@@ -188,7 +188,7 @@ dependencies {
     implementation(libs.logback)
     implementation(libs.okhttp)
     implementation(libs.okhttp.brotli)
-    implementation("com.github.haturatu:kathttp3:v0.1.29")
+    implementation("com.github.haturatu:kathttp3:v0.1.30")
     implementation(libs.newpipe.nanojson)
     implementation(libs.re2j)
     implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.3")
