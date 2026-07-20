@@ -40,7 +40,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
-import androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.ContentMetadata
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
@@ -92,7 +91,6 @@ import app.vimusic.android.utils.forcePlayAtIndex
 import app.vimusic.android.utils.forceSeekToNext
 import app.vimusic.android.utils.forceSeekToPrevious
 import app.vimusic.android.utils.get
-import app.vimusic.android.utils.InvalidPlaybackResponseException
 import app.vimusic.android.utils.intent
 import app.vimusic.android.utils.mediaItems
 import app.vimusic.android.utils.PlaybackRetryManager
@@ -669,32 +667,28 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
     override fun onPlayerError(error: PlaybackException) {
         super.onPlayerError(error)
-
-        player.currentMediaItem?.mediaId?.let { mediaId ->
-            if (error.findCause<InvalidPlaybackResponseException>() != null) {
-                playbackRetryManager.prepareRetry(mediaId) {}
-                player.prepare()
-                player.play()
-                return
-            }
-        }
-
-        if (
-            error.findCause<InvalidResponseCodeException>()?.responseCode == 416
-        ) {
-            player.prepare()
-            player.play()
-            return
-        }
+        Log.e(
+            TAG,
+            "Playback failed mediaId=${player.currentMediaItem?.mediaId} " +
+                "code=${error.errorCodeName}",
+            error,
+        )
 
         player.currentMediaItem?.mediaId?.let { mediaId ->
             val retryDelayMs = playbackRetryManager.nextRetryDelayOrNull(mediaId, error)
             if (retryDelayMs != null) {
+                Log.w(
+                    TAG,
+                    "Retrying playback mediaId=$mediaId after ${retryDelayMs}ms " +
+                        "code=${error.errorCodeName}",
+                )
                 handler.postDelayed(
                     {
                         if (player.currentMediaItem?.mediaId != mediaId) return@postDelayed
 
-                        playbackRetryManager.prepareRetry(mediaId) {}
+                        playbackRetryManager.prepareRetry {
+                            NewPipeAudioMediaSourceFactory.invalidatePreloadedAudioResult(mediaId)
+                        }
 
                         player.prepare()
                         player.play()

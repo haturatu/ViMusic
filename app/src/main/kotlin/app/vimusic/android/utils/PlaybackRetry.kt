@@ -2,6 +2,7 @@ package app.vimusic.android.utils
 
 import app.vimusic.android.service.UnplayableException
 import androidx.media3.common.PlaybackException
+import androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException
 import org.schabi.newpipe.extractor.exceptions.ContentNotAvailableException
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.exceptions.ParsingException
@@ -35,15 +36,37 @@ fun PlaybackException.isDnsResolutionError(): Boolean =
         findCause<UnresolvedAddressException>() != null
 
 fun PlaybackException.isRecoverablePlaybackError(): Boolean {
+    if (findCause<ContentNotAvailableException>() != null) return false
     if (isDnsResolutionError()) return true
 
-    if (findCause<UnplayableException>() != null) {
-        if (findCause<ParsingException>() != null) return true
-        if (findCause<ExtractionException>() != null) return true
-        if (findCause<ContentNotAvailableException>() != null) return false
+    findCause<InvalidResponseCodeException>()?.responseCode?.let { status ->
+        return status == HTTP_FORBIDDEN ||
+            status == HTTP_REQUEST_TIMEOUT ||
+            status == HTTP_RANGE_NOT_SATISFIABLE ||
+            status == HTTP_TOO_MANY_REQUESTS ||
+            status >= HTTP_INTERNAL_SERVER_ERROR
     }
 
-    if (errorCode != PlaybackException.ERROR_CODE_UNSPECIFIED) return false
-    val detail = message ?: return false
-    return detail.contains("Unknown playback error", ignoreCase = true)
+    if (findCause<ParsingException>() != null || findCause<ExtractionException>() != null) return true
+    if (findCause<UnplayableException>() != null) return true
+
+    return when (errorCode) {
+        PlaybackException.ERROR_CODE_TIMEOUT,
+        PlaybackException.ERROR_CODE_IO_UNSPECIFIED,
+        PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+        PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT,
+        PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS,
+        PlaybackException.ERROR_CODE_IO_READ_POSITION_OUT_OF_RANGE -> true
+
+        PlaybackException.ERROR_CODE_UNSPECIFIED ->
+            message?.contains("Unknown playback error", ignoreCase = true) == true
+
+        else -> false
+    }
 }
+
+private const val HTTP_FORBIDDEN = 403
+private const val HTTP_REQUEST_TIMEOUT = 408
+private const val HTTP_RANGE_NOT_SATISFIABLE = 416
+private const val HTTP_TOO_MANY_REQUESTS = 429
+private const val HTTP_INTERNAL_SERVER_ERROR = 500

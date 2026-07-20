@@ -5,30 +5,14 @@ import androidx.media3.common.PlaybackException
 class PlaybackRetryManager(
     retryDelaysMs: LongArray
 ) {
-    private val forceFreshResolveIds = HashSet<String>()
     private val retryController = PlaybackRetryController(retryDelaysMs)
 
     fun reset(mediaId: String) {
         retryController.reset(mediaId)
-        synchronized(forceFreshResolveIds) {
-            forceFreshResolveIds.remove(mediaId)
-        }
     }
 
     fun nextRetryDelayOrNull(mediaId: String, error: PlaybackException): Long? =
         retryController.nextPlanOrNull(mediaId, error)?.delayMs
 
-    fun markForceFreshResolve(mediaId: String) {
-        synchronized(forceFreshResolveIds) {
-            forceFreshResolveIds.add(mediaId)
-        }
-    }
-
-    fun prepareRetry(mediaId: String, invalidateUriCache: () -> Unit) {
-        markForceFreshResolve(mediaId)
-        invalidateUriCache()
-    }
-
-    fun consumeForceFreshResolve(mediaId: String): Boolean =
-        synchronized(forceFreshResolveIds) { forceFreshResolveIds.remove(mediaId) }
+    fun prepareRetry(invalidateResolvedStream: () -> Unit) = invalidateResolvedStream()
 }

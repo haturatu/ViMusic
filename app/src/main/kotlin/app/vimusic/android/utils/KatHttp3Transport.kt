@@ -7,6 +7,9 @@ import dev.kathttp3.KatHttp3Request
 import dev.kathttp3.QuicTransportException
 import dev.kathttp3.TlsHandshakeException
 import kotlinx.coroutines.TimeoutCancellationException
+import java.io.IOException
+
+internal class IncompleteHttp3ResponseException(message: String) : IOException(message)
 
 internal data class Http3TransportRequest(
     val method: String,
@@ -30,6 +33,7 @@ internal fun Throwable.isHttp3TransportFailure(): Boolean =
     isNetworkUnreachable() || generateSequence(this) { it.cause }
         .any { error ->
             error is TimeoutCancellationException ||
+                error is IncompleteHttp3ResponseException ||
                 error is KatHttp3Exception.RequestQueueTimeout ||
                 error is KatHttp3Exception.Dns ||
                 error is KatHttp3Exception.Timeout ||
