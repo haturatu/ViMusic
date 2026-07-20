@@ -10,6 +10,8 @@ object Dimensions {
         val artist = 92.dp
         val song = 54.dp
         val playlist = album
+        val videoWidth = 128.dp
+        val videoHeight = 72.dp
 
         val player = Player
 

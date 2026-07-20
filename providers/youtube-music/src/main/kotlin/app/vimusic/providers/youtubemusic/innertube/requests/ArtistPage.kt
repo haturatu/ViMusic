@@ -69,6 +69,8 @@ suspend fun YoutubeMusicInnertube.artistPage(body: BrowseBody) = runCatchingCanc
         ?.musicCarouselShelfRenderer
     val singlesSection = findSectionByTitleAny("Singles & EPs", "Singles", "EPs")
         ?.musicCarouselShelfRenderer
+    val videosSection = findSectionByTitleAny("Videos", "Video", "動画", "视频", "동영상")
+        ?.musicCarouselShelfRenderer
 
     YoutubeMusicInnertube.ArtistPage(
         name = response
@@ -138,6 +140,10 @@ suspend fun YoutubeMusicInnertube.artistPage(body: BrowseBody) = runCatchingCanc
             ?.buttonRenderer
             ?.navigationEndpoint
             ?.browseEndpoint,
+        videos = videosSection
+            ?.contents
+            ?.mapNotNull(MusicCarouselShelfRenderer.Content::musicTwoRowItemRenderer)
+            ?.mapNotNull(YoutubeMusicInnertube.VideoItem::from),
         subscribersCountText = response
             .header
             ?.musicImmersiveHeaderRenderer

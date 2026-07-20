@@ -237,6 +237,7 @@ object YoutubeMusicInnertube {
         val albumsEndpoint: NavigationEndpoint.Endpoint.Browse?,
         val singles: List<AlbumItem>?,
         val singlesEndpoint: NavigationEndpoint.Endpoint.Browse?,
+        val videos: List<VideoItem>?,
         val subscribersCountText: String?
     )
 

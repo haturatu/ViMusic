@@ -107,6 +107,11 @@ class ArtistViewModel(
     ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.AlbumItem>?> =
         repository.artistSinglesPage(artistPage = artistPage, continuation = continuation)
 
+    suspend fun videosPage(
+        artistPage: YoutubeMusicInnertube.ArtistPage?,
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.VideoItem>?> =
+        repository.artistVideosPage(artistPage = artistPage)
+
     companion object {
         fun factory(
             browseId: String,

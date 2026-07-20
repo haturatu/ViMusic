@@ -33,6 +33,10 @@ interface ArtistRepository {
         artistPage: YoutubeMusicInnertube.ArtistPage?,
         continuation: String?
     ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.AlbumItem>?>
+
+    suspend fun artistVideosPage(
+        artistPage: YoutubeMusicInnertube.ArtistPage?,
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.VideoItem>?>
 }
 
 object DatabaseArtistRepository : ArtistRepository {
@@ -135,4 +139,13 @@ object DatabaseArtistRepository : ArtistRepository {
                 )
             )
     }
+
+    override suspend fun artistVideosPage(
+        artistPage: YoutubeMusicInnertube.ArtistPage?,
+    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.VideoItem>?> = Result.success(
+        YoutubeMusicInnertube.ItemsPage(
+            items = artistPage?.videos,
+            continuation = null,
+        )
+    )
 }

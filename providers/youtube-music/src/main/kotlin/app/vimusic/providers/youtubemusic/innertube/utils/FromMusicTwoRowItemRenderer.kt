@@ -2,6 +2,7 @@ package app.vimusic.providers.youtubemusic.innertube.utils
 
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import app.vimusic.providers.youtubemusic.innertube.models.MusicTwoRowItemRenderer
+import app.vimusic.providers.youtubemusic.innertube.models.splitBySeparator
 
 fun YoutubeMusicInnertube.AlbumItem.Companion.from(renderer: MusicTwoRowItemRenderer) = YoutubeMusicInnertube.AlbumItem(
     info = renderer
@@ -41,6 +42,37 @@ fun YoutubeMusicInnertube.ArtistItem.Companion.from(renderer: MusicTwoRowItemRen
         ?.thumbnails
         ?.firstOrNull()
 ).takeIf { it.info?.endpoint?.browseId != null }
+
+fun YoutubeMusicInnertube.VideoItem.Companion.from(renderer: MusicTwoRowItemRenderer) = runCatching {
+    val subtitleParts = renderer.subtitle?.runs?.splitBySeparator().orEmpty()
+
+    // Artist-page video carousels put the Watch endpoint on the renderer,
+    // while the title run commonly has no navigation endpoint at all.
+    val info = renderer.navigationEndpoint?.watchEndpoint?.let { endpoint ->
+        YoutubeMusicInnertube.Info(name = renderer.title?.text, endpoint = endpoint)
+    } ?: renderer
+        .title
+        ?.runs
+        ?.firstOrNull()
+        ?.let(YoutubeMusicInnertube::Info)
+
+    YoutubeMusicInnertube.VideoItem(
+        info = info,
+        authors = subtitleParts
+            .firstOrNull()
+            ?.map(YoutubeMusicInnertube::Info),
+        viewsText = subtitleParts
+            .getOrNull(1)
+            ?.joinToString("") { it.text.orEmpty() },
+        durationText = null,
+        thumbnail = renderer
+            .thumbnailRenderer
+            ?.musicThumbnailRenderer
+            ?.thumbnail
+            ?.thumbnails
+            ?.firstOrNull()
+    ).takeIf { it.info?.endpoint?.videoId != null }
+}.getOrNull()
 
 fun YoutubeMusicInnertube.PlaylistItem.Companion.from(renderer: MusicTwoRowItemRenderer) =
     YoutubeMusicInnertube.PlaylistItem(
