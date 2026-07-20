@@ -109,8 +109,9 @@ class ArtistViewModel(
 
     suspend fun videosPage(
         artistPage: YoutubeMusicInnertube.ArtistPage?,
+        continuation: String?,
     ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.VideoItem>?> =
-        repository.artistVideosPage(artistPage = artistPage)
+        repository.artistVideosPage(artistPage = artistPage, continuation = continuation)
 
     companion object {
         fun factory(

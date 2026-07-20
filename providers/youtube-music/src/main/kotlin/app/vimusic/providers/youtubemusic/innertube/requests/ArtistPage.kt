@@ -144,6 +144,13 @@ suspend fun YoutubeMusicInnertube.artistPage(body: BrowseBody) = runCatchingCanc
             ?.contents
             ?.mapNotNull(MusicCarouselShelfRenderer.Content::musicTwoRowItemRenderer)
             ?.mapNotNull(YoutubeMusicInnertube.VideoItem::from),
+        videosEndpoint = videosSection
+            ?.header
+            ?.musicCarouselShelfBasicHeaderRenderer
+            ?.moreContentButton
+            ?.buttonRenderer
+            ?.navigationEndpoint
+            ?.browseEndpoint,
         subscribersCountText = response
             .header
             ?.musicImmersiveHeaderRenderer

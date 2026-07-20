@@ -250,12 +250,12 @@ fun ArtistScreen(browseId: String) {
                         )
 
                         4 -> ItemsPage(
-                            // The original parser persisted an empty page because it read the
-                            // title-run endpoint instead of the carousel Watch endpoint.
-                            tag = "artist/$browseId/videos/v2",
+                            // v3 replaces the carousel's ten-item snapshot with its complete
+                            // more-content playlist and continuation pages.
+                            tag = "artist/$browseId/videos/v3",
                             header = headerContent,
                             provider = displayedPage?.let {
-                                { _ -> viewModel.videosPage(displayedPage) }
+                                { continuation -> viewModel.videosPage(displayedPage, continuation) }
                             },
                             itemContent = { video ->
                                 VideoItem(

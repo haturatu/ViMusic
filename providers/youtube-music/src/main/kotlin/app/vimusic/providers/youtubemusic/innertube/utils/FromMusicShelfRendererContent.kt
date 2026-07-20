@@ -2,6 +2,7 @@ package app.vimusic.providers.youtubemusic.innertube.utils
 
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import app.vimusic.providers.youtubemusic.innertube.models.MusicShelfRenderer
+import app.vimusic.providers.youtubemusic.innertube.models.MusicResponsiveListItemRenderer
 import app.vimusic.providers.youtubemusic.innertube.models.NavigationEndpoint
 import app.vimusic.providers.youtubemusic.innertube.models.isExplicit
 
@@ -66,6 +67,51 @@ fun YoutubeMusicInnertube.VideoItem.Companion.from(content: MusicShelfRenderer.C
             ?.firstOrNull()
             ?.text,
         thumbnail = content.thumbnail
+    ).takeIf { it.info?.endpoint?.videoId != null }
+}.getOrNull()
+
+fun YoutubeMusicInnertube.VideoItem.Companion.from(renderer: MusicResponsiveListItemRenderer) = runCatching {
+    val titleRuns = renderer
+        .flexColumns
+        .firstOrNull()
+        ?.musicResponsiveListItemFlexColumnRenderer
+        ?.text
+        ?.runs
+        .orEmpty()
+    val authorRuns = renderer
+        .flexColumns
+        .getOrNull(1)
+        ?.musicResponsiveListItemFlexColumnRenderer
+        ?.text
+        ?.runs
+        .orEmpty()
+
+    YoutubeMusicInnertube.VideoItem(
+        info = titleRuns
+            .firstOrNull()
+            ?.let(YoutubeMusicInnertube::Info),
+        authors = authorRuns
+            .takeIf(List<*>::isNotEmpty)
+            ?.map(YoutubeMusicInnertube::Info),
+        viewsText = renderer
+            .flexColumns
+            .getOrNull(2)
+            ?.musicResponsiveListItemFlexColumnRenderer
+            ?.text
+            ?.text
+            ?.takeIf(String::isNotBlank),
+        durationText = renderer
+            .fixedColumns
+            ?.firstOrNull()
+            ?.musicResponsiveListItemFlexColumnRenderer
+            ?.text
+            ?.text,
+        thumbnail = renderer
+            .thumbnail
+            ?.musicThumbnailRenderer
+            ?.thumbnail
+            ?.thumbnails
+            ?.firstOrNull(),
     ).takeIf { it.info?.endpoint?.videoId != null }
 }.getOrNull()
 
