@@ -577,6 +577,15 @@ interface Database {
     @Query("UPDATE Format SET contentLength = :contentLength WHERE songId = :songId")
     fun updateFormatContentLength(songId: String, contentLength: Long): Int
 
+    @Query(
+        """
+        INSERT INTO Format(songId, contentLength)
+        VALUES (:songId, :contentLength)
+        ON CONFLICT(songId) DO UPDATE SET contentLength = excluded.contentLength
+        """
+    )
+    fun upsertFormatContentLength(songId: String, contentLength: Long)
+
     @Transaction
     @Query(
         """
