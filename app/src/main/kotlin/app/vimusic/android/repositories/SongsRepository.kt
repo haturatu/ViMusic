@@ -26,7 +26,8 @@ interface SongsRepository {
         sortOrder: SortOrder,
         isLocal: Boolean = false,
         onlyPlayed: Boolean = false,
-        excludeZeroDuration: Boolean = false
+        excludeZeroDuration: Boolean = false,
+        searchQuery: String? = null
     ): List<Song>
 
     fun deleteSong(song: Song)
@@ -66,8 +67,16 @@ object DatabaseSongsRepository : SongsRepository {
         sortOrder: SortOrder,
         isLocal: Boolean,
         onlyPlayed: Boolean,
-        excludeZeroDuration: Boolean
-    ): List<Song> = Database.songs(sortBy, sortOrder, isLocal).first().filter { song ->
+        excludeZeroDuration: Boolean,
+        searchQuery: String?
+    ): List<Song> = searchQuery?.takeIf(String::isNotBlank)?.let { query ->
+        Database.searchSongs(
+            query = query.toFtsPrefixQuery(),
+            isLocal = isLocal,
+            onlyPlayed = onlyPlayed,
+            excludeZeroDuration = excludeZeroDuration
+        )
+    } ?: Database.songs(sortBy, sortOrder, isLocal).first().filter { song ->
             (!onlyPlayed || song.totalPlayTimeMs > 0L) &&
                     (!excludeZeroDuration || song.durationText != "0:00")
         }

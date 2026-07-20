@@ -11,18 +11,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import app.vimusic.android.R
 import app.vimusic.android.models.Song
 import app.vimusic.android.ui.components.LocalMenuState
 import app.vimusic.android.ui.components.themed.HideSongDialog
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
-import app.vimusic.android.ui.components.themed.SecondaryTextButton
+import app.vimusic.android.ui.components.themed.PrimaryButton
 import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.components.themed.songCollectionItems
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
-import app.vimusic.android.utils.PlaylistDownloadIcon
+import app.vimusic.android.utils.PlaylistDownloadFloatingButton
 import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.rememberMediaItems
@@ -57,24 +56,16 @@ fun AlbumSongs(
         modifier = modifier,
         listBackground = colorPalette.background0,
         onShuffle = { playbackActions.shufflePlay(mediaItems) },
+        floatingActionsContent = {
+            PlaylistDownloadFloatingButton(mediaItems.toImmutableList())
+            PrimaryButton(
+                icon = R.drawable.enqueue,
+                onClick = { playbackActions.enqueue(mediaItems) }
+            )
+        },
         headerContent = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                headerContent(
-                    {
-                        SecondaryTextButton(
-                            text = stringResource(R.string.enqueue),
-                            enabled = songs.isNotEmpty(),
-                            onClick = {
-                                playbackActions.enqueue(mediaItems)
-                            }
-                        )
-                    },
-                    {
-                        PlaylistDownloadIcon(
-                            songs = mediaItems.toImmutableList()
-                        )
-                    }
-                )
+                headerContent(null, null)
 
                 if (!isLandscape) thumbnailContent()
                 afterHeaderContent?.invoke()

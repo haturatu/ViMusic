@@ -24,15 +24,18 @@ import app.vimusic.android.ui.components.themed.HeaderIconButton
 import app.vimusic.android.ui.components.themed.HeaderPlaceholder
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.vimusic.android.ui.components.themed.PlaylistInfo
+import app.vimusic.android.ui.components.themed.PrimaryButton
 import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.components.themed.songCollectionItems
+import app.vimusic.android.ui.components.themed.matchesSongCollectionQuery
 import app.vimusic.android.ui.components.themed.TextFieldDialog
 import app.vimusic.android.ui.components.themed.adaptiveThumbnailContent
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.viewmodels.PlaylistSongListViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
+import app.vimusic.android.utils.PlaylistDownloadFloatingButton
 import app.vimusic.android.utils.YoutubeMusicInnertubeSongMediaItemMapper
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.rememberMediaItemsOrNull
@@ -44,6 +47,7 @@ import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.collections.immutable.toImmutableList
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -95,14 +99,25 @@ fun PlaylistSongList(
     )
 
     val playlistItems = playlistPage?.songsPage?.items
-    val mediaItems = rememberMediaItemsOrNull(playlistItems, YoutubeMusicInnertubeSongMediaItemMapper)
+    var filterQuery by rememberSaveable { mutableStateOf<String?>(null) }
+    val displayedPlaylistItems = playlistItems.orEmpty().filter { song ->
+        matchesSongCollectionQuery(
+            filterQuery,
+            song.info?.name,
+            song.authors?.joinToString { it.name.orEmpty() }
+        )
+    }
+    val mediaItems = rememberMediaItemsOrNull(
+        displayedPlaylistItems,
+        YoutubeMusicInnertubeSongMediaItemMapper
+    )
 
     val headerContent: @Composable () -> Unit = {
         if (playlistPage == null) HeaderPlaceholder(modifier = Modifier.shimmer())
         else Header(title = playlistPage?.title ?: stringResource(R.string.unknown)) {
             SongListActionsRow(
-                mediaItems = mediaItems,
-                onEnqueue = { mediaItems?.let(playbackActions::enqueue) },
+                filterQuery = filterQuery,
+                onFilterQueryChange = { filterQuery = it },
                 trailingContent = {
                     HeaderIconButton(
                         icon = R.drawable.add,
@@ -150,6 +165,15 @@ fun PlaylistSongList(
         listState = lazyListState,
         listBackground = colorPalette.background0,
         onShuffle = { mediaItems?.let(playbackActions::shufflePlay) },
+        floatingActionsContent = {
+            mediaItems?.let { items ->
+                PlaylistDownloadFloatingButton(items.toImmutableList())
+                PrimaryButton(
+                    icon = R.drawable.enqueue,
+                    onClick = { playbackActions.enqueue(items) }
+                )
+            }
+        },
         headerContent = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 headerContent()
@@ -159,7 +183,7 @@ fun PlaylistSongList(
         }
     ) {
         songCollectionItems(
-            items = playlistItems.orEmpty(),
+            items = displayedPlaylistItems,
             isLoading = playlistPage == null,
         ) { index, song ->
             SongItem(
@@ -182,7 +206,7 @@ fun PlaylistSongList(
                         }
                     )
                     .songSwipeActions(
-                        key = playlistItems ?: emptyList<YoutubeMusicInnertube.SongItem>(),
+                        key = displayedPlaylistItems,
                         mediaItem = song.asMediaItem
                     )
             )

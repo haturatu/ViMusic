@@ -732,6 +732,24 @@ interface Database {
         excludeZeroDuration: Boolean = false
     ): PagingSource<Int, Song>
 
+    @Query(
+        """
+        SELECT Song.* FROM Song
+        JOIN SongFts ON Song.rowid = SongFts.rowid
+        WHERE SongFts MATCH :query
+          AND (:isLocal = 1 AND Song.id LIKE '$LOCAL_KEY_PREFIX%' OR :isLocal = 0 AND Song.id NOT LIKE '$LOCAL_KEY_PREFIX%')
+          AND (:onlyPlayed = 0 OR Song.totalPlayTimeMs > 0)
+          AND (:excludeZeroDuration = 0 OR Song.durationText != '0:00')
+        ORDER BY Song.title COLLATE NOCASE
+        """
+    )
+    suspend fun searchSongs(
+        query: String,
+        isLocal: Boolean = false,
+        onlyPlayed: Boolean = false,
+        excludeZeroDuration: Boolean = false
+    ): List<Song>
+
     @Query("SELECT albumId AS id, NULL AS name FROM SongAlbumMap WHERE songId = :songId LIMIT 1")
     suspend fun songAlbumInfo(songId: String): List<Info>
 

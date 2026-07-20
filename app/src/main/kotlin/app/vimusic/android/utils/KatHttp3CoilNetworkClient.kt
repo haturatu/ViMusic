@@ -17,6 +17,7 @@ import dev.kathttp3.KatHttp3ClientConfig
 import dev.kathttp3.KatHttp3RetryPolicy
 import dev.kathttp3.PolicyRetryInterceptor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
@@ -49,6 +50,8 @@ class KatHttp3CoilNetworkClient(
     }
 
 
+    private val addressFamilyResolver = AddressFamilyFallbackDnsResolver()
+
     private val client = KatHttp3Client(
         config = KatHttp3ClientConfig(
             // YouTube's image CDNs expose a large number of small resources
@@ -78,6 +81,7 @@ class KatHttp3CoilNetworkClient(
                     ),
                 ),
             ),
+            resolver = addressFamilyResolver,
         ),
         applicationContext = applicationContext,
     )
@@ -138,6 +142,8 @@ class KatHttp3CoilNetworkClient(
         } catch (incompatibleHost: IncompatibleThumbnailHostException) {
             originalFailure?.let(incompatibleHost::addSuppressed)
             throw incompatibleHost
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (fallbackError: Throwable) {
             YoutubeThumbnailHostResolver.recordFailure(request.url, fallbackError)
             originalFailure?.let(fallbackError::addSuppressed)
@@ -215,19 +221,39 @@ class KatHttp3CoilNetworkClient(
         request: NetworkRequest,
         block: suspend (NetworkResponse) -> T,
         originalUrl: String = request.url,
+        retryAddressFamily: Boolean = true,
     ): T {
         val requestMillis = System.currentTimeMillis()
         val startedAt = SystemClock.elapsedRealtime()
-        val response = client.execute(
-            Http3TransportRequest(
-                method = request.method.uppercase(),
-                url = request.url,
-                headers = sanitizeHttp3Headers(
-                    headers = request.headers.asMap().flatMap { (name, values) -> values.map { name to it } },
-                ),
-                body = request.body?.toByteArray(),
-            ).toKatRequest(),
-        )
+        val response = try {
+            client.execute(
+                Http3TransportRequest(
+                    method = request.method.uppercase(),
+                    url = request.url,
+                    headers = sanitizeHttp3Headers(
+                        headers = request.headers.asMap().flatMap { (name, values) -> values.map { name to it } },
+                    ),
+                    body = request.body?.toByteArray(),
+                ).toKatRequest(),
+            )
+        } catch (error: Throwable) {
+            if (retryAddressFamily && error.isNetworkUnreachable()) {
+                val host = android.net.Uri.parse(request.url).host
+                val switchedFamily = host != null && runCatching {
+                    addressFamilyResolver.switchFamily(host, error.unreachableAddressFamily())
+                }.getOrDefault(false)
+                if (switchedFamily) {
+                    Log.i(LOG_TAG, "HTTP/3 address family unreachable; retrying $request.url")
+                    return executeBufferedRequest(
+                        request = request,
+                        block = block,
+                        originalUrl = originalUrl,
+                        retryAddressFamily = false,
+                    )
+                }
+            }
+            throw error
+        }
         Http3OriginPolicy.recordHttp3Response(
             request.url,
             response.status,

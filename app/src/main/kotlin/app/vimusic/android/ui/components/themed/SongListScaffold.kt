@@ -3,6 +3,7 @@ package app.vimusic.android.ui.components.themed
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,6 +37,7 @@ fun SongCollectionScreen(
     shuffleIcon: Int = R.drawable.shuffle,
     shuffleVisible: Boolean = true,
     onShuffle: (() -> Unit)? = null,
+    floatingActionsContent: (@Composable RowScope.() -> Unit)? = null,
     content: LazyListScope.() -> Unit
 ) = LayoutWithAdaptiveThumbnail(
     thumbnailContent = thumbnailContent,
@@ -59,11 +61,12 @@ fun SongCollectionScreen(
             content()
         }
 
-        if (shuffleVisible && onShuffle != null) {
+        if (shuffleVisible && (onShuffle != null || floatingActionsContent != null)) {
             FloatingActionsContainerWithScrollToTop(
                 lazyListState = listState,
                 icon = shuffleIcon,
-                onClick = onShuffle
+                onClick = onShuffle,
+                actionsContent = floatingActionsContent
             )
         }
     }
@@ -91,5 +94,16 @@ fun <T> LazyListScope.songCollectionItems(
                 }
             }
         }
+    }
+}
+
+fun matchesSongCollectionQuery(
+    query: String?,
+    vararg values: String?
+): Boolean {
+    val normalizedQuery = query?.trim().orEmpty()
+
+    return normalizedQuery.isEmpty() || values.any {
+        it?.contains(normalizedQuery, ignoreCase = true) == true
     }
 }

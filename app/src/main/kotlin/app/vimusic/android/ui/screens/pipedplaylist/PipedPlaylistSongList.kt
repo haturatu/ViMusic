@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,14 +20,17 @@ import app.vimusic.android.ui.components.LocalMenuState
 import app.vimusic.android.ui.components.themed.Header
 import app.vimusic.android.ui.components.themed.HeaderPlaceholder
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
+import app.vimusic.android.ui.components.themed.PrimaryButton
 import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.components.themed.songCollectionItems
+import app.vimusic.android.ui.components.themed.matchesSongCollectionQuery
 import app.vimusic.android.ui.components.themed.adaptiveThumbnailContent
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.viewmodels.PipedPlaylistViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
+import app.vimusic.android.utils.PlaylistDownloadFloatingButton
 import app.vimusic.android.utils.PipedPlaylistVideoMediaItemMapper
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.enqueue
@@ -60,7 +65,11 @@ fun PipedPlaylistSongList(
     val playbackActions = LocalPlaybackActions.current
 
     var playlist by persist<Playlist>(tag = "pipedplaylist/$playlistId/playlistPage")
-    val mediaItems = rememberMediaItemsOrNull(playlist?.videos, PipedPlaylistVideoMediaItemMapper)
+    var filterQuery by rememberSaveable { mutableStateOf<String?>(null) }
+    val displayedVideos = playlist?.videos.orEmpty().filter { video ->
+        matchesSongCollectionQuery(filterQuery, video.title, video.uploaderName)
+    }
+    val mediaItems = rememberMediaItemsOrNull(displayedVideos, PipedPlaylistVideoMediaItemMapper)
 
     LaunchedEffect(Unit) {
         playlist = withContext(Dispatchers.IO) {
@@ -84,13 +93,22 @@ fun PipedPlaylistSongList(
         listState = lazyListState,
         listBackground = colorPalette.background0,
         onShuffle = { mediaItems?.let(playbackActions::shufflePlay) },
+        floatingActionsContent = {
+            mediaItems?.let { items ->
+                PlaylistDownloadFloatingButton(items.toImmutableList())
+                PrimaryButton(
+                    icon = R.drawable.enqueue,
+                    onClick = { playbackActions.enqueue(items) }
+                )
+            }
+        },
         headerContent = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 if (playlist == null) HeaderPlaceholder(modifier = Modifier.shimmer())
                 else Header(title = playlist?.name ?: stringResource(R.string.unknown)) {
                     SongListActionsRow(
-                        mediaItems = mediaItems,
-                        onEnqueue = { mediaItems?.let(playbackActions::enqueue) }
+                        filterQuery = filterQuery,
+                        onFilterQueryChange = { filterQuery = it }
                     )
                 }
 
@@ -99,7 +117,7 @@ fun PipedPlaylistSongList(
         }
     ) {
         songCollectionItems(
-            items = playlist?.videos.orEmpty(),
+            items = displayedVideos,
             isLoading = playlist == null,
         ) { index, song ->
             song.asMediaItem?.let { mediaItem ->

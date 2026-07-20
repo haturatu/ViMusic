@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -16,7 +17,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastAll
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
@@ -34,6 +34,7 @@ import app.vimusic.android.service.PrecacheService
 import app.vimusic.android.service.downloadState
 import app.vimusic.android.ui.components.themed.CircularProgressIndicator
 import app.vimusic.android.ui.components.themed.HeaderIconButton
+import app.vimusic.android.ui.components.themed.PrimaryButton
 import app.vimusic.core.ui.LocalAppearance
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -48,6 +49,7 @@ fun PlaylistDownloadIcon(
     val (colorPalette) = LocalAppearance.current
 
     val isDownloading by downloadState.collectAsStateWithLifecycle()
+    val uncachedSongs = uncachedMediaItems(songs, isDownloading)
 
     AnimatedContent(
         targetState = isDownloading,
@@ -57,23 +59,42 @@ fun PlaylistDownloadIcon(
         when {
             currentIsDownloading -> CircularProgressIndicator(modifier = Modifier.size(18.dp))
 
-            !songs.map { it.mediaId }.fastAll {
-                isCached(
-                    mediaId = it,
-                    key = isDownloading
-                )
-            } -> HeaderIconButton(
+            uncachedSongs.isNotEmpty() -> HeaderIconButton(
                 icon = R.drawable.download,
                 color = colorPalette.text,
                 onClick = {
-                    songs.forEach {
-                        PrecacheService.scheduleCache(context.applicationContext, it)
-                    }
+                    PrecacheService.scheduleCache(context.applicationContext, uncachedSongs)
                 },
                 modifier = modifier
             )
         }
     }
+}
+
+@Composable
+fun RowScope.PlaylistDownloadFloatingButton(songs: ImmutableList<MediaItem>) {
+    val context = LocalContext.current
+    val isDownloading by downloadState.collectAsStateWithLifecycle()
+    val uncachedSongs = uncachedMediaItems(songs, isDownloading)
+
+    if (!isDownloading && uncachedSongs.isNotEmpty()) PrimaryButton(
+        icon = R.drawable.download,
+        onClick = {
+            PrecacheService.scheduleCache(context.applicationContext, uncachedSongs)
+        }
+    )
+}
+
+@Composable
+private fun uncachedMediaItems(
+    songs: ImmutableList<MediaItem>,
+    cacheStateKey: Any?,
+): List<MediaItem> {
+    val uncached = ArrayList<MediaItem>(songs.size)
+    songs.forEach { song ->
+        if (!isCached(mediaId = song.mediaId, key = cacheStateKey)) uncached += song
+    }
+    return uncached
 }
 
 @OptIn(UnstableApi::class)

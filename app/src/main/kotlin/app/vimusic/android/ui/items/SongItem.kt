@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -18,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,16 +31,47 @@ import app.vimusic.android.R
 import app.vimusic.android.models.Song
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.ui.components.themed.TextPlaceholder
+import app.vimusic.android.utils.center
+import app.vimusic.android.utils.color
+import app.vimusic.android.utils.formatted
 import app.vimusic.android.utils.medium
 import app.vimusic.android.utils.secondary
 import app.vimusic.android.utils.semiBold
 import app.vimusic.android.utils.thumbnail
 import app.vimusic.core.ui.LocalAppearance
+import app.vimusic.core.ui.onOverlay
+import app.vimusic.core.ui.overlay
 import app.vimusic.core.ui.shimmer
 import app.vimusic.core.ui.utils.px
 import app.vimusic.core.ui.utils.songBundle
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import app.vimusic.android.ui.components.RetryingAsyncImage as AsyncImage
+import kotlin.time.Duration.Companion.milliseconds
+
+@Composable
+fun BoxScope.SongTotalPlayTimeOverlay(totalPlayTimeMs: Long) {
+    val (colorPalette, typography, _, thumbnailShape) = LocalAppearance.current
+
+    BasicText(
+        text = totalPlayTimeMs.milliseconds.formatted,
+        style = typography.xxs.semiBold.center.color(colorPalette.onOverlay),
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(Color.Transparent, colorPalette.overlay)
+                ),
+                shape = thumbnailShape.copy(
+                    topStart = CornerSize(0.dp),
+                    topEnd = CornerSize(0.dp)
+                )
+            )
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .align(Alignment.BottomCenter)
+    )
+}
 
 @Composable
 fun SongItem(

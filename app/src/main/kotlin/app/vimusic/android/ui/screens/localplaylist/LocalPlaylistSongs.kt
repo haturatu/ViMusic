@@ -37,15 +37,20 @@ import app.vimusic.android.ui.components.themed.HideSongDialog
 import app.vimusic.android.ui.components.themed.InPlaylistMediaItemMenu
 import app.vimusic.android.ui.components.themed.Menu
 import app.vimusic.android.ui.components.themed.MenuEntry
+import app.vimusic.android.ui.components.themed.PrimaryButton
 import app.vimusic.android.ui.components.themed.ReorderHandle
 import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.SongCollectionScreen
 import app.vimusic.android.ui.components.themed.songCollectionItems
+import app.vimusic.android.ui.components.themed.matchesSongCollectionQuery
 import app.vimusic.android.ui.components.themed.TextFieldDialog
 import app.vimusic.android.ui.items.SongItem
+import app.vimusic.android.ui.items.SongTotalPlayTimeOverlay
 import app.vimusic.android.ui.modifiers.songSwipeActions
+import app.vimusic.android.ui.screens.home.HeaderSongSortBy
 import app.vimusic.android.ui.viewmodels.LocalPlaylistViewModel
 import app.vimusic.android.utils.LocalPlaybackActions
+import app.vimusic.android.utils.PlaylistDownloadFloatingButton
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.android.utils.enqueue
 import app.vimusic.android.utils.launchYouTubeMusic
@@ -58,8 +63,12 @@ import app.vimusic.compose.reordering.draggedItem
 import app.vimusic.compose.reordering.rememberReorderingState
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
+import app.vimusic.core.ui.utils.enumSaver
 import app.vimusic.core.ui.utils.isLandscape
+import app.vimusic.core.data.enums.SongSortBy
+import app.vimusic.core.data.enums.SortOrder
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -82,7 +91,31 @@ fun LocalPlaylistSongs(
 
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
-    val mediaItems = rememberMediaItems(songs)
+    var filterQuery by rememberSaveable { mutableStateOf<String?>(null) }
+    var sortBy by rememberSaveable(stateSaver = enumSaver()) { mutableStateOf(SongSortBy.DateAdded) }
+    var sortOrder by rememberSaveable(stateSaver = enumSaver()) { mutableStateOf(SortOrder.Descending) }
+    val displayedSongs = songs.filter {
+        matchesSongCollectionQuery(filterQuery, it.title, it.artistsText)
+    }.let { filteredSongs ->
+        when (sortBy) {
+            SongSortBy.DateAdded -> if (sortOrder == SortOrder.Descending) {
+                filteredSongs
+            } else {
+                filteredSongs.asReversed()
+            }
+
+            SongSortBy.PlayTime -> filteredSongs.sortedBy(Song::totalPlayTimeMs).let {
+                if (sortOrder == SortOrder.Ascending) it else it.asReversed()
+            }
+
+            SongSortBy.Title -> filteredSongs.sortedBy(Song::title).let {
+                if (sortOrder == SortOrder.Ascending) it else it.asReversed()
+            }
+        }
+    }
+    val canReorder = filterQuery.isNullOrBlank() &&
+        sortBy == SongSortBy.DateAdded && sortOrder == SortOrder.Descending
+    val mediaItems = rememberMediaItems(displayedSongs)
 
     var loading by remember { mutableStateOf(false) }
     var hidingSong by rememberSaveable { mutableStateOf<String?>(null) }
@@ -134,6 +167,13 @@ fun LocalPlaylistSongs(
             listBackground = colorPalette.background0,
             shuffleVisible = !reorderingState.isDragging,
             onShuffle = { playbackActions.shufflePlay(mediaItems) },
+            floatingActionsContent = {
+                PlaylistDownloadFloatingButton(mediaItems.toImmutableList())
+                PrimaryButton(
+                    icon = R.drawable.enqueue,
+                    onClick = { playbackActions.enqueue(mediaItems) }
+                )
+            },
             headerContent = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Header(
@@ -141,14 +181,21 @@ fun LocalPlaylistSongs(
                         modifier = Modifier.padding(bottom = 8.dp)
                     ) {
                         SongListActionsRow(
-                            mediaItems = mediaItems,
-                            onEnqueue = { playbackActions.enqueue(mediaItems) },
+                            filterQuery = filterQuery,
+                            onFilterQueryChange = { filterQuery = it },
                             leadingContent = {
                                 AnimatedVisibility(loading) {
                                     CircularProgressIndicator(modifier = Modifier.size(18.dp))
                                 }
                             },
                             trailingContent = {
+                                HeaderSongSortBy(
+                                    sortBy = sortBy,
+                                    setSortBy = { sortBy = it },
+                                    sortOrder = sortOrder,
+                                    setSortOrder = { sortOrder = it }
+                                )
+
                                 HeaderIconButton(
                                     icon = R.drawable.ellipsis_horizontal,
                                     color = colorPalette.text,
@@ -236,7 +283,7 @@ fun LocalPlaylistSongs(
             }
         ) {
             songCollectionItems(
-                items = songs,
+                items = displayedSongs,
                 isLoading = false,
                 key = { _, song -> song.id },
                 contentType = { _, song -> song },
@@ -254,7 +301,7 @@ fun LocalPlaylistSongs(
                                 menuState.display {
                                     InPlaylistMediaItemMenu(
                                         playlistId = playlist.id,
-                                        positionInPlaylist = index,
+                                        positionInPlaylist = songs.indexOf(song),
                                         song = song,
                                         onDismiss = menuState::hide
                                     )
@@ -264,13 +311,17 @@ fun LocalPlaylistSongs(
                                 playbackActions.playAtIndex(mediaItems, index)
                             }
                         )
-                        .animateItemPlacement(reorderingState)
-                        .draggedItem(
-                            reorderingState = reorderingState,
-                            index = index
+                        .then(
+                            if (canReorder) Modifier
+                                .animateItemPlacement(reorderingState)
+                                .draggedItem(
+                                    reorderingState = reorderingState,
+                                    index = index
+                                )
+                            else Modifier
                         )
                         .songSwipeActions(
-                            key = songs,
+                            key = displayedSongs,
                             mediaItem = song.asMediaItem,
                             songToHide = song,
                             onSwipeLeftRequested = { hidingSong = it.id }
@@ -278,8 +329,11 @@ fun LocalPlaylistSongs(
                         .background(colorPalette.background0),
                     song = song,
                     thumbnailSize = Dimensions.thumbnails.song,
+                    onThumbnailContent = if (sortBy == SongSortBy.PlayTime) {
+                        { SongTotalPlayTimeOverlay(song.totalPlayTimeMs) }
+                    } else null,
                     trailingContent = {
-                        ReorderHandle(
+                        if (canReorder) ReorderHandle(
                             reorderingState = reorderingState,
                             index = index
                         )
