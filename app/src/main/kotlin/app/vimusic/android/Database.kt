@@ -458,6 +458,9 @@ interface Database {
     @Query("SELECT * FROM Playlist WHERE id = :id")
     fun playlist(id: Long): Flow<Playlist?>
 
+    @Query("SELECT EXISTS(SELECT 1 FROM Playlist WHERE id = :id)")
+    fun playlistExists(id: Long): Boolean
+
     @Transaction
     @Query(
         """
