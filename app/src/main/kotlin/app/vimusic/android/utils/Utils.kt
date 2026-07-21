@@ -29,9 +29,10 @@ import app.vimusic.providers.youtubemusic.innertube.models.bodies.ContinuationBo
 import app.vimusic.providers.youtubemusic.innertube.requests.playlistPage
 import app.vimusic.providers.piped.models.Playlist
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.isActive
 import kotlin.time.Duration
 import java.net.SocketTimeoutException
 
@@ -323,25 +324,19 @@ fun formatAsDuration(millis: Long) = DateUtils.formatElapsedTime(millis / 1000).
 suspend fun Result<YoutubeMusicInnertube.PlaylistOrAlbumPage>.completed(
     maxDepth: Int = Int.MAX_VALUE,
     shouldDedup: Boolean = false
-) = runCatching {
+) = runSuspendCatching {
     val page = getOrThrow()
     val songs = page.songsPage?.items.orEmpty().toMutableList()
 
-    if (songs.isEmpty()) return@runCatching page
+    if (songs.isEmpty()) return@runSuspendCatching page
 
     var continuation = page.songsPage?.continuation
     var depth = 0
     val knownSongs = if (shouldDedup) songs.toHashSet() else null
 
-    val context = currentCoroutineContext()
-
-    while (continuation != null && depth++ < maxDepth && context.isActive) {
-        val newSongs = YoutubeMusicInnertube
-            .playlistPage(
-                body = ContinuationBody(continuation = continuation)
-            )
-            ?.getOrNull()
-            ?.takeUnless { it.items.isNullOrEmpty() } ?: break
+    while (continuation != null && depth++ < maxDepth) {
+        currentCoroutineContext().ensureActive()
+        val newSongs = loadPlaylistContinuation(continuation)
 
         val incomingSongs = newSongs.items.orEmpty()
         if (shouldDedup && knownSongs != null && incomingSongs.any { it in knownSongs }) break
@@ -360,6 +355,39 @@ suspend fun Result<YoutubeMusicInnertube.PlaylistOrAlbumPage>.completed(
         )
     )
 }.also { it.exceptionOrNull()?.printStackTrace() }
+
+private suspend fun loadPlaylistContinuation(
+    continuation: String,
+): YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.SongItem> {
+    var lastFailure: Throwable = IllegalStateException("Playlist continuation returned no result")
+
+    repeat(PLAYLIST_CONTINUATION_ATTEMPTS) { attempt ->
+        currentCoroutineContext().ensureActive()
+
+        val result = YoutubeMusicInnertube.playlistPage(
+            body = ContinuationBody(continuation = continuation),
+        )
+
+        result?.fold(
+            onSuccess = { page ->
+                if (!page.items.isNullOrEmpty()) return page
+                lastFailure = IllegalStateException("Playlist continuation returned no songs")
+            },
+            onFailure = { error -> lastFailure = error },
+        ) ?: run {
+            lastFailure = IllegalStateException("Playlist continuation request was cancelled")
+        }
+
+        if (attempt < PLAYLIST_CONTINUATION_ATTEMPTS - 1) {
+            delay(PLAYLIST_CONTINUATION_RETRY_DELAYS_MILLIS[attempt])
+        }
+    }
+
+    throw lastFailure
+}
+
+private const val PLAYLIST_CONTINUATION_ATTEMPTS = 3
+private val PLAYLIST_CONTINUATION_RETRY_DELAYS_MILLIS = longArrayOf(500L, 1_500L)
 
 fun <T> Flow<T>.onFirst(block: suspend (T) -> Unit): Flow<T> {
     var isFirst = true

@@ -11,8 +11,15 @@ data class MusicResponsiveListItemRenderer(
     val flexColumns: List<FlexColumn>,
     val thumbnail: ThumbnailRenderer?,
     val navigationEndpoint: NavigationEndpoint?,
-    val badges: List<Badge>?
+    val badges: List<Badge>?,
+    val playlistItemData: PlaylistItemData? = null,
 ) {
+    @Serializable
+    data class PlaylistItemData(
+        val videoId: String? = null,
+        val playlistSetVideoId: String? = null,
+    )
+
     @Serializable
     data class FlexColumn(
         @JsonNames("musicResponsiveListItemFixedColumnRenderer")
