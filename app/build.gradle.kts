@@ -191,7 +191,7 @@ dependencies {
     implementation("com.github.haturatu:kathttp3:v0.1.30")
     implementation(libs.newpipe.nanojson)
     implementation(libs.re2j)
-    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.3")
+    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.4")
 
     implementation(projects.providers.github)
     implementation(projects.providers.youtubeMusic)
