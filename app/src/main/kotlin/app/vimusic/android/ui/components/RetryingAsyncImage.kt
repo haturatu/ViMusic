@@ -1,7 +1,6 @@
 package app.vimusic.android.ui.components
 
 import android.net.Uri
-import app.vimusic.android.utils.isHttp3TransportFailure
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -100,7 +99,7 @@ private fun Any?.isLocalImageSource(): Boolean = when (this) {
 
 private fun Throwable.isTransientImageFailure(): Boolean {
     if (this is CancellationException) return false
-    if (isHttp3TransportFailure()) return true
+    if (isHttpTransportFailure()) return true
 
     return generateSequence(this) { it.cause }.any { error ->
         when (error) {
