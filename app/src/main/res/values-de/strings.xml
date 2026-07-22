@@ -81,8 +81,8 @@
     <string name="now_playing">Jetzt spielt</string>
 
     <string name="enter_playlist_name_prompt">Name der Playliste eingeben</string>
-    <string name="new_playlist">Neue Playliste</string>
-    <string name="add_to_playlist">Zur Playliste hinzufügen</string>
+    <string name="new_playlist">Neue Playlist</string>
+    <string name="add_to_playlist">Zu Playlist hinzufügen</string>
 
     <string name="go_to_album">Zum Album gehen</string>
 
@@ -92,11 +92,11 @@
     <string name="youtube_music_not_installed">YouTube Music ist auf deinem Gerät nicht installiert!</string>
 
     <string name="remove_from_queue">Aus der Warteschlange entfernen</string>
-    <string name="remove_from_playlist">Aus der Playlisteliste entfernen</string>
+    <string name="remove_from_playlist">Aus der Playlistelist entfernen</string>
 
     <string name="hide_from_quick_picks">Auf Startseite verstecken</string>
     <string name="confirm_hide_song">Möchten Sie dieses Lied wirklich löschen? Die Wiedergabezeit und der Cache werden gelöscht. Diese Aktion ist nicht umkehrbar.</string>
-    <string name="confirm_delete_playlist">Willst du diese Playliste wirklich löschen?</string>
+    <string name="confirm_delete_playlist">Willst du diese Playlist wirklich löschen?</string>
     <string name="confirm_delete_piped_session">Willst du diese Piped-Sitzung wirklich löschen?</string>
     
     <string name="other_versions">Andere Versionen</string>
@@ -164,7 +164,7 @@
     <string name="minimum_speed_value">Warum haben Sie das getan?!</string>
     <string name="volume_boost">Lautstärke erhöhen</string>
     <string name="queue_loop">Warteschlange wiederholen</string>
-    <string name="add_queue_to_playlist">Warteschlange zur Playliste hinzufügen</string>
+    <string name="add_queue_to_playlist">Warteschlange zur Playlist hinzufügen</string>
 
     <string name="id">Id</string>
     <string name="itag">Itag</string>
@@ -175,7 +175,7 @@
     <string name="reload">Reload</string>
     
     <string name="view_album">Album ansehen</string>
-    <string name="view_playlist">Playliste ansehen</string>
+    <string name="view_playlist">Playlist ansehen</string>
 
     <string name="search_placeholder">Suchen…</string>
     <string name="format_version_credits">v%1$s • Von haturatu aus vfsfitvnm geforkt</string>
@@ -193,7 +193,7 @@
     <string name="color_source_dynamic">Dynamisch</string>
     <string name="color_source_material_you">Material You</string>
 
-    <string name="darkness">Dunkelheit</string>
+    <string name="darkness">Dunkel</string>
     <string name="darkness_normal">Normal</string>
     <string name="darkness_pureblack">Rein Schwarz</string>
     <string name="darkness_amoled">AMOLED</string>
@@ -228,11 +228,11 @@
     <string name="previous_button_while_collapsed_description">Zeigt die Schaltfläche für den vorherigen Titel an, wenn der Player zusammengeklappt ist.</string>
     <string name="swipe_horizontally_to_close">Horizontal wischen zum Schließen</string>
     <string name="swipe_horizontally_to_close_description">Schließt den Player, wenn Sie auf dem eingeklappten Player nach links/rechts wischen. Nützlich für Benutzer, bei denen der Einhandmodus von Android aktiviert ist.</string>
-    <string name="show_like_button">Favorit-Knopf anzeigen</string>
+    <string name="show_like_button">Like-Button anzeigen</string>
     <string name="show_like_button_description">Anzeigen des Like-Buttons direkt im Player</string>
     <string name="swipe_to_remove_item">Wischen zum Entfernen eines Titels</string>
     <string name="swipe_to_remove_item_description">Wischen Sie nach links, um ein Element aus der Warteschlange zu entfernen</string>
-    <string name="lyrics_keep_screen_awake">Bildschirm an lassen (Texte)</string>
+    <string name="lyrics_keep_screen_awake">Bildschirm an lassen (Songtexte)</string>
     <string name="lyrics_keep_screen_awake_description">Lässt den Bildschirm eingeschaltet, wenn Liedtexte angezeigt werden</string>
     <string name="lyrics_show_system_bars">Systemzeilen anzeigen (Songtexte)</string>
     <string name="lyrics_show_system_bars_description">Wenn Sie diese Option deaktivieren, wird der systemweite Vollbildmodus aktiviert.</string>
@@ -391,8 +391,8 @@
     <string name="swipe_to_hide_song_description">Wenn Sie einen Titel nach links wischen, wird er aus der Datenbank und dem Zwischenspeicher entfernt.</string>
     <string name="swipe_right_to_play_next">Nach rechts wischen, um als Nächstes abzuspielen</string>
     <string name="swipe_right_to_play_next_description">Wenn Sie einen Titel nach rechts wischen, wird er als nächster Titel zur Warteschlange hinzugefügt.</string>
-    <string name="swipe_to_hide_song_confirm">Wischen zum Löschen bestätigen</string>
-    <string name="swipe_to_hide_song_confirm_description">Wenn Sie zum Löschen wischen, müssen Sie zunächst bestätigen.</string>
+    <string name="swipe_to_hide_song_confirm">Song Löschen bestätigen</string>
+    <string name="swipe_to_hide_song_confirm_description">Wenn Sie einen Song Löschen möchten, müssen Sie dies bestätigen.</string>
     <string name="hide_explicit">Explizite Songs ausblenden</string>
     <string name="hide_explicit_description">Blendet alle Songs mit nicht jugendfreien Inhalten in der gesamten App aus. Der Player überspringt außerdem Songs mit nicht jugendfreien Inhalten, sobald er auf einen solchen stößt und diese Einstellung aktiviert ist.</string>
     
