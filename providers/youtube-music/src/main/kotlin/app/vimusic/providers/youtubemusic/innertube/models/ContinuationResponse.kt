@@ -7,9 +7,20 @@ import kotlinx.serialization.json.JsonNames
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class ContinuationResponse(
-    val continuationContents: ContinuationContents?,
-    val responseContext: ResponseContext?
+    val continuationContents: ContinuationContents? = null,
+    val responseContext: ResponseContext?,
+    val onResponseReceivedActions: List<ResponseReceivedAction>? = null,
 ) {
+    @Serializable
+    data class ResponseReceivedAction(
+        val appendContinuationItemsAction: AppendContinuationItemsAction? = null,
+    ) {
+        @Serializable
+        data class AppendContinuationItemsAction(
+            val continuationItems: List<MusicShelfRenderer.Content>? = null,
+        )
+    }
+
     @Serializable
     data class ContinuationContents(
         @JsonNames("musicPlaylistShelfContinuation")

@@ -64,8 +64,7 @@ suspend fun YoutubeMusicInnertube.playlistPage(body: BrowseBody) = runCatchingCa
                 .microformat
                 ?.microformatDataRenderer
                 ?.urlCanonical,
-            songsPage = musicShelfRenderer
-                ?.toSongsPage(),
+            songsPage = musicShelfRenderer.toSongsPage(),
             otherVersions = musicCarouselShelfRenderer
                 ?.contents
                 ?.mapNotNull(MusicCarouselShelfRenderer.Content::musicTwoRowItemRenderer)
@@ -131,8 +130,7 @@ suspend fun YoutubeMusicInnertube.playlistPage(body: BrowseBody) = runCatchingCa
                 .microformat
                 ?.microformatDataRenderer
                 ?.urlCanonical,
-            songsPage = musicShelfRenderer
-                ?.toSongsPage(),
+            songsPage = musicShelfRenderer.toSongsPage(),
             otherVersions = musicCarouselShelfRenderer
                 ?.contents
                 ?.mapNotNull(MusicCarouselShelfRenderer.Content::musicTwoRowItemRenderer)
@@ -156,20 +154,57 @@ suspend fun YoutubeMusicInnertube.playlistPage(body: ContinuationBody) = runCatc
         context = body.context,
     )
 
-    response
+    val sectionListRenderer = response
+        .continuationContents
+        ?.sectionListContinuation
+
+    val musicShelfRenderer = response
         .continuationContents
         ?.musicShelfContinuation
-        ?.toSongsPage()
+        ?: sectionListRenderer
+            ?.contents
+            ?.firstOrNull { it.musicShelfRenderer != null }
+            ?.musicShelfRenderer
+
+    val appendedContents = response
+        .onResponseReceivedActions
+        ?.flatMap { action ->
+            action
+                .appendContinuationItemsAction
+                ?.continuationItems
+                .orEmpty()
+        }
+
+    musicShelfRenderer?.toSongsPage()
+        ?: appendedContents.toSongsPage()
 }
 
-private fun MusicShelfRenderer?.toSongsPage() = YoutubeMusicInnertube.ItemsPage(
+private fun MusicShelfRenderer?.toSongsPage() = this
+    ?.contents
+    .toSongsPage(
+        continuation = this?.continuation(),
+)
+
+private fun List<MusicShelfRenderer.Content>?.toSongsPage(
+    continuation: String? = continuation(),
+) = YoutubeMusicInnertube.ItemsPage(
     items = this
-        ?.contents
         ?.mapNotNull(MusicShelfRenderer.Content::musicResponsiveListItemRenderer)
         ?.mapNotNull(YoutubeMusicInnertube.SongItem::from),
-    continuation = this
-        ?.continuations
-        ?.firstOrNull()
-        ?.nextContinuationData
-        ?.continuation
+    continuation = continuation,
 )
+
+private fun MusicShelfRenderer.continuation() = continuations
+    ?.firstOrNull()
+    ?.nextContinuationData
+    ?.continuation
+    ?.takeIf(String::isNotBlank)
+    ?: contents.continuation()
+
+private fun List<MusicShelfRenderer.Content>?.continuation() = this
+    ?.asReversed()
+    ?.firstNotNullOfOrNull(MusicShelfRenderer.Content::continuationItemRenderer)
+    ?.continuationEndpoint
+    ?.continuationCommand
+    ?.token
+    ?.takeIf(String::isNotBlank)

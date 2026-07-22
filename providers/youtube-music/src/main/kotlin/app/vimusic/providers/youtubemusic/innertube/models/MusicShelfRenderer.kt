@@ -11,8 +11,24 @@ data class MusicShelfRenderer(
 ) {
     @Serializable
     data class Content(
-        val musicResponsiveListItemRenderer: MusicResponsiveListItemRenderer?
+        val musicResponsiveListItemRenderer: MusicResponsiveListItemRenderer? = null,
+        val continuationItemRenderer: ContinuationItemRenderer? = null,
     ) {
+        @Serializable
+        data class ContinuationItemRenderer(
+            val continuationEndpoint: ContinuationEndpoint? = null,
+        ) {
+            @Serializable
+            data class ContinuationEndpoint(
+                val continuationCommand: ContinuationCommand? = null,
+            ) {
+                @Serializable
+                data class ContinuationCommand(
+                    val token: String? = null,
+                )
+            }
+        }
+
         val runs: Pair<List<Runs.Run>, List<List<Runs.Run>>>
             get() = musicResponsiveListItemRenderer
                 ?.flexColumns

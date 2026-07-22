@@ -11,7 +11,7 @@ dependencies {
 
     // Requests made by this provider go through the extractor's globally configured
     // Downloader. On Android this is KatHttp3Downloader with its HTTP/3 to HTTP/2 fallback.
-    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.3")
+    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.4")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
     implementation(libs.rhino)

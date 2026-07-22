@@ -67,7 +67,9 @@ fun PlaylistSongList(
     val menuState = LocalMenuState.current
     val playbackActions = LocalPlaybackActions.current
 
-    var playlistPage by persist<YoutubeMusicInnertube.PlaylistOrAlbumPage?>("playlist/$browseId/playlistPage")
+    // v6 invalidates partial pages that were previously treated as complete
+    // when a continuation request failed.
+    var playlistPage by persist<YoutubeMusicInnertube.PlaylistOrAlbumPage?>("playlist/$browseId/playlistPage/v6")
 
     LaunchedEffect(Unit) {
         if (playlistPage != null && playlistPage?.songsPage?.continuation == null) return@LaunchedEffect

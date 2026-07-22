@@ -1,0 +1,123 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+
+      - name: Verify tag matches the app version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          version="$(sed -n 's/^version=//p' gradle.properties)"
+          test -n "$version"
+          if [ "$RELEASE_TAG" != "v$version" ]; then
+            echo "Tag $RELEASE_TAG does not match gradle.properties version $version" >&2
+            exit 1
+          fi
+
+      - name: Restore release keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.VIMUSIC_RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$KEYSTORE_BASE64" || {
+            echo "VIMUSIC_RELEASE_KEYSTORE_BASE64 is not configured" >&2
+            exit 1
+          }
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > vimusic-release.jks
+          chmod 600 vimusic-release.jks
+
+      - name: Build signed release APK
+        env:
+          ORG_GRADLE_PROJECT_VIMUSIC_KEYSTORE_PASSWORD: ${{ secrets.VIMUSIC_KEYSTORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_VIMUSIC_KEY_ALIAS: ${{ secrets.VIMUSIC_KEY_ALIAS || 'vimusic' }}
+          ORG_GRADLE_PROJECT_VIMUSIC_KEY_PASSWORD: ${{ secrets.VIMUSIC_KEY_PASSWORD }}
+        run: |
+          test -n "$ORG_GRADLE_PROJECT_VIMUSIC_KEYSTORE_PASSWORD" || {
+            echo "VIMUSIC_KEYSTORE_PASSWORD is not configured" >&2
+            exit 1
+          }
+          test -n "$ORG_GRADLE_PROJECT_VIMUSIC_KEY_PASSWORD" || {
+            echo "VIMUSIC_KEY_PASSWORD is not configured" >&2
+            exit 1
+          }
+          make release
+
+      - name: Verify and prepare release assets
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          http3_apk="app/build/outputs/apk/http3/release/app-http3-release.apk"
+          http2_apk="app/build/outputs/apk/http2Only/release/app-http2Only-release.apk"
+          test -f "$http3_apk"
+          test -f "$http2_apk"
+
+          apksigner="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$apksigner"
+          "$apksigner" verify --verbose --print-certs "$http3_apk"
+          "$apksigner" verify --verbose --print-certs "$http2_apk"
+
+          unzip -Z1 "$http3_apk" | grep '/libkathttp3.so$' >/dev/null
+          if unzip -Z1 "$http2_apk" | grep '/libkathttp3.so$' >/dev/null; then
+            echo "HTTP/2-only APK unexpectedly contains libkathttp3.so" >&2
+            exit 1
+          fi
+          if unzip -p "$http2_apk" 'classes*.dex' | strings | \
+              grep -E 'dev/kathttp3|Ldev/kathttp3|KatHttp3Client' >/dev/null; then
+            echo "HTTP/2-only APK unexpectedly contains KatHttp3 bytecode" >&2
+            exit 1
+          fi
+
+          http3_asset="ViMusic-${RELEASE_TAG}.apk"
+          http2_asset="ViMusic-${RELEASE_TAG}-http2only.apk"
+          cp "$http3_apk" "$http3_asset"
+          cp "$http2_apk" "$http2_asset"
+          sha256sum "$http3_asset" > "$http3_asset.sha256"
+          sha256sum "$http2_asset" > "$http2_asset.sha256"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          http3_asset="ViMusic-${RELEASE_TAG}.apk"
+          http2_asset="ViMusic-${RELEASE_TAG}-http2only.apk"
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" \
+              "$http3_asset" "$http3_asset.sha256" \
+              "$http2_asset" "$http2_asset.sha256" \
+              --clobber
+            gh release edit "$RELEASE_TAG" --latest
+          else
+            gh release create "$RELEASE_TAG" \
+              "$http3_asset" "$http3_asset.sha256" \
+              "$http2_asset" "$http2_asset.sha256" \
+              --title "$RELEASE_TAG" \
+              --generate-notes \
+              --latest
+          fi
+
+      - name: Remove release keystore
+        if: always()
+        run: rm -f vimusic-release.jks

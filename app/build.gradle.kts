@@ -31,6 +31,19 @@ android {
         multiDexEnabled = true
     }
 
+    flavorDimensions += "httpTransport"
+    productFlavors {
+        create("http3") {
+            dimension = "httpTransport"
+            isDefault = true
+        }
+
+        create("http2Only") {
+            dimension = "httpTransport"
+            versionNameSuffix = "-HTTP2ONLY"
+        }
+    }
+
     splits {
         abi {
             reset()
@@ -111,6 +124,12 @@ android {
     }
 }
 
+androidComponents {
+    onVariants(selector().withFlavor("httpTransport" to "http2Only")) { variant ->
+        variant.packaging.jniLibs.excludes.add("**/libkathttp3.so")
+    }
+}
+
 kotlin {
     jvmToolchain(libs.versions.jvm.get().toInt())
     compilerOptions {
@@ -156,6 +175,7 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.coil.network.core)
+    implementation(libs.coil.network.okhttp)
     implementation(libs.palette)
     implementation(libs.monet)
     runtimeOnly(projects.core.materialCompat)
@@ -188,10 +208,11 @@ dependencies {
     implementation(libs.logback)
     implementation(libs.okhttp)
     implementation(libs.okhttp.brotli)
-    implementation("com.github.haturatu:kathttp3:v0.1.30")
+    // KatHttp3 code and native libraries exist only in the HTTP/3 source set.
+    add("http3Implementation", "com.github.haturatu:kathttp3:v0.1.30")
     implementation(libs.newpipe.nanojson)
     implementation(libs.re2j)
-    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.3")
+    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.4")
 
     implementation(projects.providers.github)
     implementation(projects.providers.youtubeMusic)

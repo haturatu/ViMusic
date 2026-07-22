@@ -7,18 +7,34 @@ import app.vimusic.providers.youtubemusic.innertube.models.isExplicit
 
 fun YoutubeMusicInnertube.SongItem.Companion.from(renderer: MusicResponsiveListItemRenderer) =
     YoutubeMusicInnertube.SongItem(
-        info = renderer
+        info = (renderer.navigationEndpoint?.watchEndpoint
+            ?: renderer
             .flexColumns
             .getOrNull(0)
             ?.musicResponsiveListItemFlexColumnRenderer
             ?.text
             ?.runs
             ?.getOrNull(0)
-            ?.let {
-                if (it.navigationEndpoint?.endpoint is NavigationEndpoint.Endpoint.Watch) YoutubeMusicInnertube.Info(
-                    name = it.text,
-                    endpoint = it.navigationEndpoint.endpoint as NavigationEndpoint.Endpoint.Watch
-                ) else null
+            ?.navigationEndpoint
+            ?.watchEndpoint
+            ?: renderer.playlistItemData?.videoId?.let { videoId ->
+                NavigationEndpoint.Endpoint.Watch(
+                    videoId = videoId,
+                    playlistSetVideoId = renderer.playlistItemData.playlistSetVideoId,
+                )
+            })
+            ?.let { endpoint ->
+                YoutubeMusicInnertube.Info(
+                    name = renderer
+                        .flexColumns
+                        .getOrNull(0)
+                        ?.musicResponsiveListItemFlexColumnRenderer
+                        ?.text
+                        ?.runs
+                        ?.getOrNull(0)
+                        ?.text,
+                    endpoint = endpoint,
+                )
             },
         authors = renderer
             .flexColumns

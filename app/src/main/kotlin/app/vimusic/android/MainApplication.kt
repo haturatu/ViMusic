@@ -86,7 +86,6 @@ import app.vimusic.android.repositories.HomeRepository
 import app.vimusic.android.repositories.YoutubeMusicInnertubeDeepLinkRepository
 import app.vimusic.android.repositories.YoutubeMusicInnertubeSearchResultRepository
 import app.vimusic.android.repositories.YoutubeMusicInnertubeMoodRepository
-import app.vimusic.android.utils.Http3OriginPolicy
 import app.vimusic.android.repositories.LibraryRepository
 import app.vimusic.android.repositories.MoodRepository
 import app.vimusic.android.repositories.LocalPlaylistRepository
@@ -136,8 +135,8 @@ import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.collectProvidedBitmapAsState
 import app.vimusic.android.utils.forcePlay
 import app.vimusic.android.utils.intent
-import app.vimusic.android.utils.KatHttp3CoilNetworkClient
-import app.vimusic.android.utils.KatHttp3CoilConcurrentRequestStrategy
+import app.vimusic.android.utils.addHttpTransport
+import app.vimusic.android.utils.initializeHttpTransport
 import app.vimusic.android.utils.invokeOnReady
 import app.vimusic.android.utils.isInPip
 import app.vimusic.android.utils.maybeEnterPip
@@ -170,7 +169,6 @@ import coil3.decode.ExifOrientationStrategy
 import coil3.disk.DiskCache
 import coil3.disk.directory
 import coil3.memory.MemoryCache
-import coil3.network.NetworkFetcher
 import coil3.request.crossfade
 import coil3.util.DebugLogger
 import com.kieronquinn.monetcompat.core.MonetActivityAccessException
@@ -621,7 +619,7 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         MonetCompat.setup(applicationContext)
 
         MainApplicationProvider.application = this
-        Http3OriginPolicy.initialize(this)
+        initializeHttpTransport(this)
         appContainer = AppContainer(this).also(AppContainer::initialize)
         ServiceNotifications.createAll(this)
         DatabaseAutoBackupWorker.upsert(this)
@@ -629,14 +627,7 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
 
     override fun newImageLoader(context: PlatformContext) = ImageLoader.Builder(this)
         .components {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                add(
-                    NetworkFetcher.Factory(
-                        networkClient = { KatHttp3CoilNetworkClient(applicationContext) },
-                        concurrentRequestStrategy = { KatHttp3CoilConcurrentRequestStrategy },
-                    ),
-                )
-            }
+            addHttpTransport(applicationContext)
         }
         .crossfade(true)
         .memoryCache {
