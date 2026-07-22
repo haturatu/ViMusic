@@ -68,28 +68,51 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          source_apk="app/build/outputs/apk/release/app-release.apk"
-          test -f "$source_apk"
+          http3_apk="app/build/outputs/apk/http3/release/app-http3-release.apk"
+          http2_apk="app/build/outputs/apk/http2Only/release/app-http2Only-release.apk"
+          test -f "$http3_apk"
+          test -f "$http2_apk"
 
           apksigner="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
           test -n "$apksigner"
-          "$apksigner" verify --verbose --print-certs "$source_apk"
+          "$apksigner" verify --verbose --print-certs "$http3_apk"
+          "$apksigner" verify --verbose --print-certs "$http2_apk"
 
-          asset="ViMusic-${RELEASE_TAG}.apk"
-          cp "$source_apk" "$asset"
-          sha256sum "$asset" > "$asset.sha256"
+          unzip -Z1 "$http3_apk" | grep '/libkathttp3.so$' >/dev/null
+          if unzip -Z1 "$http2_apk" | grep '/libkathttp3.so$' >/dev/null; then
+            echo "HTTP/2-only APK unexpectedly contains libkathttp3.so" >&2
+            exit 1
+          fi
+          if unzip -p "$http2_apk" 'classes*.dex' | strings | \
+              grep -E 'dev/kathttp3|Ldev/kathttp3|KatHttp3Client' >/dev/null; then
+            echo "HTTP/2-only APK unexpectedly contains KatHttp3 bytecode" >&2
+            exit 1
+          fi
+
+          http3_asset="ViMusic-${RELEASE_TAG}.apk"
+          http2_asset="ViMusic-${RELEASE_TAG}-http2only.apk"
+          cp "$http3_apk" "$http3_asset"
+          cp "$http2_apk" "$http2_asset"
+          sha256sum "$http3_asset" > "$http3_asset.sha256"
+          sha256sum "$http2_asset" > "$http2_asset.sha256"
 
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          asset="ViMusic-${RELEASE_TAG}.apk"
+          http3_asset="ViMusic-${RELEASE_TAG}.apk"
+          http2_asset="ViMusic-${RELEASE_TAG}-http2only.apk"
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" "$asset" "$asset.sha256" --clobber
+            gh release upload "$RELEASE_TAG" \
+              "$http3_asset" "$http3_asset.sha256" \
+              "$http2_asset" "$http2_asset.sha256" \
+              --clobber
             gh release edit "$RELEASE_TAG" --latest
           else
-            gh release create "$RELEASE_TAG" "$asset" "$asset.sha256" \
+            gh release create "$RELEASE_TAG" \
+              "$http3_asset" "$http3_asset.sha256" \
+              "$http2_asset" "$http2_asset.sha256" \
               --title "$RELEASE_TAG" \
               --generate-notes \
               --latest

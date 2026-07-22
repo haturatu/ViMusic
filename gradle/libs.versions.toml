@@ -54,6 +54,7 @@ compose_viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-compose",
 
 coil_compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil_network_core = { module = "io.coil-kt.coil3:coil-network-core", version.ref = "coil" }
+coil_network_okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 
 room = { module = "androidx.room:room-ktx", version.ref = "room" }
 room_compiler = { module = "androidx.room:room-compiler", version.ref = "room" }

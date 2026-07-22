@@ -248,9 +248,9 @@ object NewPipeExtractorClient {
 
         // kathttp3 resolves the URL hostname itself, so it is used for NewPipe's normal resolver
         // path. Fixed-address retry uses the OkHttp DNS override fallback.
-        return if (dnsTarget == NewPipeDnsTarget.System && android.os.Build.VERSION.SDK_INT >= 26) {
+        return if (dnsTarget == NewPipeDnsTarget.System) {
             synchronized(downloaderLock) {
-                sharedSystemDownloader ?: KatHttp3Downloader(fallback, context)
+                sharedSystemDownloader ?: createSystemDownloader(fallback, context)
                     .also { sharedSystemDownloader = it }
             }
         } else {

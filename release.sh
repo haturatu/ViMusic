@@ -15,7 +15,7 @@ example:
 notes:
   - tag must match gradle.properties version (expected: v$VERSION)
   - this script commits only gradle.properties, then pushes master and the tag
-  - the tag starts .github/workflows/release.yml, which builds and publishes the signed APK
+  - the tag starts .github/workflows/release.yml, which publishes HTTP/3 and HTTP/2-only APKs
   - configure these Actions secrets before releasing:
       VIMUSIC_RELEASE_KEYSTORE_BASE64
       VIMUSIC_KEYSTORE_PASSWORD

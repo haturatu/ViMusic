@@ -7,13 +7,14 @@ NEWPIPEEXTRACTOR_PATCH := patches/newpipeextractor.patch
 NEWPIPEEXTRACTOR_ANDROID10_PATCH := patches/newpipeextractor-android10.patch
 
 build: $(NEWPIPEEXTRACTOR_DIR)
-	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew assembleDebug
+	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew assembleHttp3Debug
 
 adbinstall: $(NEWPIPEEXTRACTOR_DIR)
-	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew installDebug
+	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew installHttp3Debug
 
 release: $(NEWPIPEEXTRACTOR_DIR)
-	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew assembleRelease
+	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew --no-daemon assembleHttp3Release
+	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew --no-daemon assembleHttp2OnlyRelease
 
 lint: $(NEWPIPEEXTRACTOR_DIR)
 	NEWPIPE_EXTRACTOR_DIR=$(NEWPIPEEXTRACTOR_DIR) ./gradlew lint
