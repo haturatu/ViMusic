@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.3.10"
-ksp = "2.3.10"
+ksp = "2.3.11"
 
 jvm = "17"
 agp = "9.3.1"
