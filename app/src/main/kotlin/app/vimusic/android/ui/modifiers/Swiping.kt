@@ -331,9 +331,9 @@ fun Modifier.swipeToAction(
                 val horizontalPadding = 16.dp.toPx()
                 val iconAlpha = (kotlin.math.abs(currentOffsetPx) / currentWidth).coerceIn(0f, 1f)
                 val iconLeft = if (currentOffsetPx < 0) {
-                    horizontalPadding
-                } else {
                     size.width - iconSize - horizontalPadding
+                } else {
+                    horizontalPadding
                 }
 
                 translate(iconLeft, (size.height - iconSize) / 2f) {
