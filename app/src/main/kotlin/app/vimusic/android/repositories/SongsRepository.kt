@@ -90,7 +90,13 @@ object DatabaseSongsRepository : SongsRepository {
     }
 }
 
-fun String.toFtsPrefixQuery(): String =
-    trim().split(Regex("\\s+")).filter(String::isNotBlank).joinToString(" AND ") { token ->
-        "\"${token.replace("\"", "\"\"")}\"*"
-    }
+fun String.toFtsPrefixQuery(): String {
+    val tokens = trim()
+        .split(Regex("\\s+"))
+        .map { token -> token.filter { it != '"' } }
+        .filter(String::isNotBlank)
+
+    if (tokens.isEmpty()) return ""
+
+    return tokens.joinToString(" AND ") { "\"$it\"*" }
+}
