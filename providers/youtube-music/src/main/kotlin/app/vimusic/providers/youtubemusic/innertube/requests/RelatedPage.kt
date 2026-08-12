@@ -24,7 +24,7 @@ suspend fun YoutubeMusicInnertube.relatedPage(body: NextBody) = runCatchingCance
         ?.tabbedRenderer
         ?.watchNextTabbedResultsRenderer
         ?.tabs
-        ?.getOrNull(2)
+        ?.firstOrNull { it.tabRenderer?.title == "Related" }
         ?.tabRenderer
         ?.endpoint
         ?.browseEndpoint
