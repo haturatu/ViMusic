@@ -28,6 +28,8 @@ interface LocalPlaylistRepository {
 }
 
 object DatabaseLocalPlaylistRepository : LocalPlaylistRepository {
+    private const val SONGS_BATCH_SIZE = 300
+
     override fun observePlaylist(playlistId: Long): Flow<Playlist?> = Database.playlist(playlistId)
 
     override fun observePlaylistSongs(playlistId: Long): Flow<List<Song>> = Database.playlistSongs(playlistId)
@@ -69,7 +71,8 @@ object DatabaseLocalPlaylistRepository : LocalPlaylistRepository {
                             position = position
                         )
                     }
-                    ?.let(Database::insertSongPlaylistMaps)
+                    ?.chunked(SONGS_BATCH_SIZE)
+                    ?.forEach(Database::insertSongPlaylistMaps)
             }
         }
     }.onFailure {

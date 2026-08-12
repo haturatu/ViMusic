@@ -28,6 +28,8 @@ interface PlaylistRepository {
 }
 
 object DatabasePlaylistRepository : PlaylistRepository {
+    private const val SONGS_BATCH_SIZE = 300
+
     override suspend fun fetchPlaylistPage(
         browseId: String,
         params: String?,
@@ -65,7 +67,8 @@ object DatabasePlaylistRepository : PlaylistRepository {
                             position = index
                         )
                     }
-                    ?.let(Database::insertSongPlaylistMaps)
+                    ?.chunked(SONGS_BATCH_SIZE)
+                    ?.forEach(Database::insertSongPlaylistMaps)
             }
         }
     }
