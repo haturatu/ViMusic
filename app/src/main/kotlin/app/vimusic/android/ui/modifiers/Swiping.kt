@@ -1,5 +1,6 @@
 package app.vimusic.android.ui.modifiers
 
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.AnimationVector1D
@@ -25,15 +26,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.px
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -273,12 +281,17 @@ fun Modifier.swipeToAction(
     requireUnconsumed: Boolean = false,
     enableSwipeLeft: Boolean = true,
     enableSwipeRight: Boolean = true,
+    @DrawableRes leftActionIcon: Int? = null,
+    @DrawableRes rightActionIcon: Int? = null,
     onSwipeLeft: suspend (animationJob: Job) -> Unit = { },
     onSwipeRight: suspend (animationJob: Job) -> Unit = { }
 ) = this.composed {
     val swipeState = state ?: rememberSwipeState(key)
 
     val density = LocalDensity.current
+    val (colorPalette) = LocalAppearance.current
+    val leftPainter = leftActionIcon?.let { painterResource(it) }
+    val rightPainter = rightActionIcon?.let { painterResource(it) }
 
     var currentWidth by remember { mutableIntStateOf(0) }
     val currentWidthDp by remember { derivedStateOf { currentWidth.px.dp(density) } }
@@ -306,7 +319,37 @@ fun Modifier.swipeToAction(
 
     this
         .onSizeChanged { currentWidth = it.width }
-        .alpha(alpha)
+        .drawWithContent {
+            val actionPainter = when {
+                currentOffsetPx < 0 -> leftPainter
+                currentOffsetPx > 0 -> rightPainter
+                else -> null
+            }
+
+            if (actionPainter != null && currentWidth > 0) {
+                val iconSize = 24.dp.toPx()
+                val horizontalPadding = 16.dp.toPx()
+                val iconAlpha = (kotlin.math.abs(currentOffsetPx) / currentWidth).coerceIn(0f, 1f)
+                val iconLeft = if (currentOffsetPx < 0) {
+                    size.width - iconSize - horizontalPadding
+                } else {
+                    horizontalPadding
+                }
+
+                translate(iconLeft, (size.height - iconSize) / 2f) {
+                    with(actionPainter) {
+                        draw(
+                            size = Size(iconSize, iconSize),
+                            alpha = iconAlpha,
+                            colorFilter = ColorFilter.tint(colorPalette.text)
+                        )
+                    }
+                }
+            }
+
+            drawContent()
+        }
+        .graphicsLayer(alpha = alpha)
         .onSwipe(
             state = swipeState,
             key = key,

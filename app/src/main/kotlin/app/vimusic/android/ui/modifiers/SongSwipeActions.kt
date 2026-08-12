@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.MediaItem
+import app.vimusic.android.R
 import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
 import app.vimusic.android.models.Song
@@ -36,6 +37,12 @@ fun Modifier.songSwipeActions(
         requireUnconsumed = requireUnconsumed,
         enableSwipeLeft = canSwipeLeft,
         enableSwipeRight = AppearancePreferences.swipeRightToPlayNext,
+        leftActionIcon = if (canSwipeLeft) R.drawable.trash else null,
+        rightActionIcon = if (AppearancePreferences.swipeRightToPlayNext) {
+            R.drawable.play_skip_forward
+        } else {
+            null
+        },
         onSwipeLeft = { animationJob ->
             if (canSwipeLeft) {
                 val song = requireNotNull(songToHide)
