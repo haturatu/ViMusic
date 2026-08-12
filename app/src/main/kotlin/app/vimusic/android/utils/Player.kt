@@ -56,10 +56,9 @@ fun Player.forcePlayAtIndex(
     items: List<MediaItem>,
     index: Int
 ) {
-    if (items.isEmpty()) return
+    if (index !in items.indices) return
 
-    val safeIndex = index.coerceIn(0, items.lastIndex)
-    setMediaItems(items, safeIndex, C.TIME_UNSET)
+    setMediaItems(items, index, C.TIME_UNSET)
     playWhenReady = true
     prepare()
 }
