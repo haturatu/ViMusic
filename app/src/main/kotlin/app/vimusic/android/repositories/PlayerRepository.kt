@@ -149,10 +149,12 @@ object DatabasePlayerRepository : PlayerRepository {
 
     private fun insertFormatMetadataIgnoringMissingSong(format: Format) {
         runCatching {
-            Database.upsertFormatMetadata(format.songId, format.itag, format.mimeType, format.bitrate)
+            if (Database.updateFormatMetadata(format.songId, format.itag, format.mimeType, format.bitrate) == 0) {
+                Database.insertFormatMetadata(format)
+            }
         }.onFailure { throwable ->
             if (throwable is SQLiteConstraintException) {
-                Log.w(TAG, "Skipping format upsert without song ${format.songId}", throwable)
+                Log.w(TAG, "Skipping format metadata insert without song ${format.songId}", throwable)
             } else {
                 throw throwable
             }

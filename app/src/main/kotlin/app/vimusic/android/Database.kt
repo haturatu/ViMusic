@@ -838,15 +838,18 @@ interface Database {
 
     @Query(
         """
-        INSERT INTO Format(songId, itag, mimeType, bitrate)
-        VALUES (:songId, :itag, :mimeType, :bitrate)
-        ON CONFLICT(songId) DO UPDATE SET
-            itag = COALESCE(excluded.itag, Format.itag),
-            mimeType = COALESCE(excluded.mimeType, Format.mimeType),
-            bitrate = COALESCE(excluded.bitrate, Format.bitrate)
+        UPDATE Format
+        SET
+            itag = COALESCE(:itag, itag),
+            mimeType = COALESCE(:mimeType, mimeType),
+            bitrate = COALESCE(:bitrate, bitrate)
+        WHERE songId = :songId
         """
     )
-    fun upsertFormatMetadata(songId: String, itag: Int?, mimeType: String?, bitrate: Long?)
+    fun updateFormatMetadata(songId: String, itag: Int?, mimeType: String?, bitrate: Long?): Int
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertFormatMetadata(format: Format)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(searchQuery: SearchQuery)
