@@ -209,7 +209,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.brotli)
     // KatHttp3 code and native libraries exist only in the HTTP/3 source set.
-    add("http3Implementation", "com.github.haturatu:kathttp3:v0.1.30")
+    add("http3Implementation", "com.github.haturatu:kathttp3:v0.1.31")
     implementation(libs.newpipe.nanojson)
     implementation(libs.re2j)
     implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.4")
