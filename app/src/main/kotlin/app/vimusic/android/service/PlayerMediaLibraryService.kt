@@ -437,7 +437,7 @@ class PlayerMediaLibraryService : MediaLibraryService(), ServiceConnection {
                             withContext(Dispatchers.Main) {
                                 binder.player.forcePlayAtIndex(
                                     items = it,
-                                    index = index.coerceIn(0, it.size)
+                                    index = index
                                 )
                             }
                         }
