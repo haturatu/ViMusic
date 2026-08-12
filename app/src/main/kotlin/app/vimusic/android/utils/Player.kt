@@ -36,8 +36,11 @@ fun Player.shuffleQueue() {
     val mediaItems = currentTimeline
         .mediaItems
         .toMutableList()
-        .apply { removeAt(currentMediaItemIndex) }
-        .shuffled()
+    if (mediaItems.isEmpty()) return
+
+    mediaItems
+        .removeAt(currentMediaItemIndex.coerceIn(0, mediaItems.lastIndex))
+    mediaItems.shuffle()
 
     safeClearQueue()
     addMediaItems(mediaItems)
@@ -53,7 +56,7 @@ fun Player.forcePlayAtIndex(
     items: List<MediaItem>,
     index: Int
 ) {
-    if (items.isEmpty()) return
+    if (index !in items.indices) return
 
     setMediaItems(items, index, C.TIME_UNSET)
     playWhenReady = true
