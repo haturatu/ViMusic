@@ -70,13 +70,16 @@ fun Player.forceSeekToPrevious(
     hideExplicit -> if (mediaItemCount <= 1) forceSeekToPrevious(hideExplicit = false)
     else {
         var i = currentMediaItemIndex - 1
-        while (
-            i !in (0 until mediaItemCount) ||
-            getMediaItemAt(i).mediaMetadata.extras?.songBundle?.explicit == true
-        ) {
-            if (i <= 0) i = mediaItemCount - 1 else i--
+        var scanned = 0
+        while (scanned < mediaItemCount) {
+            if (i < 0) i = mediaItemCount - 1
+            if (getMediaItemAt(i).mediaMetadata.extras?.songBundle?.explicit != true) {
+                return seekTo(i, C.TIME_UNSET)
+            }
+            i--
+            scanned++
         }
-        seekTo(i, C.TIME_UNSET)
+        return forceSeekToPrevious(hideExplicit = false)
     }
     // fall back to default behavior if there is only a single song
 
