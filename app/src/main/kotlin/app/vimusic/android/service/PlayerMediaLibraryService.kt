@@ -382,7 +382,14 @@ class PlayerMediaLibraryService : MediaLibraryService(), ServiceConnection {
                         MediaId.SHUFFLE -> lastSongs.shuffled()
 
                         MediaId.SONGS -> data.getOrNull(1)?.let { songId ->
-                            lastSongs.firstOrNull { it.id == songId }?.let { listOf(it) }
+                            val requestedIndex = lastSongs.indexOfFirst { it.id == songId }
+
+                            if (requestedIndex >= 0) {
+                                index = requestedIndex
+                                lastSongs
+                            } else {
+                                emptyList()
+                            }
                         }
 
                         MediaId.FAVORITES ->
