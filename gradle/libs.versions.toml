@@ -16,7 +16,7 @@ credentials = "1.6.0"
 coil = "3.6.2"
 okhttp = "5.5.0"
 re2j = "1.8"
-dependency_analysis = "3.19.1"
+dependency_analysis = "3.19.2"
 
 [plugins]
 android_application = { id = "com.android.application", version.ref = "agp" }
