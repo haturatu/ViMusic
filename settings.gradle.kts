@@ -13,7 +13,7 @@ dependencyResolutionManagement {
 }
 
 pluginManagement {
-    val kotlinVersion = "2.4.10"
+    val kotlinVersion = "2.4.20"
     resolutionStrategy {
         repositories {
             google()
@@ -22,9 +22,9 @@ pluginManagement {
         }
     }
     plugins {
-        id("com.android.application") version "9.3.1"
-        id("com.android.library") version "9.3.1"
-        id("com.android.lint") version "9.3.1"
+        id("com.android.application") version "9.4.1"
+        id("com.android.library") version "9.4.1"
+        id("com.android.lint") version "9.4.1"
         id("org.jetbrains.kotlin.jvm") version kotlinVersion
         id("org.jetbrains.kotlin.plugin.compose") version kotlinVersion
         id("org.jetbrains.kotlin.plugin.parcelize") version kotlinVersion

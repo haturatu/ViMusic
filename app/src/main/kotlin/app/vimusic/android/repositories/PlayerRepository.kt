@@ -93,7 +93,7 @@ object DatabasePlayerRepository : PlayerRepository {
 
     override fun insertFormat(format: Format) {
         transaction {
-            insertFormatIgnoringMissingSong(format)
+            insertFormatMetadataIgnoringMissingSong(format)
         }
     }
 
@@ -141,6 +141,20 @@ object DatabasePlayerRepository : PlayerRepository {
         }.onFailure { throwable ->
             if (throwable is SQLiteConstraintException) {
                 Log.w(TAG, "Skipping format insert without song ${format.songId}", throwable)
+            } else {
+                throw throwable
+            }
+        }
+    }
+
+    private fun insertFormatMetadataIgnoringMissingSong(format: Format) {
+        runCatching {
+            if (Database.updateFormatMetadata(format.songId, format.itag, format.mimeType, format.bitrate) == 0) {
+                Database.insertFormatMetadata(format)
+            }
+        }.onFailure { throwable ->
+            if (throwable is SQLiteConstraintException) {
+                Log.w(TAG, "Skipping format metadata insert without song ${format.songId}", throwable)
             } else {
                 throw throwable
             }

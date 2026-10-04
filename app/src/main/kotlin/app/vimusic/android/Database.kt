@@ -836,6 +836,21 @@ interface Database {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(format: Format)
 
+    @Query(
+        """
+        UPDATE Format
+        SET
+            itag = COALESCE(:itag, itag),
+            mimeType = COALESCE(:mimeType, mimeType),
+            bitrate = COALESCE(:bitrate, bitrate)
+        WHERE songId = :songId
+        """
+    )
+    fun updateFormatMetadata(songId: String, itag: Int?, mimeType: String?, bitrate: Long?): Int
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertFormatMetadata(format: Format)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(searchQuery: SearchQuery)
 
@@ -1288,6 +1303,24 @@ abstract class DatabaseInitializer protected constructor() : RoomDatabase() {
                         "`title` TEXT NOT NULL, `artistsText` TEXT, content=`Song`)"
             )
             db.execSQL("INSERT INTO `SongFts`(`SongFts`) VALUES('rebuild')")
+            db.execSQL(
+                "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_SongFts_BEFORE_UPDATE " +
+                        "BEFORE UPDATE ON `Song` BEGIN DELETE FROM `SongFts` WHERE `docid`=OLD.`rowid`; END"
+            )
+            db.execSQL(
+                "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_SongFts_BEFORE_DELETE " +
+                        "BEFORE DELETE ON `Song` BEGIN DELETE FROM `SongFts` WHERE `docid`=OLD.`rowid`; END"
+            )
+            db.execSQL(
+                "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_SongFts_AFTER_UPDATE " +
+                        "AFTER UPDATE ON `Song` BEGIN INSERT INTO `SongFts`(`docid`, `title`, `artistsText`)" +
+                        " VALUES (NEW.`rowid`, NEW.`title`, NEW.`artistsText`); END"
+            )
+            db.execSQL(
+                "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_SongFts_AFTER_INSERT " +
+                        "AFTER INSERT ON `Song` BEGIN INSERT INTO `SongFts`(`docid`, `title`, `artistsText`)" +
+                        " VALUES (NEW.`rowid`, NEW.`title`, NEW.`artistsText`); END"
+            )
         }
     }
 }
