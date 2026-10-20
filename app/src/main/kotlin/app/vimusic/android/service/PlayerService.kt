@@ -571,18 +571,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         super.onTaskRemoved(rootIntent)
     }
 
-    override fun onEvents(player: Player, events: Player.Events) {
-        if (
-            events.containsAny(
-                Player.EVENT_MEDIA_ITEM_TRANSITION,
-                Player.EVENT_POSITION_DISCONTINUITY,
-                Player.EVENT_PLAY_WHEN_READY_CHANGED
-            )
-        ) {
-            maybeSavePlayerQueue(immediately = true)
-        }
-    }
-
     override fun onDestroy() {
         runCatching {
             maybeSavePlayerQueue(immediately = true)
@@ -1032,6 +1020,16 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     // legacy behavior may cause inconsistencies, but not available on sdk 24 or lower
     @Suppress("DEPRECATION")
     override fun onEvents(player: Player, events: Player.Events) {
+        if (
+            events.containsAny(
+                Player.EVENT_MEDIA_ITEM_TRANSITION,
+                Player.EVENT_POSITION_DISCONTINUITY,
+                Player.EVENT_PLAY_WHEN_READY_CHANGED
+            )
+        ) {
+            maybeSavePlayerQueue(immediately = true)
+        }
+
         if (
             !events.containsAny(
                 Player.EVENT_PLAYBACK_STATE_CHANGED,
