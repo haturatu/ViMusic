@@ -72,9 +72,7 @@ import kotlinx.coroutines.withContext
 
 @Dao
 @Suppress("LargeClass", "TooManyFunctions") // Room requires the DAO surface to remain in one interface.
-interface Database {
-    companion object : Database by DatabaseInitializer.instance.database
-
+interface DatabaseDao {
     @Transaction
     @Query("SELECT * FROM Song WHERE id NOT LIKE '$LOCAL_KEY_PREFIX%' ORDER BY ROWID ASC")
     @RewriteQueriesToDropUnusedColumns
@@ -982,6 +980,9 @@ interface Database {
     }
 }
 
+// Keep the facade separate so Room can inspect the DAO before the database is initialized.
+object Database : DatabaseDao by DatabaseInitializer.instance.database
+
 @androidx.room.Database(
     entities = [
         Song::class,
@@ -1032,7 +1033,7 @@ interface Database {
 )
 @TypeConverters(Converters::class)
 abstract class DatabaseInitializer protected constructor() : RoomDatabase() {
-    abstract val database: Database
+    abstract val database: DatabaseDao
 
     companion object {
         @Volatile
