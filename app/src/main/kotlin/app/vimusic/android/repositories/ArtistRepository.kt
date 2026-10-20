@@ -4,6 +4,9 @@ import app.vimusic.android.Database
 import app.vimusic.android.models.Artist
 import app.vimusic.android.query
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
+import app.vimusic.providers.youtubemusic.innertube.models.MusicResponsiveListItemRenderer
+import app.vimusic.providers.youtubemusic.innertube.models.MusicTwoRowItemRenderer
+import app.vimusic.providers.youtubemusic.innertube.models.NavigationEndpoint
 import app.vimusic.providers.youtubemusic.innertube.models.bodies.BrowseBody
 import app.vimusic.providers.youtubemusic.innertube.models.bodies.ContinuationBody
 import app.vimusic.providers.youtubemusic.innertube.requests.artistPage
@@ -57,116 +60,64 @@ object DatabaseArtistRepository : ArtistRepository {
     override suspend fun artistSongsPage(
         artistPage: YoutubeMusicInnertube.ArtistPage?,
         continuation: String?
-    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.SongItem>?> {
-        return continuation?.let {
-            YoutubeMusicInnertube.itemsPage(
-                body = ContinuationBody(continuation = continuation),
-                fromMusicResponsiveListItemRenderer = YoutubeMusicInnertube.SongItem::from
-            )
-        } ?: artistPage
-            ?.songsEndpoint
-            ?.takeIf { it.browseId != null }
-            ?.let { endpoint ->
-                YoutubeMusicInnertube.itemsPage(
-                    body = BrowseBody(
-                        browseId = endpoint.browseId!!,
-                        params = endpoint.params
-                    ),
-                    fromMusicResponsiveListItemRenderer = YoutubeMusicInnertube.SongItem::from
-                )
-            }
-            ?: Result.success(
-                YoutubeMusicInnertube.ItemsPage(
-                    items = artistPage?.songs,
-                    continuation = null
-                )
-            )
-    }
+    ) = loadArtistItems(
+        endpoint = artistPage?.songsEndpoint,
+        continuation = continuation,
+        initialItems = artistPage?.songs,
+        fromList = YoutubeMusicInnertube.SongItem::from
+    )
 
     override suspend fun artistAlbumsPage(
         artistPage: YoutubeMusicInnertube.ArtistPage?,
         continuation: String?
-    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.AlbumItem>?> {
-        return continuation?.let {
-            YoutubeMusicInnertube.itemsPage(
-                body = ContinuationBody(continuation = continuation),
-                fromMusicTwoRowItemRenderer = YoutubeMusicInnertube.AlbumItem::from
-            )
-        } ?: artistPage
-            ?.albumsEndpoint
-            ?.takeIf { it.browseId != null }
-            ?.let { endpoint ->
-                YoutubeMusicInnertube.itemsPage(
-                    body = BrowseBody(
-                        browseId = endpoint.browseId!!,
-                        params = endpoint.params
-                    ),
-                    fromMusicTwoRowItemRenderer = YoutubeMusicInnertube.AlbumItem::from
-                )
-            }
-            ?: Result.success(
-                YoutubeMusicInnertube.ItemsPage(
-                    items = artistPage?.albums,
-                    continuation = null
-                )
-            )
-    }
+    ) = loadArtistItems(
+        endpoint = artistPage?.albumsEndpoint,
+        continuation = continuation,
+        initialItems = artistPage?.albums,
+        fromGrid = YoutubeMusicInnertube.AlbumItem::from
+    )
 
     override suspend fun artistSinglesPage(
         artistPage: YoutubeMusicInnertube.ArtistPage?,
         continuation: String?
-    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.AlbumItem>?> {
-        return continuation?.let {
-            YoutubeMusicInnertube.itemsPage(
-                body = ContinuationBody(continuation = continuation),
-                fromMusicTwoRowItemRenderer = YoutubeMusicInnertube.AlbumItem::from
-            )
-        } ?: artistPage
-            ?.singlesEndpoint
-            ?.takeIf { it.browseId != null }
-            ?.let { endpoint ->
-                YoutubeMusicInnertube.itemsPage(
-                    body = BrowseBody(
-                        browseId = endpoint.browseId!!,
-                        params = endpoint.params
-                    ),
-                    fromMusicTwoRowItemRenderer = YoutubeMusicInnertube.AlbumItem::from
-                )
-            }
-            ?: Result.success(
-                YoutubeMusicInnertube.ItemsPage(
-                    items = artistPage?.singles,
-                    continuation = null
-                )
-            )
-    }
+    ) = loadArtistItems(
+        endpoint = artistPage?.singlesEndpoint,
+        continuation = continuation,
+        initialItems = artistPage?.singles,
+        fromGrid = YoutubeMusicInnertube.AlbumItem::from
+    )
 
     override suspend fun artistVideosPage(
         artistPage: YoutubeMusicInnertube.ArtistPage?,
+        continuation: String?
+    ) = loadArtistItems(
+        endpoint = artistPage?.videosEndpoint,
+        continuation = continuation,
+        initialItems = artistPage?.videos,
+        fromList = YoutubeMusicInnertube.VideoItem::from
+    )
+
+    private suspend fun <T : YoutubeMusicInnertube.Item> loadArtistItems(
+        endpoint: NavigationEndpoint.Endpoint.Browse?,
         continuation: String?,
-    ): Result<YoutubeMusicInnertube.ItemsPage<YoutubeMusicInnertube.VideoItem>?> {
+        initialItems: List<T>?,
+        fromList: (MusicResponsiveListItemRenderer) -> T? = { null },
+        fromGrid: (MusicTwoRowItemRenderer) -> T? = { null }
+    ): Result<YoutubeMusicInnertube.ItemsPage<T>?> {
         return continuation?.let {
             YoutubeMusicInnertube.itemsPage(
-                body = ContinuationBody(continuation = continuation),
-                fromMusicResponsiveListItemRenderer = YoutubeMusicInnertube.VideoItem::from,
+                body = ContinuationBody(continuation = it),
+                fromMusicResponsiveListItemRenderer = fromList,
+                fromMusicTwoRowItemRenderer = fromGrid
             )
-        } ?: artistPage
-            ?.videosEndpoint
-            ?.takeIf { it.browseId != null }
-            ?.let { endpoint ->
-                YoutubeMusicInnertube.itemsPage(
-                    body = BrowseBody(
-                        browseId = endpoint.browseId!!,
-                        params = endpoint.params,
-                    ),
-                    fromMusicResponsiveListItemRenderer = YoutubeMusicInnertube.VideoItem::from,
-                )
-            }
-            ?: Result.success(
-                YoutubeMusicInnertube.ItemsPage(
-                    items = artistPage?.videos,
-                    continuation = null,
-                )
+        } ?: endpoint?.browseId?.let { browseId ->
+            YoutubeMusicInnertube.itemsPage(
+                body = BrowseBody(browseId = browseId, params = endpoint.params),
+                fromMusicResponsiveListItemRenderer = fromList,
+                fromMusicTwoRowItemRenderer = fromGrid
             )
+        } ?: Result.success(
+            YoutubeMusicInnertube.ItemsPage(items = initialItems, continuation = null)
+        )
     }
 }
