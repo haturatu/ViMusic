@@ -70,79 +70,94 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 
+private const val SONGS_BASE_QUERY = "SELECT * FROM Song WHERE id NOT LIKE '$LOCAL_KEY_PREFIX%'"
+
+private const val LOCAL_SONGS_BASE_QUERY = "SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%'"
+
+private const val PAGED_SONGS_BASE_QUERY = """
+SELECT * FROM Song
+WHERE (:isLocal = 1 AND id LIKE '$LOCAL_KEY_PREFIX%' OR :isLocal = 0 AND id NOT LIKE '$LOCAL_KEY_PREFIX%')
+  AND (:onlyPlayed = 0 OR totalPlayTimeMs > 0)
+  AND (:excludeZeroDuration = 0 OR durationText != '0:00')
+"""
+
+private const val FAVORITES_BASE_QUERY = "SELECT * FROM Song WHERE likedAt IS NOT NULL"
+
+private const val BOOKMARKED_ARTISTS_BASE_QUERY = "SELECT * FROM Artist WHERE bookmarkedAt IS NOT NULL"
+
+private const val BOOKMARKED_ALBUMS_BASE_QUERY = "SELECT * FROM Album WHERE bookmarkedAt IS NOT NULL"
+
+private const val PLAYLIST_PREVIEWS_BASE_QUERY = """
+SELECT id, name, (SELECT COUNT(*) FROM SongPlaylistMap WHERE playlistId = id) as songCount, thumbnail
+FROM Playlist
+"""
+
+private const val SONGS_WITH_CONTENT_LENGTH_BASE_QUERY = """
+SELECT Song.*, contentLength FROM Song
+JOIN Format ON id = songId
+WHERE contentLength IS NOT NULL
+"""
+
 @Dao
 @Suppress("LargeClass", "TooManyFunctions") // Room requires the DAO surface to remain in one interface.
 interface DatabaseDao {
     @Transaction
-    @Query("SELECT * FROM Song WHERE id NOT LIKE '$LOCAL_KEY_PREFIX%' ORDER BY ROWID ASC")
+    @Query(SONGS_BASE_QUERY + " ORDER BY ROWID ASC")
     @RewriteQueriesToDropUnusedColumns
     fun songsByRowIdAsc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE id NOT LIKE '$LOCAL_KEY_PREFIX%' ORDER BY ROWID DESC")
+    @Query(SONGS_BASE_QUERY + " ORDER BY ROWID DESC")
     @RewriteQueriesToDropUnusedColumns
     fun songsByRowIdDesc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE id NOT LIKE '$LOCAL_KEY_PREFIX%' ORDER BY title COLLATE NOCASE ASC")
+    @Query(SONGS_BASE_QUERY + " ORDER BY title COLLATE NOCASE ASC")
     @RewriteQueriesToDropUnusedColumns
     fun songsByTitleAsc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE id NOT LIKE '$LOCAL_KEY_PREFIX%' ORDER BY title COLLATE NOCASE DESC")
+    @Query(SONGS_BASE_QUERY + " ORDER BY title COLLATE NOCASE DESC")
     @RewriteQueriesToDropUnusedColumns
     fun songsByTitleDesc(): Flow<List<Song>>
 
     @Transaction
-    @Query(
-        """
-        SELECT * FROM Song
-        WHERE id NOT LIKE '$LOCAL_KEY_PREFIX%'
-        ORDER BY totalPlayTimeMs ASC
-        """
-    )
+    @Query(SONGS_BASE_QUERY + " ORDER BY totalPlayTimeMs ASC")
     @RewriteQueriesToDropUnusedColumns
     fun songsByPlayTimeAsc(): Flow<List<Song>>
 
     @Transaction
-    @Query(
-        """
-        SELECT * FROM Song
-        WHERE id NOT LIKE '$LOCAL_KEY_PREFIX%'
-        ORDER BY totalPlayTimeMs DESC
-        LIMIT :limit
-        """
-    )
+    @Query(SONGS_BASE_QUERY + " ORDER BY totalPlayTimeMs DESC LIMIT :limit")
     @RewriteQueriesToDropUnusedColumns
     fun songsByPlayTimeDesc(limit: Int = -1): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' ORDER BY ROWID ASC")
+    @Query(LOCAL_SONGS_BASE_QUERY + " ORDER BY ROWID ASC")
     @RewriteQueriesToDropUnusedColumns
     fun localSongsByRowIdAsc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' ORDER BY ROWID DESC")
+    @Query(LOCAL_SONGS_BASE_QUERY + " ORDER BY ROWID DESC")
     @RewriteQueriesToDropUnusedColumns
     fun localSongsByRowIdDesc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' ORDER BY title COLLATE NOCASE ASC")
+    @Query(LOCAL_SONGS_BASE_QUERY + " ORDER BY title COLLATE NOCASE ASC")
     @RewriteQueriesToDropUnusedColumns
     fun localSongsByTitleAsc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' ORDER BY title COLLATE NOCASE DESC")
+    @Query(LOCAL_SONGS_BASE_QUERY + " ORDER BY title COLLATE NOCASE DESC")
     @RewriteQueriesToDropUnusedColumns
     fun localSongsByTitleDesc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' ORDER BY totalPlayTimeMs ASC")
+    @Query(LOCAL_SONGS_BASE_QUERY + " ORDER BY totalPlayTimeMs ASC")
     @RewriteQueriesToDropUnusedColumns
     fun localSongsByPlayTimeAsc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE id LIKE '$LOCAL_KEY_PREFIX%' ORDER BY totalPlayTimeMs DESC")
+    @Query(LOCAL_SONGS_BASE_QUERY + " ORDER BY totalPlayTimeMs DESC")
     @RewriteQueriesToDropUnusedColumns
     fun localSongsByPlayTimeDesc(): Flow<List<Song>>
 
@@ -164,90 +179,42 @@ interface DatabaseDao {
         }
     }
 
-    @Query(
-        """
-        SELECT * FROM Song
-        WHERE (:isLocal = 1 AND id LIKE '$LOCAL_KEY_PREFIX%' OR :isLocal = 0 AND id NOT LIKE '$LOCAL_KEY_PREFIX%')
-          AND (:onlyPlayed = 0 OR totalPlayTimeMs > 0)
-          AND (:excludeZeroDuration = 0 OR durationText != '0:00')
-        ORDER BY totalPlayTimeMs ASC
-        """
-    )
+    @Query(PAGED_SONGS_BASE_QUERY + " ORDER BY totalPlayTimeMs ASC")
     fun pagedSongsByPlayTimeAsc(
         isLocal: Boolean,
         onlyPlayed: Boolean,
         excludeZeroDuration: Boolean
     ): PagingSource<Int, Song>
 
-    @Query(
-        """
-        SELECT * FROM Song
-        WHERE (:isLocal = 1 AND id LIKE '$LOCAL_KEY_PREFIX%' OR :isLocal = 0 AND id NOT LIKE '$LOCAL_KEY_PREFIX%')
-          AND (:onlyPlayed = 0 OR totalPlayTimeMs > 0)
-          AND (:excludeZeroDuration = 0 OR durationText != '0:00')
-        ORDER BY totalPlayTimeMs DESC
-        """
-    )
+    @Query(PAGED_SONGS_BASE_QUERY + " ORDER BY totalPlayTimeMs DESC")
     fun pagedSongsByPlayTimeDesc(
         isLocal: Boolean,
         onlyPlayed: Boolean,
         excludeZeroDuration: Boolean
     ): PagingSource<Int, Song>
 
-    @Query(
-        """
-        SELECT * FROM Song
-        WHERE (:isLocal = 1 AND id LIKE '$LOCAL_KEY_PREFIX%' OR :isLocal = 0 AND id NOT LIKE '$LOCAL_KEY_PREFIX%')
-          AND (:onlyPlayed = 0 OR totalPlayTimeMs > 0)
-          AND (:excludeZeroDuration = 0 OR durationText != '0:00')
-        ORDER BY title COLLATE NOCASE ASC
-        """
-    )
+    @Query(PAGED_SONGS_BASE_QUERY + " ORDER BY title COLLATE NOCASE ASC")
     fun pagedSongsByTitleAsc(
         isLocal: Boolean,
         onlyPlayed: Boolean,
         excludeZeroDuration: Boolean
     ): PagingSource<Int, Song>
 
-    @Query(
-        """
-        SELECT * FROM Song
-        WHERE (:isLocal = 1 AND id LIKE '$LOCAL_KEY_PREFIX%' OR :isLocal = 0 AND id NOT LIKE '$LOCAL_KEY_PREFIX%')
-          AND (:onlyPlayed = 0 OR totalPlayTimeMs > 0)
-          AND (:excludeZeroDuration = 0 OR durationText != '0:00')
-        ORDER BY title COLLATE NOCASE DESC
-        """
-    )
+    @Query(PAGED_SONGS_BASE_QUERY + " ORDER BY title COLLATE NOCASE DESC")
     fun pagedSongsByTitleDesc(
         isLocal: Boolean,
         onlyPlayed: Boolean,
         excludeZeroDuration: Boolean
     ): PagingSource<Int, Song>
 
-    @Query(
-        """
-        SELECT * FROM Song
-        WHERE (:isLocal = 1 AND id LIKE '$LOCAL_KEY_PREFIX%' OR :isLocal = 0 AND id NOT LIKE '$LOCAL_KEY_PREFIX%')
-          AND (:onlyPlayed = 0 OR totalPlayTimeMs > 0)
-          AND (:excludeZeroDuration = 0 OR durationText != '0:00')
-        ORDER BY ROWID ASC
-        """
-    )
+    @Query(PAGED_SONGS_BASE_QUERY + " ORDER BY ROWID ASC")
     fun pagedSongsByRowIdAsc(
         isLocal: Boolean,
         onlyPlayed: Boolean,
         excludeZeroDuration: Boolean
     ): PagingSource<Int, Song>
 
-    @Query(
-        """
-        SELECT * FROM Song
-        WHERE (:isLocal = 1 AND id LIKE '$LOCAL_KEY_PREFIX%' OR :isLocal = 0 AND id NOT LIKE '$LOCAL_KEY_PREFIX%')
-          AND (:onlyPlayed = 0 OR totalPlayTimeMs > 0)
-          AND (:excludeZeroDuration = 0 OR durationText != '0:00')
-        ORDER BY ROWID DESC
-        """
-    )
+    @Query(PAGED_SONGS_BASE_QUERY + " ORDER BY ROWID DESC")
     fun pagedSongsByRowIdDesc(
         isLocal: Boolean,
         onlyPlayed: Boolean,
@@ -273,27 +240,27 @@ interface DatabaseDao {
     }
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE likedAt IS NOT NULL ORDER BY totalPlayTimeMs ASC")
+    @Query(FAVORITES_BASE_QUERY + " ORDER BY totalPlayTimeMs ASC")
     fun favoritesByPlayTimeAsc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE likedAt IS NOT NULL ORDER BY totalPlayTimeMs DESC")
+    @Query(FAVORITES_BASE_QUERY + " ORDER BY totalPlayTimeMs DESC")
     fun favoritesByPlayTimeDesc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE likedAt IS NOT NULL ORDER BY likedAt ASC")
+    @Query(FAVORITES_BASE_QUERY + " ORDER BY likedAt ASC")
     fun favoritesByLikedAtAsc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE likedAt IS NOT NULL ORDER BY likedAt DESC")
+    @Query(FAVORITES_BASE_QUERY + " ORDER BY likedAt DESC")
     fun favoritesByLikedAtDesc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE likedAt IS NOT NULL ORDER BY title COLLATE NOCASE ASC")
+    @Query(FAVORITES_BASE_QUERY + " ORDER BY title COLLATE NOCASE ASC")
     fun favoritesByTitleAsc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM Song WHERE likedAt IS NOT NULL ORDER BY title COLLATE NOCASE DESC")
+    @Query(FAVORITES_BASE_QUERY + " ORDER BY title COLLATE NOCASE DESC")
     fun favoritesByTitleDesc(): Flow<List<Song>>
 
     fun favorites(
@@ -372,16 +339,16 @@ interface DatabaseDao {
     @Query("SELECT * FROM Artist WHERE id = :id")
     fun artist(id: String): Flow<Artist?>
 
-    @Query("SELECT * FROM Artist WHERE bookmarkedAt IS NOT NULL ORDER BY name COLLATE NOCASE DESC")
+    @Query(BOOKMARKED_ARTISTS_BASE_QUERY + " ORDER BY name COLLATE NOCASE DESC")
     fun artistsByNameDesc(): Flow<List<Artist>>
 
-    @Query("SELECT * FROM Artist WHERE bookmarkedAt IS NOT NULL ORDER BY name COLLATE NOCASE ASC")
+    @Query(BOOKMARKED_ARTISTS_BASE_QUERY + " ORDER BY name COLLATE NOCASE ASC")
     fun artistsByNameAsc(): Flow<List<Artist>>
 
-    @Query("SELECT * FROM Artist WHERE bookmarkedAt IS NOT NULL ORDER BY bookmarkedAt DESC")
+    @Query(BOOKMARKED_ARTISTS_BASE_QUERY + " ORDER BY bookmarkedAt DESC")
     fun artistsByRowIdDesc(): Flow<List<Artist>>
 
-    @Query("SELECT * FROM Artist WHERE bookmarkedAt IS NOT NULL ORDER BY bookmarkedAt ASC")
+    @Query(BOOKMARKED_ARTISTS_BASE_QUERY + " ORDER BY bookmarkedAt ASC")
     fun artistsByRowIdAsc(): Flow<List<Artist>>
 
     fun artists(sortBy: ArtistSortBy, sortOrder: SortOrder) = when (sortBy) {
@@ -412,23 +379,23 @@ interface DatabaseDao {
     @RewriteQueriesToDropUnusedColumns
     fun albumSongs(albumId: String): Flow<List<Song>>
 
-    @Query("SELECT * FROM Album WHERE bookmarkedAt IS NOT NULL ORDER BY title COLLATE NOCASE ASC")
+    @Query(BOOKMARKED_ALBUMS_BASE_QUERY + " ORDER BY title COLLATE NOCASE ASC")
     fun albumsByTitleAsc(): Flow<List<Album>>
 
     // authorsText as fallback for when YouTube showed the year in the artist field
-    @Query("SELECT * FROM Album WHERE bookmarkedAt IS NOT NULL ORDER BY year ASC, authorsText COLLATE NOCASE ASC")
+    @Query(BOOKMARKED_ALBUMS_BASE_QUERY + " ORDER BY year ASC, authorsText COLLATE NOCASE ASC")
     fun albumsByYearAsc(): Flow<List<Album>>
 
-    @Query("SELECT * FROM Album WHERE bookmarkedAt IS NOT NULL ORDER BY bookmarkedAt ASC")
+    @Query(BOOKMARKED_ALBUMS_BASE_QUERY + " ORDER BY bookmarkedAt ASC")
     fun albumsByRowIdAsc(): Flow<List<Album>>
 
-    @Query("SELECT * FROM Album WHERE bookmarkedAt IS NOT NULL ORDER BY title COLLATE NOCASE DESC")
+    @Query(BOOKMARKED_ALBUMS_BASE_QUERY + " ORDER BY title COLLATE NOCASE DESC")
     fun albumsByTitleDesc(): Flow<List<Album>>
 
-    @Query("SELECT * FROM Album WHERE bookmarkedAt IS NOT NULL ORDER BY year DESC, authorsText COLLATE NOCASE DESC")
+    @Query(BOOKMARKED_ALBUMS_BASE_QUERY + " ORDER BY year DESC, authorsText COLLATE NOCASE DESC")
     fun albumsByYearDesc(): Flow<List<Album>>
 
-    @Query("SELECT * FROM Album WHERE bookmarkedAt IS NOT NULL ORDER BY bookmarkedAt DESC")
+    @Query(BOOKMARKED_ALBUMS_BASE_QUERY + " ORDER BY bookmarkedAt DESC")
     fun albumsByRowIdDesc(): Flow<List<Album>>
 
     fun albums(sortBy: AlbumSortBy, sortOrder: SortOrder) = when (sortBy) {
@@ -476,57 +443,27 @@ interface DatabaseDao {
     fun playlistWithSongs(id: Long): Flow<PlaylistWithSongs?>
 
     @Transaction
-    @Query(
-        """
-        SELECT id, name, (SELECT COUNT(*) FROM SongPlaylistMap WHERE playlistId = id) as songCount, thumbnail FROM Playlist 
-        ORDER BY name COLLATE NOCASE ASC
-        """
-    )
+    @Query(PLAYLIST_PREVIEWS_BASE_QUERY + " ORDER BY name COLLATE NOCASE ASC")
     fun playlistPreviewsByNameAsc(): Flow<List<PlaylistPreview>>
 
     @Transaction
-    @Query(
-        """
-        SELECT id, name, (SELECT COUNT(*) FROM SongPlaylistMap WHERE playlistId = id) as songCount, thumbnail FROM Playlist
-        ORDER BY ROWID ASC
-        """
-    )
+    @Query(PLAYLIST_PREVIEWS_BASE_QUERY + " ORDER BY ROWID ASC")
     fun playlistPreviewsByDateAddedAsc(): Flow<List<PlaylistPreview>>
 
     @Transaction
-    @Query(
-        """
-        SELECT id, name, (SELECT COUNT(*) FROM SongPlaylistMap WHERE playlistId = id) as songCount, thumbnail FROM Playlist
-        ORDER BY songCount ASC
-        """
-    )
+    @Query(PLAYLIST_PREVIEWS_BASE_QUERY + " ORDER BY songCount ASC")
     fun playlistPreviewsByDateSongCountAsc(): Flow<List<PlaylistPreview>>
 
     @Transaction
-    @Query(
-        """
-        SELECT id, name, (SELECT COUNT(*) FROM SongPlaylistMap WHERE playlistId = id) as songCount, thumbnail FROM Playlist
-        ORDER BY name COLLATE NOCASE DESC
-        """
-    )
+    @Query(PLAYLIST_PREVIEWS_BASE_QUERY + " ORDER BY name COLLATE NOCASE DESC")
     fun playlistPreviewsByNameDesc(): Flow<List<PlaylistPreview>>
 
     @Transaction
-    @Query(
-        """
-        SELECT id, name, (SELECT COUNT(*) FROM SongPlaylistMap WHERE playlistId = id) as songCount, thumbnail FROM Playlist
-        ORDER BY ROWID DESC
-        """
-    )
+    @Query(PLAYLIST_PREVIEWS_BASE_QUERY + " ORDER BY ROWID DESC")
     fun playlistPreviewsByDateAddedDesc(): Flow<List<PlaylistPreview>>
 
     @Transaction
-    @Query(
-        """
-        SELECT id, name, (SELECT COUNT(*) FROM SongPlaylistMap WHERE playlistId = id) as songCount, thumbnail FROM Playlist
-        ORDER BY songCount DESC
-        """
-    )
+    @Query(PLAYLIST_PREVIEWS_BASE_QUERY + " ORDER BY songCount DESC")
     fun playlistPreviewsByDateSongCountDesc(): Flow<List<PlaylistPreview>>
 
     fun playlistPreviews(
@@ -589,69 +526,27 @@ interface DatabaseDao {
     fun upsertFormatContentLength(songId: String, contentLength: Long)
 
     @Transaction
-    @Query(
-        """
-        SELECT Song.*, contentLength FROM Song
-        JOIN Format ON id = songId
-        WHERE contentLength IS NOT NULL
-        ORDER BY Song.totalPlayTimeMs ASC
-        """
-    )
+    @Query(SONGS_WITH_CONTENT_LENGTH_BASE_QUERY + " ORDER BY Song.totalPlayTimeMs ASC")
     fun songsWithContentLengthByPlayTimeAsc(): Flow<List<SongWithContentLength>>
 
     @Transaction
-    @Query(
-        """
-        SELECT Song.*, contentLength FROM Song
-        JOIN Format ON id = songId
-        WHERE contentLength IS NOT NULL
-        ORDER BY Song.totalPlayTimeMs DESC
-        """
-    )
+    @Query(SONGS_WITH_CONTENT_LENGTH_BASE_QUERY + " ORDER BY Song.totalPlayTimeMs DESC")
     fun songsWithContentLengthByPlayTimeDesc(): Flow<List<SongWithContentLength>>
 
     @Transaction
-    @Query(
-        """
-        SELECT Song.*, contentLength FROM Song
-        JOIN Format ON id = songId
-        WHERE contentLength IS NOT NULL
-        ORDER BY Song.ROWID ASC
-        """
-    )
+    @Query(SONGS_WITH_CONTENT_LENGTH_BASE_QUERY + " ORDER BY Song.ROWID ASC")
     fun songsWithContentLengthByRowIdAsc(): Flow<List<SongWithContentLength>>
 
     @Transaction
-    @Query(
-        """
-        SELECT Song.*, contentLength FROM Song
-        JOIN Format ON id = songId
-        WHERE contentLength IS NOT NULL
-        ORDER BY Song.ROWID DESC
-        """
-    )
+    @Query(SONGS_WITH_CONTENT_LENGTH_BASE_QUERY + " ORDER BY Song.ROWID DESC")
     fun songsWithContentLengthByRowIdDesc(): Flow<List<SongWithContentLength>>
 
     @Transaction
-    @Query(
-        """
-        SELECT Song.*, contentLength FROM Song
-        JOIN Format ON id = songId
-        WHERE contentLength IS NOT NULL
-        ORDER BY Song.title COLLATE NOCASE ASC
-        """
-    )
+    @Query(SONGS_WITH_CONTENT_LENGTH_BASE_QUERY + " ORDER BY Song.title COLLATE NOCASE ASC")
     fun songsWithContentLengthByTitleAsc(): Flow<List<SongWithContentLength>>
 
     @Transaction
-    @Query(
-        """
-        SELECT Song.*, contentLength FROM Song
-        JOIN Format ON id = songId
-        WHERE contentLength IS NOT NULL
-        ORDER BY Song.title COLLATE NOCASE DESC
-        """
-    )
+    @Query(SONGS_WITH_CONTENT_LENGTH_BASE_QUERY + " ORDER BY Song.title COLLATE NOCASE DESC")
     fun songsWithContentLengthByTitleDesc(): Flow<List<SongWithContentLength>>
 
     fun songsWithContentLength(

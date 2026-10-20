@@ -1,12 +1,18 @@
 package app.vimusic.android.preferences
 
+import android.content.ComponentName
+import android.content.Context
+import android.content.pm.PackageManager
 import android.media.audiofx.PresetReverb
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import app.vimusic.android.GlobalPreferencesHolder
 import app.vimusic.android.R
+import app.vimusic.android.service.PlayerService
 
 object PlayerPreferences : GlobalPreferencesHolder() {
+    val isAndroidAutoEnabledProperty = boolean(true)
+    var isAndroidAutoEnabled by isAndroidAutoEnabledProperty
     val isInvincibilityEnabledProperty = boolean(false)
     var isInvincibilityEnabled by isInvincibilityEnabledProperty
     val trackLoopEnabledProperty = boolean(false)
@@ -54,6 +60,25 @@ object PlayerPreferences : GlobalPreferencesHolder() {
 
     val sponsorBlockEnabledProperty = boolean(false)
     var sponsorBlockEnabled by sponsorBlockEnabledProperty
+
+    internal fun migrateAndroidAutoSetting(context: Context) {
+        val component = ComponentName(context, PlayerService::class.java)
+        val componentState = context.packageManager.getComponentEnabledSetting(component)
+        val key = ::isAndroidAutoEnabled.name
+        if (!contains(key)) {
+            val enabled = componentState == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT ||
+                componentState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+            edit().putBoolean(key, enabled).apply()
+        }
+        // Playback must stay available even when browsing from Android Auto is disabled.
+        if (componentState != PackageManager.COMPONENT_ENABLED_STATE_DEFAULT) {
+            context.packageManager.setComponentEnabledSetting(
+                component,
+                PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
+                PackageManager.DONT_KILL_APP
+            )
+        }
+    }
 
     enum class PlayerLayout(val displayName: @Composable () -> String) {
         Classic(displayName = { stringResource(R.string.classic_player_layout_name) }),

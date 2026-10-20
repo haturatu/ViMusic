@@ -61,6 +61,7 @@ import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaStyleNotificationHelper
+import androidx.media3.session.SessionCommands
 import androidx.media3.session.SessionError
 import app.vimusic.android.MainActivity
 import app.vimusic.android.R
@@ -483,7 +484,8 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             }
         }
 
-        mediaSession = MediaLibraryService.MediaLibrarySession.Builder(this, player, AutoSessionCallback())
+        val sessionCallback = AutoSessionCallback()
+        mediaSession = MediaLibraryService.MediaLibrarySession.Builder(this, player, sessionCallback)
             .setSessionActivity(activityPendingIntent<MainActivity>())
             .build()
 
@@ -517,6 +519,16 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             }
 
             subscribe(PlayerPreferences.reverbProperty) { maybeReverb() }
+            subscribe(PlayerPreferences.isAndroidAutoEnabledProperty) {
+                mediaSession.connectedControllers.forEach { controller ->
+                    val connection = sessionCallback.onConnect(mediaSession, controller)
+                    mediaSession.setAvailableCommands(
+                        controller,
+                        connection.availableSessionCommands,
+                        connection.availablePlayerCommands
+                    )
+                }
+            }
             subscribe(PlayerPreferences.isInvincibilityEnabledProperty) {
                 this@PlayerService.isInvincibilityEnabled = it
             }
@@ -1222,6 +1234,24 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
     @Stable
     private inner class AutoSessionCallback : MediaLibraryService.MediaLibrarySession.Callback {
+        override fun onConnect(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo
+        ): MediaSession.ConnectionResult {
+            val connection = super.onConnect(session, controller)
+            if (PlayerPreferences.isAndroidAutoEnabled || !connection.isAccepted) return connection
+
+            val sessionCommands = SessionCommands.Builder()
+                .addSessionCommands(connection.availableSessionCommands.commands.filter {
+                    MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.contains(it)
+                })
+                .build()
+            return MediaSession.ConnectionResult.AcceptedResultBuilder(session, controller)
+                .setAvailableSessionCommands(sessionCommands)
+                .setAvailablePlayerCommands(connection.availablePlayerCommands)
+                .build()
+        }
+
         @Suppress("CyclomaticComplexMethod")
         override fun onGetChildren(
             session: MediaLibraryService.MediaLibrarySession,
@@ -1289,7 +1319,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             controller: MediaSession.ControllerInfo,
             params: MediaLibraryService.LibraryParams?
         ): ListenableFuture<LibraryResult<MediaItem>> = Futures.immediateFuture(
-            LibraryResult.ofItem(
+            if (!PlayerPreferences.isAndroidAutoEnabled) {
+                LibraryResult.ofError(SessionError.ERROR_PERMISSION_DENIED)
+            } else LibraryResult.ofItem(
                 rootMediaItem,
                 MediaLibraryService.LibraryParams.Builder()
                     .setExtras(Bundle().apply {

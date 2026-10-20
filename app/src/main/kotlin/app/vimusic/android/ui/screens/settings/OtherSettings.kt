@@ -2,9 +2,7 @@ package app.vimusic.android.ui.screens.settings
 
 import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
-import android.content.ComponentName
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -18,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SnapshotMutationPolicy
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -41,7 +38,6 @@ import app.vimusic.android.R
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.preferences.PlayerPreferences
-import app.vimusic.android.service.PlayerService
 import app.vimusic.android.service.PrecacheService
 import app.vimusic.android.ui.components.themed.SecondaryTextButton
 import app.vimusic.android.ui.components.themed.SliderDialog
@@ -78,26 +74,6 @@ fun OtherSettings() {
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
 
-    var isAndroidAutoEnabled by remember {
-        val component = ComponentName(context, PlayerService::class.java)
-        val disabledFlag = PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-        val enabledFlag = PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-
-        mutableStateOf(
-            value = context.packageManager.getComponentEnabledSetting(component) == enabledFlag,
-            policy = object : SnapshotMutationPolicy<Boolean> {
-                override fun equivalent(a: Boolean, b: Boolean): Boolean {
-                    context.packageManager.setComponentEnabledSetting(
-                        component,
-                        if (b) enabledFlag else disabledFlag,
-                        PackageManager.DONT_KILL_APP
-                    )
-                    return a == b
-                }
-            }
-        )
-    }
-
     var isIgnoringBatteryOptimizations by remember {
         mutableStateOf(context.isIgnoringBatteryOptimizations)
     }
@@ -118,11 +94,11 @@ fun OtherSettings() {
             SwitchSettingsEntry(
                 title = stringResource(R.string.android_auto),
                 text = stringResource(R.string.android_auto_description),
-                isChecked = isAndroidAutoEnabled,
-                onCheckedChange = { isAndroidAutoEnabled = it }
+                isChecked = PlayerPreferences.isAndroidAutoEnabled,
+                onCheckedChange = { PlayerPreferences.isAndroidAutoEnabled = it }
             )
 
-            AnimatedVisibility(visible = isAndroidAutoEnabled) {
+            AnimatedVisibility(visible = PlayerPreferences.isAndroidAutoEnabled) {
                 SettingsDescription(text = stringResource(R.string.android_auto_warning))
             }
         }
