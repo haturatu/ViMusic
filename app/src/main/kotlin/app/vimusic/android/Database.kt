@@ -343,6 +343,9 @@ interface Database {
     @Query("DELETE FROM QueuedMediaItem")
     fun clearQueue()
 
+    @Query("UPDATE QueuedMediaItem SET position = CASE WHEN id = :id THEN :position ELSE NULL END")
+    fun updateQueuePosition(id: Long, position: Long): Int
+
     @Query("SELECT * FROM SearchQuery WHERE `query` LIKE :query ORDER BY id DESC")
     fun queries(query: String): Flow<List<SearchQuery>>
 
@@ -1344,13 +1347,19 @@ object Converters {
 
     @TypeConverter
     @OptIn(UnstableApi::class)
-    fun mediaItemToByteArray(mediaItem: MediaItem?): ByteArray? = mediaItem?.toBundle()?.let {
+    fun mediaItemToByteArray(mediaItem: MediaItem?): ByteArray? = mediaItem?.let {
+        // Media3 bundles artworkData through shared memory, which cannot be marshalled.
+        // Keep artworkUri so the cached notification image can be loaded again.
+        val persistentItem = it.buildUpon()
+            .setMediaMetadata(it.mediaMetadata.buildUpon().setArtworkData(null).build())
+            .build()
         val parcel = Parcel.obtain()
-        parcel.writeBundle(it)
-        val bytes = parcel.marshall()
-        parcel.recycle()
-
-        bytes
+        try {
+            parcel.writeBundle(persistentItem.toBundle())
+            parcel.marshall()
+        } finally {
+            parcel.recycle()
+        }
     }
 
     @TypeConverter
