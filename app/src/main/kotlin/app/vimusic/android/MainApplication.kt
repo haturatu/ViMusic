@@ -69,6 +69,7 @@ import app.vimusic.android.extractor.NewPipeExtractorClient
 import app.vimusic.android.extractor.NewPipePoTokenProvider
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.preferences.DataPreferences
+import app.vimusic.android.preferences.PlayerPreferences
 import app.vimusic.android.repositories.AlbumRepository
 import app.vimusic.android.repositories.ApiPipedPlaylistRepository
 import app.vimusic.android.repositories.ApiSponsorBlockRepository
@@ -621,6 +622,7 @@ class MainApplication : Application(), SingletonImageLoader.Factory, Configurati
         MonetCompat.setup(applicationContext)
 
         MainApplicationProvider.application = this
+        PlayerPreferences.migrateAndroidAutoSetting(this)
         initializeHttpTransport(this)
         appContainer = AppContainer(this).also(AppContainer::initialize)
         ServiceNotifications.createAll(this)
