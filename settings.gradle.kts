@@ -13,7 +13,7 @@ dependencyResolutionManagement {
 }
 
 pluginManagement {
-    val kotlinVersion = "2.4.20"
+    val kotlinVersion = "2.4.21"
     resolutionStrategy {
         repositories {
             google()
