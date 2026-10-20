@@ -1,8 +1,10 @@
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import app.vimusic.android.models.Album
 import app.vimusic.android.repositories.AlbumRepository
+import app.vimusic.android.utils.launchDatabaseAction
 
 class AlbumScreenViewModel(
     private val repository: AlbumRepository
@@ -13,7 +15,7 @@ class AlbumScreenViewModel(
 
     suspend fun fetchAlbumPage(browseId: String) = repository.fetchAlbumPage(browseId)
 
-    fun replaceAlbumFromPage(
+    suspend fun replaceAlbumFromPage(
         browseId: String,
         bookmarkedAt: Long?,
         page: app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube.PlaylistOrAlbumPage
@@ -24,12 +26,14 @@ class AlbumScreenViewModel(
     )
 
     fun toggleBookmark(album: Album?) {
-        album ?: return
-        repository.updateAlbum(
-            album.copy(
-                bookmarkedAt = if (album.bookmarkedAt == null) System.currentTimeMillis() else null
+        viewModelScope.launchDatabaseAction {
+            album ?: return@launchDatabaseAction
+            repository.updateAlbum(
+                album.copy(
+                    bookmarkedAt = if (album.bookmarkedAt == null) System.currentTimeMillis() else null
+                )
             )
-        )
+        }
     }
 
     companion object {

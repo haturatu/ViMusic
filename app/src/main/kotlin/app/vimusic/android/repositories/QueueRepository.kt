@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.Flow
 interface QueueRepository {
     suspend fun fetchSuggestions(videoId: String): List<MediaItem>?
     fun observePlaylistPreviews(sortBy: PlaylistSortBy, sortOrder: SortOrder): Flow<List<PlaylistPreview>>
-    fun addQueueToPlaylist(playlist: Playlist, index: Int, mediaItems: List<MediaItem>)
+    suspend fun addQueueToPlaylist(playlist: Playlist, index: Int, mediaItems: List<MediaItem>)
 }
 
 object DatabaseQueueRepository : QueueRepository {
@@ -33,7 +33,7 @@ object DatabaseQueueRepository : QueueRepository {
         sortOrder: SortOrder
     ): Flow<List<PlaylistPreview>> = Database.playlistPreviews(sortBy = sortBy, sortOrder = sortOrder)
 
-    override fun addQueueToPlaylist(playlist: Playlist, index: Int, mediaItems: List<MediaItem>) {
+    override suspend fun addQueueToPlaylist(playlist: Playlist, index: Int, mediaItems: List<MediaItem>) {
         transaction {
             val playlistId = Database.insert(playlist).takeIf { it != -1L } ?: playlist.id
 

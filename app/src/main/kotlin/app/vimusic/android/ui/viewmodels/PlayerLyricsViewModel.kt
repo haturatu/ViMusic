@@ -11,7 +11,7 @@ class PlayerLyricsViewModel(
 ) : ViewModel() {
     fun observeLyrics(songId: String) = repository.observeLyrics(songId)
 
-    fun upsertLyrics(lyrics: Lyrics) = repository.upsertLyrics(lyrics)
+    suspend fun upsertLyrics(lyrics: Lyrics) = repository.upsertLyrics(lyrics)
 
     suspend fun fetchYoutubeMusicInnertubeLyrics(mediaId: String) = repository.fetchYoutubeMusicInnertubeLyrics(mediaId)
 

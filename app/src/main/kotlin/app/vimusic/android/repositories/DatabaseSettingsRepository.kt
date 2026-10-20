@@ -4,6 +4,7 @@ import app.vimusic.android.Database
 import app.vimusic.android.dbPath
 import app.vimusic.android.internal
 import app.vimusic.android.transaction
+import app.vimusic.android.utils.withDatabaseSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.io.File
@@ -11,12 +12,10 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 interface DatabaseSettingsRepository {
     fun observeBlacklistLength(): Flow<Int>
-    fun resetBlacklist()
+    suspend fun resetBlacklist()
     suspend fun backupTo(output: OutputStream)
     suspend fun restoreFrom(input: InputStream)
 }
@@ -24,31 +23,13 @@ interface DatabaseSettingsRepository {
 object DefaultDatabaseSettingsRepository : DatabaseSettingsRepository {
     override fun observeBlacklistLength(): Flow<Int> = Database.blacklistLength().distinctUntilChanged()
 
-    override fun resetBlacklist() {
+    override suspend fun resetBlacklist() {
         transaction { Database.resetBlacklist() }
     }
 
     override suspend fun backupTo(output: OutputStream) {
-        withContext(Dispatchers.IO) {
-            val path = requireNotNull(Database.internal.dbPath) { "Database path is null" }
-            val tmpBackup = File.createTempFile("vimusic_backup_", ".db")
-
-            try {
-                runCatching {
-                    Database.checkpoint()
-                    val escapedPath = tmpBackup.absolutePath.replace("'", "''")
-                    Database.internal.openHelper.writableDatabase.execSQL("VACUUM INTO '$escapedPath'")
-                }.getOrElse {
-                    // Fallback for SQLite engines where VACUUM INTO is unavailable.
-                    FileInputStream(path).use { input ->
-                        FileOutputStream(tmpBackup).use(input::copyTo)
-                    }
-                }
-
-                FileInputStream(tmpBackup).use { input -> input.copyTo(output) }
-            } finally {
-                tmpBackup.delete()
-            }
+        withDatabaseSnapshot { snapshot ->
+            snapshot.inputStream().use { it.copyTo(output) }
         }
     }
 

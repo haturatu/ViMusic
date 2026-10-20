@@ -16,8 +16,8 @@ interface ArtistRepository {
 
     suspend fun fetchArtistPage(browseId: String): Result<YoutubeMusicInnertube.ArtistPage?>?
 
-    fun upsertArtist(artist: Artist)
-    fun updateArtist(artist: Artist)
+    suspend fun upsertArtist(artist: Artist)
+    suspend fun updateArtist(artist: Artist)
 
     suspend fun artistSongsPage(
         artistPage: YoutubeMusicInnertube.ArtistPage?,
@@ -46,11 +46,11 @@ object DatabaseArtistRepository : ArtistRepository {
     override suspend fun fetchArtistPage(browseId: String) =
         YoutubeMusicInnertube.artistPage(BrowseBody(browseId = browseId))
 
-    override fun upsertArtist(artist: Artist) {
+    override suspend fun upsertArtist(artist: Artist) {
         query { Database.upsert(artist) }
     }
 
-    override fun updateArtist(artist: Artist) {
+    override suspend fun updateArtist(artist: Artist) {
         query { Database.update(artist) }
     }
 

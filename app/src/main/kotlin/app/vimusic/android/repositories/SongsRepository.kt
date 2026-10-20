@@ -1,13 +1,13 @@
 package app.vimusic.android.repositories
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import app.vimusic.android.Database
 import app.vimusic.android.models.Song
 import app.vimusic.android.transaction
 import app.vimusic.core.data.enums.SongSortBy
 import app.vimusic.core.data.enums.SortOrder
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
@@ -30,9 +30,9 @@ interface SongsRepository {
         searchQuery: String? = null
     ): List<Song>
 
-    fun deleteSong(song: Song)
+    suspend fun deleteSong(song: Song)
 
-    fun upsertSongs(songs: List<Song>)
+    suspend fun upsertSongs(songs: List<Song>)
 }
 
 object DatabaseSongsRepository : SongsRepository {
@@ -81,12 +81,12 @@ object DatabaseSongsRepository : SongsRepository {
                     (!excludeZeroDuration || song.durationText != "0:00")
         }
 
-    override fun deleteSong(song: Song) {
+    override suspend fun deleteSong(song: Song) {
         transaction { Database.delete(song) }
     }
 
-    override fun upsertSongs(songs: List<Song>) {
-        transaction { songs.forEach(Database::insert) }
+    override suspend fun upsertSongs(songs: List<Song>) {
+        transaction { songs.forEach { Database.insert(it) } }
     }
 }
 
@@ -98,5 +98,5 @@ fun String.toFtsPrefixQuery(): String {
 
     if (tokens.isEmpty()) return ""
 
-    return tokens.joinToString(" AND ") { "\"$it\"*" }
+    return tokens.joinToString(" AND ") { "\"$it*\"" }
 }

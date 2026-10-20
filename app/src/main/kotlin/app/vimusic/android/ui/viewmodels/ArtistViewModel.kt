@@ -7,6 +7,7 @@ import app.vimusic.android.repositories.ArtistRepository
 import app.vimusic.android.ui.state.LoadState
 import app.vimusic.android.ui.state.contentOrNull
 import app.vimusic.android.ui.state.launchLoad
+import app.vimusic.android.utils.launchDatabaseAction
 import app.vimusic.android.utils.requireValue
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import kotlinx.coroutines.Job
@@ -56,16 +57,18 @@ class ArtistViewModel(
         loadJob = mutableUiState.launchLoad(
             scope = viewModelScope,
             keepPreviousOnFailure = true,
-            onSuccess = { content -> upsertArtistFromPage(currentArtist, content.page) },
         ) {
                 repository.fetchArtistPage(browseId).requireValue(
                     nullResultMessage = "Artist request was not executed",
                     nullValueMessage = "Artist page was empty",
-                ).getOrThrow().let { page -> ArtistContent(currentArtist, page) }
+                ).getOrThrow().let { page ->
+                    upsertArtistFromPage(currentArtist, page)
+                    ArtistContent(currentArtist, page)
+                }
         }
     }
 
-    fun upsertArtistFromPage(
+    suspend fun upsertArtistFromPage(
         currentArtist: Artist?,
         page: YoutubeMusicInnertube.ArtistPage
     ) {
@@ -81,12 +84,14 @@ class ArtistViewModel(
     }
 
     fun toggleBookmark(artist: Artist?) {
-        artist ?: return
-        repository.updateArtist(
-            artist.copy(
-                bookmarkedAt = if (artist.bookmarkedAt == null) System.currentTimeMillis() else null
+        viewModelScope.launchDatabaseAction {
+            artist ?: return@launchDatabaseAction
+            repository.updateArtist(
+                artist.copy(
+                    bookmarkedAt = if (artist.bookmarkedAt == null) System.currentTimeMillis() else null
+                )
             )
-        )
+        }
     }
 
     suspend fun songsPage(

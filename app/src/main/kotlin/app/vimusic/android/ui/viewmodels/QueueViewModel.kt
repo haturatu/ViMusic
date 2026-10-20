@@ -7,6 +7,7 @@ import app.vimusic.android.models.Playlist
 import app.vimusic.android.repositories.QueueRepository
 import app.vimusic.android.ui.state.LoadState
 import app.vimusic.android.ui.state.launchLoad
+import app.vimusic.android.utils.launchDatabaseAction
 import app.vimusic.core.data.enums.PlaylistSortBy
 import app.vimusic.core.data.enums.SortOrder
 import kotlinx.coroutines.Job
@@ -39,8 +40,11 @@ class QueueViewModel(
     fun observePlaylistPreviews(sortBy: PlaylistSortBy, sortOrder: SortOrder) =
         repository.observePlaylistPreviews(sortBy = sortBy, sortOrder = sortOrder)
 
-    fun addQueueToPlaylist(playlist: Playlist, index: Int, mediaItems: List<MediaItem>) =
-        repository.addQueueToPlaylist(playlist = playlist, index = index, mediaItems = mediaItems)
+    fun addQueueToPlaylist(playlist: Playlist, index: Int, mediaItems: List<MediaItem>) {
+        viewModelScope.launchDatabaseAction {
+            repository.addQueueToPlaylist(playlist = playlist, index = index, mediaItems = mediaItems)
+        }
+    }
 
     companion object {
         fun factory(repository: QueueRepository) = viewModelFactory {

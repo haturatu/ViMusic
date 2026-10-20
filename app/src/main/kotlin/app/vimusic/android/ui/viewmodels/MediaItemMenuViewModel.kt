@@ -1,24 +1,32 @@
 package app.vimusic.android.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import app.vimusic.android.models.Playlist
 import app.vimusic.android.repositories.MediaItemMenuRepository
+import app.vimusic.android.utils.launchDatabaseAction
 import app.vimusic.core.data.enums.PlaylistSortBy
 import app.vimusic.core.data.enums.SortOrder
 
 class MediaItemMenuViewModel(
     private val repository: MediaItemMenuRepository
 ) : ViewModel() {
-    fun removeFromPlaylist(playlistId: Long, positionInPlaylist: Int, songId: String) =
-        repository.removeFromPlaylist(
-            playlistId = playlistId,
-            positionInPlaylist = positionInPlaylist,
-            songId = songId
-        )
+    fun removeFromPlaylist(playlistId: Long, positionInPlaylist: Int, songId: String) {
+        viewModelScope.launchDatabaseAction {
+            repository.removeFromPlaylist(
+                playlistId = playlistId,
+                positionInPlaylist = positionInPlaylist,
+                songId = songId
+            )
+        }
+    }
 
-    fun addToPlaylist(mediaItem: MediaItem, playlist: Playlist, position: Int) =
-        repository.addToPlaylist(mediaItem = mediaItem, playlist = playlist, position = position)
+    fun addToPlaylist(mediaItem: MediaItem, playlist: Playlist, position: Int) {
+        viewModelScope.launchDatabaseAction {
+            repository.addToPlaylist(mediaItem = mediaItem, playlist = playlist, position = position)
+        }
+    }
 
     suspend fun getSongAlbumInfo(mediaId: String) = repository.getSongAlbumInfo(mediaId)
 
@@ -26,12 +34,19 @@ class MediaItemMenuViewModel(
 
     fun observeLikedAt(mediaId: String) = repository.observeLikedAt(mediaId)
 
-    fun toggleLike(mediaItem: MediaItem, likedAt: Long?) =
-        repository.toggleLike(mediaItem = mediaItem, likedAt = likedAt)
+    fun toggleLike(mediaItem: MediaItem, likedAt: Long?) {
+        viewModelScope.launchDatabaseAction {
+            repository.toggleLike(mediaItem = mediaItem, likedAt = likedAt)
+        }
+    }
 
     fun observeBlacklisted(mediaId: String) = repository.observeBlacklisted(mediaId)
 
-    fun toggleBlacklist(mediaItem: MediaItem) = repository.toggleBlacklist(mediaItem)
+    fun toggleBlacklist(mediaItem: MediaItem) {
+        viewModelScope.launchDatabaseAction {
+            repository.toggleBlacklist(mediaItem)
+        }
+    }
 
     fun observePlaylistPreviews(sortBy: PlaylistSortBy, sortOrder: SortOrder) =
         repository.observePlaylistPreviews(sortBy = sortBy, sortOrder = sortOrder)

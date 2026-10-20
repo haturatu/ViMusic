@@ -19,6 +19,7 @@ import app.vimusic.android.appContainer
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.utils.ActionReceiver
 import app.vimusic.android.utils.download
+import app.vimusic.android.utils.launchDatabaseAction
 import app.vimusic.android.utils.safeUnregisterReceiver
 import app.vimusic.android.utils.toast
 import kotlinx.coroutines.CancellationException
@@ -188,10 +189,15 @@ class PrecacheService : DownloadService(
 
     companion object {
         fun scheduleCache(context: Context, mediaItems: Iterable<MediaItem>) {
-            mediaItems.distinctBy(MediaItem::mediaId).forEach { scheduleCache(context, it) }
+            val items = mediaItems.distinctBy(MediaItem::mediaId)
+            context.applicationContext.appContainer.databaseScope.launchDatabaseAction {
+                items.forEach { cacheMediaItem(context.applicationContext, it) }
+            }
         }
 
-        fun scheduleCache(context: Context, mediaItem: MediaItem) {
+        fun scheduleCache(context: Context, mediaItem: MediaItem) = scheduleCache(context, listOf(mediaItem))
+
+        private suspend fun cacheMediaItem(context: Context, mediaItem: MediaItem) {
             if (mediaItem.isLocal) return
             val repository = context.appContainer.precacheRepository
             if (DataPreferences.cacheFavoritesOnly) {
