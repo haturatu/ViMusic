@@ -160,6 +160,7 @@ private const val TAG = "PlayerService"
 private const val PERSISTENT_QUEUE_MAX_PAST_ITEMS = 50
 private const val PERSISTENT_QUEUE_MAX_FUTURE_ITEMS = 50
 private const val PERSISTENT_QUEUE_SAVE_DEBOUNCE_MS = 500L
+private const val PERSISTENT_QUEUE_POSITION_SAVE_INTERVAL_MS = 10_000L
 private const val SPONSOR_BLOCK_SEEK_POLL_DELAY_MS = 1_000L
 private const val NEXT_TRACK_RESOLVE_PRELOAD_ATTEMPTS = 4
 private const val NEXT_TRACK_RESOLVE_PRELOAD_RETRY_MS = 500L
@@ -475,6 +476,13 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         updateRepeatMode()
         maybeRestorePlayerQueue()
 
+        coroutineScope.launch(Dispatchers.Main) {
+            while (isActive) {
+                delay(PERSISTENT_QUEUE_POSITION_SAVE_INTERVAL_MS)
+                if (player.isPlaying) maybeSavePlayerQueue(immediately = true)
+            }
+        }
+
         mediaSession = MediaLibraryService.MediaLibrarySession.Builder(this, player, AutoSessionCallback())
             .setSessionActivity(activityPendingIntent<MainActivity>())
             .build()
@@ -557,13 +565,23 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
+        maybeSavePlayerQueue(immediately = true)
         if (!player.shouldBePlaying || PlayerPreferences.stopWhenClosed)
             broadcastPendingIntent<NotificationDismissReceiver>().send()
         super.onTaskRemoved(rootIntent)
     }
 
-    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) =
-        maybeSavePlayerQueue()
+    override fun onEvents(player: Player, events: Player.Events) {
+        if (
+            events.containsAny(
+                Player.EVENT_MEDIA_ITEM_TRANSITION,
+                Player.EVENT_POSITION_DISCONTINUITY,
+                Player.EVENT_PLAY_WHEN_READY_CHANGED
+            )
+        ) {
+            maybeSavePlayerQueue(immediately = true)
+        }
+    }
 
     override fun onDestroy() {
         runCatching {
@@ -722,44 +740,42 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         if (!PlayerPreferences.persistentQueue) return
 
         queuePersistenceJob?.cancel()
-        queuePersistenceJob = coroutineScope.launch {
-            if (!immediately) delay(PERSISTENT_QUEUE_SAVE_DEBOUNCE_MS)
-
-            val queue = withContext(Dispatchers.Main) {
-                val mediaItems = player.currentTimeline.mediaItems
-                val mediaItemIndex = player.currentMediaItemIndex
-                val mediaItemPosition = player.currentPosition
-                if (mediaItems.isEmpty() || mediaItemIndex !in mediaItems.indices) return@withContext null
-
-                val startIndex = (mediaItemIndex - PERSISTENT_QUEUE_MAX_PAST_ITEMS).coerceAtLeast(0)
-                val endExclusive = (mediaItemIndex + PERSISTENT_QUEUE_MAX_FUTURE_ITEMS + 1)
-                    .coerceAtMost(mediaItems.size)
-                val persistedCurrentIndex = mediaItemIndex - startIndex
-
-                mediaItems.subList(startIndex, endExclusive).mapIndexed { index, mediaItem ->
-                    QueuedMediaItem(
-                        id = index.toLong() + 1L,
-                        mediaItem = mediaItem,
-                        position = if (index == persistedCurrentIndex) mediaItemPosition else null
-                    )
-                }
-            } ?: return@launch
-
-            runCatching {
-                playerRepository.saveQueue(queue)
+        if (immediately) {
+            savePlayerQueue()
+        } else {
+            queuePersistenceJob = coroutineScope.launch(Dispatchers.Main) {
+                delay(PERSISTENT_QUEUE_SAVE_DEBOUNCE_MS)
+                savePlayerQueue()
             }
         }
+    }
+
+    private fun savePlayerQueue() {
+        val mediaItems = player.currentTimeline.mediaItems
+        val mediaItemIndex = player.currentMediaItemIndex
+        val mediaItemPosition = player.currentPosition
+        if (mediaItems.isEmpty() || mediaItemIndex !in mediaItems.indices) return
+
+        val startIndex = (mediaItemIndex - PERSISTENT_QUEUE_MAX_PAST_ITEMS).coerceAtLeast(0)
+        val endExclusive = (mediaItemIndex + PERSISTENT_QUEUE_MAX_FUTURE_ITEMS + 1)
+            .coerceAtMost(mediaItems.size)
+        val persistedCurrentIndex = mediaItemIndex - startIndex
+
+        val queue = mediaItems.subList(startIndex, endExclusive).mapIndexed { index, mediaItem ->
+            QueuedMediaItem(
+                id = index.toLong() + 1L,
+                mediaItem = mediaItem,
+                position = if (index == persistedCurrentIndex) mediaItemPosition else null
+            )
+        }
+        playerRepository.saveQueue(queue)
     }
 
     private fun maybeRestorePlayerQueue() {
         if (!PlayerPreferences.persistentQueue) return
 
         coroutineScope.launch {
-            val queue = withContext(Dispatchers.IO) {
-                playerRepository.loadQueue().also {
-                    if (it.isNotEmpty()) playerRepository.clearQueue()
-                }
-            }
+            val queue = playerRepository.loadQueue()
             if (queue.isEmpty()) return@launch
 
             val index = queue

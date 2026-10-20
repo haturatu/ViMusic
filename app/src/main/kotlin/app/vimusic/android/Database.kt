@@ -343,6 +343,9 @@ interface Database {
     @Query("DELETE FROM QueuedMediaItem")
     fun clearQueue()
 
+    @Query("UPDATE QueuedMediaItem SET position = CASE WHEN id = :id THEN :position ELSE NULL END")
+    fun updateQueuePosition(id: Long, position: Long): Int
+
     @Query("SELECT * FROM SearchQuery WHERE `query` LIKE :query ORDER BY id DESC")
     fun queries(query: String): Flow<List<SearchQuery>>
 
