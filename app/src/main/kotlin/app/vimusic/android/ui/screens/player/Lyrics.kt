@@ -57,6 +57,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
 import androidx.media3.common.MediaMetadata
@@ -78,13 +79,15 @@ import app.vimusic.android.ui.components.themed.TextPlaceholder
 import app.vimusic.android.ui.components.themed.ValueSelectorDialogBody
 import app.vimusic.android.ui.modifiers.verticalFadingEdge
 import app.vimusic.android.ui.viewmodels.PlayerLyricsViewModel
+import app.vimusic.android.utils.DisposableListener
 import app.vimusic.android.utils.SynchronizedLyrics
 import app.vimusic.android.utils.SynchronizedLyricsState
-import app.vimusic.android.utils.DisposableListener
 import app.vimusic.android.utils.center
 import app.vimusic.android.utils.color
 import app.vimusic.android.utils.isInPip
+import app.vimusic.android.utils.launchDatabaseAction
 import app.vimusic.android.utils.medium
+import app.vimusic.android.utils.runSuspendCatching
 import app.vimusic.android.utils.semiBold
 import app.vimusic.android.utils.toast
 import app.vimusic.core.ui.LocalAppearance
@@ -114,7 +117,7 @@ fun Lyrics(
     onDismiss: () -> Unit,
     mediaMetadataProvider: () -> MediaMetadata,
     durationProvider: () -> Long,
-    ensureSongInserted: () -> Unit,
+    ensureSongInserted: suspend () -> Unit,
     modifier: Modifier = Modifier,
     onMenuLaunch: () -> Unit = { },
     onOpenDialog: (() -> Unit)? = null,
@@ -209,7 +212,7 @@ fun Lyrics(
     }
 
     LaunchedEffect(mediaId) {
-        runCatching {
+        runSuspendCatching {
             withContext(Dispatchers.IO) {
                 viewModel
                     .observeLyrics(mediaId)
@@ -284,7 +287,7 @@ fun Lyrics(
                                     synced = currentLyrics?.synced.orEmpty()
                                 ).also {
                                     ensureActive()
-                                    runCatching {
+                                    runSuspendCatching {
                                         currentEnsureSongInserted()
                                         viewModel.upsertLyrics(it)
                                     }
@@ -316,7 +319,7 @@ fun Lyrics(
         isFetchingSynced = true
         hasSyncedFetchFinished = false
         try {
-            runCatching {
+            runSuspendCatching {
                 withContext(Dispatchers.IO) {
                     val mediaMetadata = currentMediaMetadataProvider()
                     var duration = withContext(Dispatchers.Main) { currentDurationProvider() }
@@ -371,7 +374,7 @@ fun Lyrics(
 
                     if (!synced.isNullOrBlank()) {
                         ensureActive()
-                        runCatching {
+                        runSuspendCatching {
                             currentEnsureSongInserted()
                             viewModel.upsertLyrics(
                                 Lyrics(
@@ -401,7 +404,7 @@ fun Lyrics(
         isTextInputValid = { true },
         onDismiss = { editing = false },
         onAccept = {
-            runCatching {
+            viewModel.viewModelScope.launchDatabaseAction {
                 currentEnsureSongInserted()
                 viewModel.upsertLyrics(
                     if (shouldShowSynchronizedLyrics) Lyrics(
@@ -435,7 +438,7 @@ fun Lyrics(
             setQuery = { query = it },
             onDismiss = { picking = false },
             onPick = {
-                runCatching {
+                viewModel.viewModelScope.launchDatabaseAction {
                     viewModel.upsertLyrics(
                         Lyrics(
                             songId = mediaId,
@@ -722,7 +725,7 @@ fun Lyrics(
                                         enabled = lyrics != null,
                                         onClick = {
                                             menuState.hide()
-                                            runCatching {
+                                            viewModel.viewModelScope.launchDatabaseAction {
                                                 currentEnsureSongInserted()
                                                 viewModel.upsertLyrics(
                                                     if (shouldShowSynchronizedLyrics) Lyrics(
@@ -758,7 +761,10 @@ fun Lyrics(
                                                 menuState.hide()
                                                 lyrics?.let {
                                                     val startTime = binder?.player?.currentPosition
-                                                    viewModel.upsertLyrics(it.copy(startTime = startTime))
+                                                    val updatedLyrics = it.copy(startTime = startTime)
+                                                    viewModel.viewModelScope.launchDatabaseAction {
+                                                        viewModel.upsertLyrics(updatedLyrics)
+                                                    }
                                                 }
                                             }
                                         )

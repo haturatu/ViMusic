@@ -16,7 +16,7 @@ import kotlinx.coroutines.withContext
 
 interface DatabaseSettingsRepository {
     fun observeBlacklistLength(): Flow<Int>
-    fun resetBlacklist()
+    suspend fun resetBlacklist()
     suspend fun backupTo(output: OutputStream)
     suspend fun restoreFrom(input: InputStream)
 }
@@ -24,7 +24,7 @@ interface DatabaseSettingsRepository {
 object DefaultDatabaseSettingsRepository : DatabaseSettingsRepository {
     override fun observeBlacklistLength(): Flow<Int> = Database.blacklistLength().distinctUntilChanged()
 
-    override fun resetBlacklist() {
+    override suspend fun resetBlacklist() {
         transaction { Database.resetBlacklist() }
     }
 

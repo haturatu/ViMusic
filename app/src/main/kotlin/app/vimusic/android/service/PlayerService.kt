@@ -9,14 +9,15 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.net.Uri
-import android.os.Bundle
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.media.audiofx.AudioEffect
 import android.media.audiofx.LoudnessEnhancer
 import android.media.audiofx.PresetReverb
+import android.net.Uri
+import android.os.Bundle
+import android.os.IBinder
 import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
@@ -45,8 +46,8 @@ import androidx.media3.datasource.cache.ContentMetadata
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
-import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.analytics.PlaybackStats
@@ -61,12 +62,11 @@ import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaStyleNotificationHelper
 import androidx.media3.session.SessionError
-import java.io.ByteArrayOutputStream
 import app.vimusic.android.MainActivity
 import app.vimusic.android.R
 import app.vimusic.android.appContainer
-import app.vimusic.android.models.Event
 import app.vimusic.android.models.Album
+import app.vimusic.android.models.Event
 import app.vimusic.android.models.PlaylistPreview
 import app.vimusic.android.models.QueuedMediaItem
 import app.vimusic.android.models.Song
@@ -77,6 +77,8 @@ import app.vimusic.android.preferences.PlayerPreferences
 import app.vimusic.android.utils.ActionReceiver
 import app.vimusic.android.utils.GlyphInterface
 import app.vimusic.android.utils.InvincibleService
+import app.vimusic.android.utils.PlaybackRetryManager
+import app.vimusic.android.utils.RequestGeneration
 import app.vimusic.android.utils.TimerJob
 import app.vimusic.android.utils.YouTubeRadio
 import app.vimusic.android.utils.YouTubeRadioState
@@ -86,15 +88,13 @@ import app.vimusic.android.utils.broadcastPendingIntent
 import app.vimusic.android.utils.enqueue
 import app.vimusic.android.utils.findCause
 import app.vimusic.android.utils.findNextMediaItemById
-import app.vimusic.android.utils.forcePlayFromBeginning
 import app.vimusic.android.utils.forcePlayAtIndex
+import app.vimusic.android.utils.forcePlayFromBeginning
 import app.vimusic.android.utils.forceSeekToNext
 import app.vimusic.android.utils.forceSeekToPrevious
 import app.vimusic.android.utils.get
 import app.vimusic.android.utils.intent
 import app.vimusic.android.utils.mediaItems
-import app.vimusic.android.utils.PlaybackRetryManager
-import app.vimusic.android.utils.RequestGeneration
 import app.vimusic.android.utils.progress
 import app.vimusic.android.utils.safeUnregisterReceiver
 import app.vimusic.android.utils.setPlaybackPitch
@@ -111,10 +111,10 @@ import app.vimusic.core.ui.utils.isAtLeastAndroid8
 import app.vimusic.core.ui.utils.isAtLeastAndroid9
 import app.vimusic.core.ui.utils.songBundle
 import app.vimusic.core.ui.utils.streamVolumeFlow
-import app.vimusic.providers.youtubemusic.innertube.models.NavigationEndpoint
 import app.vimusic.providers.sponsorblock.models.Action
 import app.vimusic.providers.sponsorblock.models.Category
 import app.vimusic.providers.sponsorblock.models.Segment
+import app.vimusic.providers.youtubemusic.innertube.models.NavigationEndpoint
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -148,12 +148,12 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import android.os.Binder as AndroidBinder
-import android.os.IBinder
 
 const val LOCAL_KEY_PREFIX = "local:"
 private const val TAG = "PlayerService"
@@ -612,23 +612,20 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         if (totalPlayTimeMs < 5000) return
 
         val mediaItem = eventTime.timeline[eventTime.windowIndex].mediaItem
-        runCatching { playerRepository.insertSong(mediaItem) }
-
-        if (!DataPreferences.pausePlaytime) {
-            runCatching {
-                playerRepository.incrementTotalPlayTimeMs(mediaItem.mediaId, totalPlayTimeMs)
-            }
-        }
-
-        if (!DataPreferences.pauseHistory) {
-            runCatching {
-                playerRepository.insertEvent(
-                    Event(
-                        songId = mediaItem.mediaId,
-                        timestamp = System.currentTimeMillis(),
-                        playTime = totalPlayTimeMs
-                    )
-                )
+        val recordedPlayTimeMs = if (DataPreferences.pausePlaytime) 0L else totalPlayTimeMs
+        val event = if (DataPreferences.pauseHistory) null else Event(
+            songId = mediaItem.mediaId,
+            timestamp = System.currentTimeMillis(),
+            playTime = totalPlayTimeMs
+        )
+        // Playback statistics can arrive during player release; complete the write in app scope.
+        applicationContext.appContainer.databaseScope.launch {
+            try {
+                playerRepository.recordPlayback(mediaItem, recordedPlayTimeMs, event)
+            } catch (error: kotlinx.coroutines.CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Log.e(TAG, "Failed to persist playback statistics", error)
             }
         }
     }
@@ -1676,11 +1673,9 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
     }
 
     private fun likeAction() = mediaItemState.value?.let { mediaItem ->
-        runCatching {
-            playerRepository.setLikedAt(
-                songId = mediaItem.mediaId,
-                likedAt = if (isLikedState.value) null else System.currentTimeMillis()
-            )
+        val likedAt = if (isLikedState.value) null else System.currentTimeMillis()
+        coroutineScope.launch {
+            playerRepository.setLikedAt(songId = mediaItem.mediaId, likedAt = likedAt)
         }
     }.let { }
 

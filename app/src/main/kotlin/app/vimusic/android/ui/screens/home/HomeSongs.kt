@@ -43,6 +43,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
+import androidx.paging.PagingData
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.LocalPlayerServiceBinder
@@ -67,11 +70,8 @@ import app.vimusic.core.data.enums.SongSortBy
 import app.vimusic.core.data.enums.SortOrder
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
-import androidx.paging.PagingData
-import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 @Composable
@@ -115,7 +115,7 @@ fun HomeSongs(
     onSearchClick: () -> Unit,
     songProvider: (String?) -> Flow<PagingData<Song>>,
     allSongsProvider: suspend (String?) -> List<Song>,
-    onHideSong: (Song) -> Unit,
+    onHideSong: suspend (Song) -> Unit,
     sortBy: SongSortBy,
     setSortBy: (SongSortBy) -> Unit,
     sortOrder: SortOrder,

@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.R
@@ -25,12 +26,12 @@ import app.vimusic.android.ui.components.themed.HeaderPlaceholder
 import app.vimusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.vimusic.android.ui.components.themed.PlaylistInfo
 import app.vimusic.android.ui.components.themed.PrimaryButton
-import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.SongCollectionScreen
-import app.vimusic.android.ui.components.themed.songCollectionItems
-import app.vimusic.android.ui.components.themed.matchesSongCollectionQuery
+import app.vimusic.android.ui.components.themed.SongListActionsRow
 import app.vimusic.android.ui.components.themed.TextFieldDialog
 import app.vimusic.android.ui.components.themed.adaptiveThumbnailContent
+import app.vimusic.android.ui.components.themed.matchesSongCollectionQuery
+import app.vimusic.android.ui.components.themed.songCollectionItems
 import app.vimusic.android.ui.items.SongItem
 import app.vimusic.android.ui.modifiers.songSwipeActions
 import app.vimusic.android.ui.viewmodels.PlaylistSongListViewModel
@@ -38,6 +39,7 @@ import app.vimusic.android.utils.LocalPlaybackActions
 import app.vimusic.android.utils.PlaylistDownloadFloatingButton
 import app.vimusic.android.utils.YoutubeMusicInnertubeSongMediaItemMapper
 import app.vimusic.android.utils.asMediaItem
+import app.vimusic.android.utils.launchDatabaseAction
 import app.vimusic.android.utils.rememberMediaItemsOrNull
 import app.vimusic.compose.persist.persist
 import app.vimusic.core.ui.Dimensions
@@ -45,9 +47,9 @@ import app.vimusic.core.ui.LocalAppearance
 import app.vimusic.core.ui.utils.isLandscape
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import com.valentinilk.shimmer.shimmer
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.collections.immutable.toImmutableList
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -91,12 +93,14 @@ fun PlaylistSongList(
         initialTextInput = playlistPage?.title.orEmpty(),
         onDismiss = { isImportingPlaylist = false },
         onAccept = { text ->
-            viewModel.importPlaylist(
-                name = text,
-                browseId = browseId,
-                thumbnailUrl = playlistPage?.thumbnail?.url,
-                songs = playlistPage?.songsPage?.items
-            )
+            viewModel.viewModelScope.launchDatabaseAction {
+                viewModel.importPlaylist(
+                    name = text,
+                    browseId = browseId,
+                    thumbnailUrl = playlistPage?.thumbnail?.url,
+                    songs = playlistPage?.songsPage?.items
+                )
+            }
         }
     )
 

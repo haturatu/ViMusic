@@ -3,8 +3,8 @@ package app.vimusic.android.repositories
 import app.vimusic.android.Database
 import app.vimusic.android.models.Album
 import app.vimusic.android.models.Song
-import app.vimusic.android.query
 import app.vimusic.android.models.SongAlbumMap
+import app.vimusic.android.query
 import app.vimusic.android.transaction
 import app.vimusic.android.utils.asMediaItem
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
@@ -16,13 +16,13 @@ interface AlbumRepository {
     fun observeAlbum(browseId: String): Flow<Album?>
     fun observeAlbumSongs(browseId: String): Flow<List<Song>>
     suspend fun fetchAlbumPage(browseId: String): Result<YoutubeMusicInnertube.PlaylistOrAlbumPage?>?
-    fun replaceAlbumFromPage(
+    suspend fun replaceAlbumFromPage(
         browseId: String,
         bookmarkedAt: Long?,
         page: YoutubeMusicInnertube.PlaylistOrAlbumPage
     )
 
-    fun updateAlbum(album: Album)
+    suspend fun updateAlbum(album: Album)
 }
 
 object DatabaseAlbumRepository : AlbumRepository {
@@ -33,26 +33,26 @@ object DatabaseAlbumRepository : AlbumRepository {
     override suspend fun fetchAlbumPage(browseId: String): Result<YoutubeMusicInnertube.PlaylistOrAlbumPage?>? =
         YoutubeMusicInnertube.albumPage(BrowseBody(browseId = browseId))
 
-    override fun replaceAlbumFromPage(
+    override suspend fun replaceAlbumFromPage(
         browseId: String,
         bookmarkedAt: Long?,
         page: YoutubeMusicInnertube.PlaylistOrAlbumPage
     ) {
-        val songAlbumMaps = page
-            .songsPage
-            ?.items
-            ?.map { it.asMediaItem }
-            ?.onEach(Database::insert)
-            ?.mapIndexed { position, mediaItem ->
-                SongAlbumMap(
-                    songId = mediaItem.mediaId,
-                    albumId = browseId,
-                    position = position
-                )
-            }
-            ?: emptyList()
-
         transaction {
+            val songAlbumMaps = page
+                .songsPage
+                ?.items
+                ?.map { it.asMediaItem }
+                ?.onEach { Database.insert(it) }
+                ?.mapIndexed { position, mediaItem ->
+                    SongAlbumMap(
+                        songId = mediaItem.mediaId,
+                        albumId = browseId,
+                        position = position
+                    )
+                }
+                ?: emptyList()
+
             Database.clearAlbum(browseId)
             Database.upsert(
                 album = Album(
@@ -72,7 +72,7 @@ object DatabaseAlbumRepository : AlbumRepository {
         }
     }
 
-    override fun updateAlbum(album: Album) {
+    override suspend fun updateAlbum(album: Album) {
         query { Database.update(album) }
     }
 }

@@ -2,11 +2,11 @@ package app.vimusic.android.ui.modifiers
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.MediaItem
-import app.vimusic.android.R
+import androidx.media3.common.util.UnstableApi
 import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
+import app.vimusic.android.R
 import app.vimusic.android.models.Song
 import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.service.isLocal
@@ -20,10 +20,10 @@ fun Modifier.songSwipeActions(
     songToHide: Song? = null,
     requireUnconsumed: Boolean = true,
     onSwipeLeftRequested: ((Song) -> Unit)? = null,
-    onHideSong: ((Song) -> Unit)? = null
+    onHideSong: (suspend (Song) -> Unit)? = null
 ): Modifier {
     val binder = LocalPlayerServiceBinder.current
-    val defaultOnHideSong = onHideSong ?: LocalAppContainer.current.songsRepository::deleteSong
+    val defaultOnHideSong: suspend (Song) -> Unit = onHideSong ?: LocalAppContainer.current.songsRepository::deleteSong
     val canSwipeLeft = AppearancePreferences.swipeToHideSong &&
         songToHide != null &&
         onSwipeLeftRequested != null
