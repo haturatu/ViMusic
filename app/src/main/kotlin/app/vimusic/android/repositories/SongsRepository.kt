@@ -98,5 +98,5 @@ fun String.toFtsPrefixQuery(): String {
 
     if (tokens.isEmpty()) return ""
 
-    return tokens.joinToString(" AND ") { "\"$it\"*" }
+    return tokens.joinToString(" AND ") { "\"$it*\"" }
 }
