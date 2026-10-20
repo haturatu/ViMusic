@@ -13,11 +13,9 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import app.vimusic.android.Database
-import app.vimusic.android.dbPath
-import app.vimusic.android.internal
 import app.vimusic.android.preferences.DataPreferences
-import app.vimusic.android.repositories.DefaultDatabaseSettingsRepository
+import app.vimusic.android.utils.withDatabaseSnapshot
+import kotlinx.coroutines.CancellationException
 import java.io.FileInputStream
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
@@ -67,54 +65,35 @@ class DatabaseAutoBackupWorker(
         if (treeUriValue.isBlank()) return Result.failure()
         val previousHash = DataPreferences.autoDatabaseBackupLastSha256
 
-        val currentHash = runCatching {
-            Database.checkpoint()
-            val path = requireNotNull(Database.internal.dbPath) { "Database path is null" }
-            sha256(path)
-        }.getOrElse { error ->
-            Log.e(TAG, "Failed to calculate database backup hash", error)
-            return Result.retry()
-        }
-
-        if (
-            previousHash.isNotBlank() &&
-            previousHash == currentHash &&
-            DataPreferences.autoDatabaseBackupDocumentUri.isNotBlank()
-        ) {
-            return Result.success()
-        }
-
-        val resolver = applicationContext.contentResolver
-        val treeUri = Uri.parse(treeUriValue)
-        val parentUri = runCatching {
-            DocumentsContract.buildDocumentUriUsingTree(
-                treeUri,
-                DocumentsContract.getTreeDocumentId(treeUri)
-            )
-        }.getOrElse { error ->
-            Log.e(TAG, "Invalid database backup tree URI", error)
-            return Result.failure()
-        }
-
-        val documentUri = runCatching {
-            resolveBackupDocumentUri(treeUri, parentUri)
-        }.getOrElse { error ->
-            Log.e(TAG, "Failed to resolve database backup document", error)
-            return Result.retry()
-        } ?: return Result.retry()
-
-        DataPreferences.autoDatabaseBackupDocumentUri = documentUri.toString()
-
         return try {
-            requireNotNull(resolver.openOutputStream(documentUri)) {
-                "Failed to open output stream for backup"
-            }.use { output ->
-                DefaultDatabaseSettingsRepository.backupTo(output)
+            withDatabaseSnapshot { snapshot ->
+                val currentHash = sha256(snapshot.absolutePath)
+                if (
+                    previousHash.isNotBlank() && previousHash == currentHash &&
+                    DataPreferences.autoDatabaseBackupDocumentUri.isNotBlank()
+                ) return@withDatabaseSnapshot Result.success()
+
+                val treeUri = Uri.parse(treeUriValue)
+                val parentUri = DocumentsContract.buildDocumentUriUsingTree(
+                    treeUri,
+                    DocumentsContract.getTreeDocumentId(treeUri)
+                )
+                val documentUri = resolveBackupDocumentUri(treeUri, parentUri)
+                    ?: return@withDatabaseSnapshot Result.retry()
+                val resolver = applicationContext.contentResolver
+                requireNotNull(resolver.openOutputStream(documentUri, "wt")) {
+                    "Failed to open output stream for backup"
+                }.use { output ->
+                    snapshot.inputStream().use { it.copyTo(output) }
+                }
+                DataPreferences.autoDatabaseBackupDocumentUri = documentUri.toString()
+                DataPreferences.autoDatabaseBackupLastSha256 = currentHash
+                Result.success()
             }
-            DataPreferences.autoDatabaseBackupLastSha256 = currentHash
-            Result.success()
-        } catch (throwable: Throwable) {
-            Log.e(TAG, "Failed to write database backup", throwable)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Log.e(TAG, "Failed to create database backup", error)
             Result.retry()
         }
     }
@@ -126,7 +105,11 @@ class DatabaseAutoBackupWorker(
             .takeIf(String::isNotBlank)
             ?.let(Uri::parse)
             ?.let { savedUri ->
-                if (resolver.openOutputStream(savedUri) != null) return savedUri
+                val exists = runCatching {
+                    resolver.query(savedUri, arrayOf(Document.COLUMN_DOCUMENT_ID), null, null, null)
+                        ?.use { it.moveToFirst() } == true
+                }.getOrDefault(false)
+                if (exists) return savedUri
             }
 
         findExistingBackupDocumentUri(treeUri)?.let { existing ->

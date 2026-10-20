@@ -6,10 +6,11 @@ import app.vimusic.android.models.Song
 import app.vimusic.android.repositories.HomeRepository
 import app.vimusic.android.ui.state.LoadState
 import app.vimusic.android.ui.state.launchLoad
+import app.vimusic.android.utils.launchDatabaseAction
 import app.vimusic.android.utils.requireValue
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,7 +53,11 @@ class HomeQuickPicksViewModel(
         currentVideoId?.let { load(it, force = true) }
     }
 
-    fun removeFromQuickPicks(songId: String) = repository.clearEventsFor(songId = songId)
+    fun removeFromQuickPicks(songId: String) {
+        viewModelScope.launchDatabaseAction {
+            repository.clearEventsFor(songId = songId)
+        }
+    }
 
     fun clearCachedQuickPicks() = repository.clearCachedQuickPicks()
 

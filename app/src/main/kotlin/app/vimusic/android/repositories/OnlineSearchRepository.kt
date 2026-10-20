@@ -13,9 +13,9 @@ interface OnlineSearchRepository {
     fun observeHistory(input: String): Flow<List<SearchQuery>>
     fun observeHistoryCount(): Flow<Int>
     suspend fun fetchSuggestions(input: String): Result<List<String>?>?
-    fun deleteHistory(searchQuery: SearchQuery)
-    fun clearHistory()
-    fun saveHistory(text: String)
+    suspend fun deleteHistory(searchQuery: SearchQuery)
+    suspend fun clearHistory()
+    suspend fun saveHistory(text: String)
 }
 
 object DatabaseOnlineSearchRepository : OnlineSearchRepository {
@@ -28,15 +28,15 @@ object DatabaseOnlineSearchRepository : OnlineSearchRepository {
     override suspend fun fetchSuggestions(input: String): Result<List<String>?>? =
         YoutubeMusicInnertube.searchSuggestions(body = SearchSuggestionsBody(input = input))
 
-    override fun deleteHistory(searchQuery: SearchQuery) {
+    override suspend fun deleteHistory(searchQuery: SearchQuery) {
         query { Database.delete(searchQuery) }
     }
 
-    override fun clearHistory() {
+    override suspend fun clearHistory() {
         query(Database::clearQueries)
     }
 
-    override fun saveHistory(text: String) {
+    override suspend fun saveHistory(text: String) {
         query {
             Database.insert(SearchQuery(query = text))
         }

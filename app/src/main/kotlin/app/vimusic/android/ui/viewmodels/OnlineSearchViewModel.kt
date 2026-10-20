@@ -6,6 +6,7 @@ import app.vimusic.android.models.SearchQuery
 import app.vimusic.android.repositories.OnlineSearchRepository
 import app.vimusic.android.ui.state.LoadState
 import app.vimusic.android.ui.state.launchLoad
+import app.vimusic.android.utils.launchDatabaseAction
 import app.vimusic.android.utils.requireValue
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -40,9 +41,19 @@ class OnlineSearchViewModel(
         }
     }
 
-    fun deleteHistory(searchQuery: SearchQuery) = repository.deleteHistory(searchQuery)
-    fun clearHistory() = repository.clearHistory()
-    fun saveHistory(text: String) = repository.saveHistory(text)
+    fun deleteHistory(searchQuery: SearchQuery) {
+        viewModelScope.launchDatabaseAction {
+            repository.deleteHistory(searchQuery)
+        }
+    }
+
+    fun clearHistory() {
+        viewModelScope.launchDatabaseAction {
+            repository.clearHistory()
+        }
+    }
+
+    suspend fun saveHistory(text: String) = repository.saveHistory(text)
 
     companion object {
         fun factory(repository: OnlineSearchRepository) = viewModelFactory {

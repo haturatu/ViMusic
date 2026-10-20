@@ -17,8 +17,8 @@ interface SyncSettingsRepository {
         password: String
     ): app.vimusic.providers.piped.models.Session?
 
-    fun saveSession(session: app.vimusic.providers.piped.models.Session, username: String)
-    fun deleteSession(session: PipedSession)
+    suspend fun saveSession(session: app.vimusic.providers.piped.models.Session, username: String)
+    suspend fun deleteSession(session: PipedSession)
 }
 
 object DatabaseSyncSettingsRepository : SyncSettingsRepository {
@@ -37,7 +37,7 @@ object DatabaseSyncSettingsRepository : SyncSettingsRepository {
             password = password
         )?.getOrNull()
 
-    override fun saveSession(
+    override suspend fun saveSession(
         session: app.vimusic.providers.piped.models.Session,
         username: String
     ) {
@@ -52,7 +52,7 @@ object DatabaseSyncSettingsRepository : SyncSettingsRepository {
         }
     }
 
-    override fun deleteSession(session: PipedSession) {
+    override suspend fun deleteSession(session: PipedSession) {
         transaction { Database.delete(session) }
     }
 }
