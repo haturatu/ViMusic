@@ -128,11 +128,9 @@ class NewPipeAudioMediaSourceFactory(
                 }
 
             runCatching {
-                mediaItem?.let { item ->
-                    playerRepository.insertSong(item)
-                }
-                playerRepository.insertFormat(
-                    Format(
+                playerRepository.saveStreamMetadata(
+                    mediaItem = mediaItem,
+                    format = Format(
                         songId = mediaId,
                         itag = result.selectedItag.takeIf { it > 0 },
                         mimeType = result.selectedMimeType,
@@ -142,12 +140,9 @@ class NewPipeAudioMediaSourceFactory(
                         loudnessDb = null,
                         contentLength = null,
                         lastModified = null
-                    )
+                    ),
+                    durationText = durationText
                 )
-
-                durationText?.let {
-                    playerRepository.updateDurationText(mediaId, it)
-                }
             }.onFailure {
                 Log.w(TAG, "Failed to persist stream metadata for $mediaId", it)
             }

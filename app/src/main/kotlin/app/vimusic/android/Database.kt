@@ -12,6 +12,7 @@ import androidx.core.database.getFloatOrNull
 import androidx.core.database.getLongOrNull
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
+import androidx.paging.PagingSource
 import androidx.room.AutoMigration
 import androidx.room.Dao
 import androidx.room.Delete
@@ -31,9 +32,9 @@ import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import androidx.room.Update
 import androidx.room.Upsert
-import androidx.paging.PagingSource
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
+import androidx.room.withTransaction
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteQuery
@@ -51,9 +52,9 @@ import app.vimusic.android.models.PlaylistWithSongs
 import app.vimusic.android.models.QueuedMediaItem
 import app.vimusic.android.models.SearchQuery
 import app.vimusic.android.models.Song
-import app.vimusic.android.models.SongFts
 import app.vimusic.android.models.SongAlbumMap
 import app.vimusic.android.models.SongArtistMap
+import app.vimusic.android.models.SongFts
 import app.vimusic.android.models.SongPlaylistMap
 import app.vimusic.android.models.SongWithContentLength
 import app.vimusic.android.models.SortedSongPlaylistMap
@@ -65,12 +66,9 @@ import app.vimusic.core.data.enums.SongSortBy
 import app.vimusic.core.data.enums.SortOrder
 import app.vimusic.core.ui.utils.songBundle
 import io.ktor.http.Url
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Dao
 @Suppress("LargeClass", "TooManyFunctions") // Room requires the DAO surface to remain in one interface.
@@ -321,7 +319,7 @@ interface Database {
     }
 
     @Query("SELECT * FROM QueuedMediaItem ORDER BY id ASC")
-    fun queue(): List<QueuedMediaItem>
+    suspend fun queue(): List<QueuedMediaItem>
 
     @Transaction
     @Query(
@@ -453,7 +451,7 @@ interface Database {
     }
 
     @Query("UPDATE Song SET totalPlayTimeMs = totalPlayTimeMs + :addition WHERE id = :id")
-    fun incrementTotalPlayTimeMs(id: String, addition: Long)
+    suspend fun incrementTotalPlayTimeMs(id: String, addition: Long)
 
     @Query("SELECT * FROM PipedSession")
     fun pipedSessions(): Flow<List<PipedSession>>
@@ -812,7 +810,7 @@ interface Database {
     fun eventsCount(): Flow<Int>
 
     @Query("SELECT COUNT (*) FROM Event")
-    fun eventsCountNow(): Int
+    suspend fun eventsCountNow(): Int
 
     @Query("DELETE FROM Event")
     fun clearEvents()
@@ -827,14 +825,14 @@ interface Database {
         )
         """
     )
-    fun deleteOldestEvents(count: Int)
+    suspend fun deleteOldestEvents(count: Int)
 
     @Query("DELETE FROM Event WHERE songId = :songId")
     fun clearEventsFor(songId: String)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     @Throws(SQLException::class)
-    fun insert(event: Event)
+    suspend fun insert(event: Event)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(format: Format)
@@ -885,7 +883,7 @@ interface Database {
     fun insert(pipedSession: PipedSession)
 
     @Transaction
-    fun insert(mediaItem: MediaItem, block: (Song) -> Song = { it }) {
+    suspend fun insert(mediaItem: MediaItem, block: (Song) -> Song = { it }) {
         val extras = mediaItem.mediaMetadata.extras?.songBundle
         val song = Song(
             id = mediaItem.mediaId,
@@ -1373,15 +1371,10 @@ object Converters {
 val Database.internal: RoomDatabase
     get() = DatabaseInitializer.instance
 
-fun query(block: () -> Unit): Job = databaseWriteScope.launch {
-    block()
-}
+suspend fun <T> query(block: suspend () -> T): T = withContext(Dispatchers.IO) { block() }
 
-fun transaction(block: () -> Unit): Job = databaseWriteScope.launch {
-    DatabaseInitializer.instance.runInTransaction(block)
-}
-
-private val databaseWriteScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+suspend fun <T> transaction(block: suspend () -> T): T =
+    DatabaseInitializer.instance.withTransaction { block() }
 
 val RoomDatabase.dbPath: String?
     get() = openHelper.writableDatabase.path

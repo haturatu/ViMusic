@@ -19,7 +19,7 @@ class PlaylistSongListViewModel(
         shouldDedup = shouldDedup
     )
 
-    fun importPlaylist(
+    suspend fun importPlaylist(
         name: String,
         browseId: String,
         thumbnailUrl: String?,

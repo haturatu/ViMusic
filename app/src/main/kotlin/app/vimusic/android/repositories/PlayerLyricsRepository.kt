@@ -3,18 +3,18 @@ package app.vimusic.android.repositories
 import app.vimusic.android.Database
 import app.vimusic.android.models.Lyrics
 import app.vimusic.android.transaction
-import app.vimusic.providers.youtubemusic.innertube.models.bodies.NextBody
-import app.vimusic.providers.youtubemusic.innertube.requests.lyrics
-import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import app.vimusic.providers.kugou.KuGou
 import app.vimusic.providers.lrclib.LrcLib
 import app.vimusic.providers.lrclib.models.Track
+import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
+import app.vimusic.providers.youtubemusic.innertube.models.bodies.NextBody
+import app.vimusic.providers.youtubemusic.innertube.requests.lyrics
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Duration
 
 interface PlayerLyricsRepository {
     fun observeLyrics(songId: String): Flow<Lyrics?>
-    fun upsertLyrics(lyrics: Lyrics)
+    suspend fun upsertLyrics(lyrics: Lyrics)
     suspend fun fetchYoutubeMusicInnertubeLyrics(mediaId: String): String?
     suspend fun fetchBestLrcLibLyrics(
         artist: String,
@@ -36,7 +36,7 @@ interface PlayerLyricsRepository {
 object DefaultPlayerLyricsRepository : PlayerLyricsRepository {
     override fun observeLyrics(songId: String): Flow<Lyrics?> = Database.lyrics(songId)
 
-    override fun upsertLyrics(lyrics: Lyrics) {
+    override suspend fun upsertLyrics(lyrics: Lyrics) {
         transaction { Database.upsert(lyrics) }
     }
 

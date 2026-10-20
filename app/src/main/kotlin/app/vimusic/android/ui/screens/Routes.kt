@@ -18,6 +18,7 @@ import app.vimusic.android.ui.screens.search.SearchScreen
 import app.vimusic.android.ui.screens.searchresult.SearchResultScreen
 import app.vimusic.android.ui.screens.settings.LogsScreen
 import app.vimusic.android.ui.screens.settings.SettingsScreen
+import app.vimusic.android.utils.launchDatabaseAction
 import app.vimusic.android.utils.toast
 import app.vimusic.compose.routing.Route0
 import app.vimusic.compose.routing.Route1
@@ -54,7 +55,8 @@ fun RouteHandlerScope.GlobalRoutes() {
     val errorMessage = stringResource(R.string.error_message)
     val errorUrlPattern = stringResource(R.string.error_url, "%s")
     val binder = LocalPlayerServiceBinder.current
-    val onlineSearchRepository = LocalAppContainer.current.onlineSearchRepository
+    val container = LocalAppContainer.current
+    val onlineSearchRepository = container.onlineSearchRepository
 
     albumRoute { browseId ->
         AlbumScreen(browseId = browseId)
@@ -105,7 +107,9 @@ fun RouteHandlerScope.GlobalRoutes() {
             onSearch = { rawQuery ->
                 val query = rawQuery.trim()
                 if (query.isNotEmpty()) {
-                    if (!DataPreferences.pauseSearchHistory) onlineSearchRepository.saveHistory(query)
+                    if (!DataPreferences.pauseSearchHistory) container.databaseScope.launchDatabaseAction {
+                        onlineSearchRepository.saveHistory(query)
+                    }
 
                     args[0] = query
                     if (child == searchResultRoute) replace(null)
