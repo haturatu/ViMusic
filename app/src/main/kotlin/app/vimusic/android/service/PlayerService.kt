@@ -390,7 +390,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             subscribe(PlayerPreferences.reverbProperty) { maybeReverb() }
             subscribe(PlayerPreferences.isAndroidAutoEnabledProperty) {
                 mediaSession.connectedControllers.forEach { controller ->
-                    val connection = sessionCallback.onConnect(mediaSession, controller)
+                    val connection = sessionCallback.connectionResult(mediaSession, controller)
                     mediaSession.setAvailableCommands(
                         controller,
                         connection.availableSessionCommands,

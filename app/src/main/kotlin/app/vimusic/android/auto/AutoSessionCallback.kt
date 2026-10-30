@@ -36,13 +36,18 @@ class AutoSessionCallback(
     private val queueSelected: () -> Unit,
 ) : MediaLibraryService.MediaLibrarySession.Callback {
     private val context: Context get() = tree.context
-    override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
-        val defaults = super.onConnect(session, controller)
-        if (!defaults.isAccepted) return defaults
+    override fun onConnectAsync(session: MediaSession, controller: MediaSession.ControllerInfo): ListenableFuture<MediaSession.ConnectionResult> =
+        Futures.immediateFuture(connectionResult(session, controller))
+
+    fun connectionResult(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
+        // The deprecated onConnect default is an empty sentinel in Media3 1.11.
+        // The controller-aware builder supplies the session/library permissions.
+        val defaults = MediaSession.ConnectionResult.AcceptedResultBuilder(session, controller).build()
         val enabled = PlayerPreferences.isAndroidAutoEnabled || controller.packageName == context.packageName
+        val canControl = controller.isTrusted || controller.packageName == context.packageName
         val available = SessionCommands.Builder().addSessionCommands(defaults.availableSessionCommands.commands.filter {
             enabled || MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.contains(it)
-        }).apply { if (enabled) AutoCommandHandler.ALL_ACTIONS.forEach { add(AutoCommandHandler.command(it)) } }.build()
+        }).apply { if (enabled && canControl) AutoCommandHandler.ALL_ACTIONS.forEach { add(AutoCommandHandler.command(it)) } }.build()
         return MediaSession.ConnectionResult.AcceptedResultBuilder(session, controller)
             .setAvailableSessionCommands(available).setAvailablePlayerCommands(defaults.availablePlayerCommands)
             .build()
