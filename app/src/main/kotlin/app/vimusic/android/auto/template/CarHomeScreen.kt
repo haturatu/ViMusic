@@ -53,17 +53,19 @@ internal class CarHomeScreen(context: CarContext, private val client: CarMediaCl
         job = scope.launch {
             try {
                 val children = client.children(selected)
-                sections = children.map { it to emptyList() }
-                loading = false; failed = false; invalidate()
+                val updated = children.map { it to emptyList<MediaItem>() }.toMutableList()
                 client.subscribe(selected)
                 if (selected != AutoMediaId.LIBRARY) {
                     val quota = ((CarUi.limit(carContext, grid) - children.size) / children.size.coerceAtLeast(1)).coerceIn(0, 3)
                     children.forEachIndexed { index, folder ->
                         val entries = try { client.children(folder.mediaId).take(quota) } catch (error: CancellationException) { throw error } catch (_: Exception) { emptyList() }
-                        sections = sections.toMutableList().apply { this[index] = folder to entries }
-                        invalidate()
+                        updated[index] = folder to entries
                     }
                 }
+                // Publish the completed sections together; changing row counts after
+                // every preview is treated as extra task steps by some car hosts.
+                sections = updated
+                loading = false; failed = false; invalidate()
             } catch (error: CancellationException) { throw error } catch (error: Exception) { android.util.Log.w("ViMusicCar", "Unable to load home", error); loading = false; failed = true; invalidate() }
         }
     }

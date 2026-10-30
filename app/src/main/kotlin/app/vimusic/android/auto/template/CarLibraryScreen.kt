@@ -4,8 +4,6 @@ package app.vimusic.android.auto.template
 
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
-import androidx.car.app.model.ItemList
-import androidx.car.app.model.ListTemplate
 import androidx.car.app.model.Row
 import androidx.car.app.model.SectionedItemTemplate
 import androidx.car.app.model.Template
@@ -63,10 +61,14 @@ internal open class CarLibraryScreen(
     }
     override fun onGetTemplate(): Template {
         val header = CarUi.header(this, title, client) { grid = !grid; page = 0; invalidate() }
-        if (loading) return ListTemplate.Builder().setHeader(header).setLoading(true).build()
-        if (failed || items.isEmpty()) return ListTemplate.Builder().setHeader(header).setSingleList(ItemList.Builder()
-            .setNoItemsMessage(carContext.getString(if (failed) R.string.auto_error else R.string.auto_empty))
-            .apply { if (failed) addItem(Row.Builder().setTitle(carContext.getString(R.string.auto_retry)).setOnClickListener { loading = true; reload(); invalidate() }.build()) }.build()).build()
+        val template = SectionedItemTemplate.Builder().setHeader(header)
+        // Loading and results belong to one host step. Switching template types spends
+        // another step and can exceed the car host's task limit while browsing.
+        if (loading) return template.setLoading(true).build()
+        if (failed || items.isEmpty()) return template.addSection(androidx.car.app.model.RowSection.Builder().setItems(listOf(
+            Row.Builder().setTitle(carContext.getString(if (failed) R.string.auto_error else R.string.auto_empty))
+                .apply { if (failed) setOnClickListener { loading = true; reload(); invalidate() } }.build(),
+        )).build()).build()
         val size = (CarUi.limit(carContext, grid) - 2).coerceAtLeast(1)
         page = page.coerceIn(0, (items.size - 1) / size)
         val visible = items.drop(page * size).take(size)
@@ -77,6 +79,6 @@ internal open class CarLibraryScreen(
         if (page > 0) navigation += Row.Builder().setTitle(carContext.getString(R.string.auto_previous)).setOnClickListener { page--; invalidate() }.build()
         if ((page + 1) * size < items.size) navigation += Row.Builder().setTitle(carContext.getString(R.string.auto_next)).setOnClickListener { page++; invalidate() }.build()
         if (navigation.isNotEmpty()) sections += androidx.car.app.model.RowSection.Builder().setItems(navigation).build()
-        return SectionedItemTemplate.Builder().setHeader(header).setSections(sections).build()
+        return template.setSections(sections).build()
     }
 }
