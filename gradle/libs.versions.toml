@@ -9,7 +9,6 @@ room = "2.8.5"
 paging = "3.5.3"
 media3 = "1.11.1"
 teamnewpipe_nanojson = "e9d656ddb49a412a5a0a5d5ef20ca7ef09549996"
-ktor = "3.6.0"
 detekt = "1.23.8"
 workmanager = "2.12.0"
 coil = "3.6.3"
@@ -31,6 +30,9 @@ dependency_analysis = { id = "com.autonomousapps.dependency-analysis", version.r
 
 [libraries]
 core_ktx = { module = "androidx.core:core-ktx", version = "1.19.1" }
+
+kotlin_serialization_json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "1.12.0" }
+junit = { module = "junit:junit", version = "4.13.2" }
 
 kotlin_coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.11.0" }
 kotlin_datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.8.0-0.6.x-compat" }
@@ -69,15 +71,6 @@ media3_datasource_okhttp = { module = "androidx.media3:media3-datasource-okhttp"
 
 workmanager = { module = "androidx.work:work-runtime", version.ref = "workmanager" }
 workmanager_ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workmanager" }
-
-ktor_http = { module = "io.ktor:ktor-http", version.ref = "ktor" }
-
-ktor_client_core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
-ktor_client_okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
-ktor_client_content_negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
-ktor_client_logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
-ktor_client_serialization = { module = "io.ktor:ktor-client-serialization", version.ref = "ktor" }
-ktor_serialization_json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 
 rhino = { module = "org.mozilla:rhino", version = "1.8.0" }
 log4j = { module = "org.apache.logging.log4j:log4j-api", version = "2.26.1" }

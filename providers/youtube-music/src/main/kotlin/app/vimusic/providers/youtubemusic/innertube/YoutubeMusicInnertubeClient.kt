@@ -21,8 +21,8 @@ import java.net.URLEncoder
  * Small, buffered client for YouTube Music's private API.
  *
  * NewPipe's Downloader already owns HTTP/3 selection and HTTP/2 fallback.
- * Keeping the completed response as a String avoids Ktor response channels,
- * content-encoding plugins and DoubleReceive entirely.
+ * Responses are buffered before JSON decoding so transport failures are
+ * handled by the downloader.
  */
 internal class YoutubeMusicInnertubeClient(
     private val baseUrl: String = "https://music.youtube.com",

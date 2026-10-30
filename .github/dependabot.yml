@@ -18,9 +18,6 @@ updates:
       androidx:
         patterns:
           - "androidx.*"
-      ktor:
-        patterns:
-          - "io.ktor*"
       media3:
         patterns:
           - "androidx.media3*"

@@ -1,6 +1,5 @@
 package app.vimusic.providers.utils
 
-import io.ktor.http.Url
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -9,16 +8,6 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.util.UUID
-
-object UrlSerializer : KSerializer<Url> {
-    override val descriptor = PrimitiveSerialDescriptor("Url", PrimitiveKind.STRING)
-    override fun deserialize(decoder: Decoder) = Url(decoder.decodeString())
-    override fun serialize(encoder: Encoder, value: Url) = encoder.encodeString(value.toString())
-}
-
-typealias SerializableUrl =
-@Serializable(with = UrlSerializer::class)
-Url
 
 object Iso8601DateSerializer : KSerializer<LocalDateTime> {
     override val descriptor = PrimitiveSerialDescriptor("Iso8601LocalDateTime", PrimitiveKind.STRING)
