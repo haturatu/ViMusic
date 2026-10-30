@@ -96,7 +96,6 @@
     <string name="hide_from_quick_picks">Peida "Kiirvalikutest"</string>
     <string name="confirm_hide_song">Kas sa tõesti tahad selle loo peita? Selle esitusaeg ja vahemälu kustutatakse.\nSee tegevus on pöördumatu.</string>
     <string name="confirm_delete_playlist">Kas sa tõesti tahad selle esitusloendi kustutada?</string>
-    <string name="confirm_delete_piped_session">Kas sa tõesti tahad selle Piped\'i sessiooni kustutada?</string>
 
     <string name="other_versions">Teised versioonid</string>
     <string name="no_alternative_version">Sellel albumil ei ole alternatiivset versiooni</string>
@@ -121,8 +120,6 @@
     <string name="error_server_restrictions">Seda lugu ei saa mängida serveri piirangute tõttu</string>
     <string name="error_id_mismatch">Tagastatud video ID ei kattu nõutud omaga</string>
     <string name="error_unknown_playback">Tekkis tundmatu esitamise viga</string>
-    <string name="error_piped_link">Tekkis tundmatu viga sinu Piped\'i konto sidumisel. Proovi uuesti.</string>
-    <string name="error_piped_instances_unavailable">Piped\'i instantside loend ei ole hetkel saadaval</string>
     <string name="error_pre_cache">Tekkis viga eelvahemälu loomisel. Proovi uuesti.</string>
     <string name="error_url">Ei saa avada URL\'i %1$s</string>
 
@@ -334,22 +331,6 @@
     <string name="player_layout">Mängija paigutus</string>
     <string name="classic_player_layout_name">Klassikaline</string>
     <string name="new_player_layout_name">Uus (modernne)</string>
-
-    <string name="piped">Piped</string>
-    <string name="instance">Instants</string>
-    <string name="click_to_select">Vajuta, et valida</string>
-    <string name="username">Kasutajanimi</string>
-    <string name="password">Parool</string>
-    <string name="login">Logi sisse</string>
-    <string name="sync_description">Sa saad esitusloendeid mujal majutada ja sünkroonida neid ViMusic\'iga. Praegu toetab ainult Piped.</string>
-    <string name="add_account">Lisa konto</string>
-    <string name="add_account_description">Siduge Piped\'i konto oma instantsiga, kasutajanime ja parooliga.</string>
-    <string name="learn_more">Uuri rohkem</string>
-    <string name="learn_more_description">Ei tea, mis on Piped või sul pole kontot? Kliki siia, et suunata nende dokumentatsioonile</string>
-    <string name="piped_sessions">Piped\'i seansid</string>
-    <string name="custom_instance">Kohanda instants</string>
-    <string name="base_api_url">Instantsi API URL</string>
-    <string name="piped_session_created_successfully">Piped\'i seanss loodi edukalt</string>
 
     <string name="seek_bar_style">Otsinguriba stiil</string>
     <string name="static_seek_bar_name">Statiline</string>

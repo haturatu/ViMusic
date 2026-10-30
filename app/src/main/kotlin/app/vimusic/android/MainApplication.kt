@@ -58,7 +58,6 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
-import androidx.credentials.CredentialManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -71,7 +70,6 @@ import app.vimusic.android.preferences.AppearancePreferences
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.preferences.PlayerPreferences
 import app.vimusic.android.repositories.AlbumRepository
-import app.vimusic.android.repositories.ApiPipedPlaylistRepository
 import app.vimusic.android.repositories.ApiSponsorBlockRepository
 import app.vimusic.android.repositories.ArtistRepository
 import app.vimusic.android.repositories.BuiltInPlaylistRepository
@@ -89,7 +87,6 @@ import app.vimusic.android.repositories.DatabasePrecacheRepository
 import app.vimusic.android.repositories.DatabaseQueueRepository
 import app.vimusic.android.repositories.DatabaseSettingsRepository
 import app.vimusic.android.repositories.DatabaseSongsRepository
-import app.vimusic.android.repositories.DatabaseSyncSettingsRepository
 import app.vimusic.android.repositories.DeepLinkRepository
 import app.vimusic.android.repositories.DefaultDatabaseSettingsRepository
 import app.vimusic.android.repositories.DefaultHomeRepository
@@ -101,7 +98,6 @@ import app.vimusic.android.repositories.MediaItemMenuRepository
 import app.vimusic.android.repositories.MediaLibraryRepository
 import app.vimusic.android.repositories.MoodRepository
 import app.vimusic.android.repositories.OnlineSearchRepository
-import app.vimusic.android.repositories.PipedPlaylistRepository
 import app.vimusic.android.repositories.PlayerLyricsRepository
 import app.vimusic.android.repositories.PlayerRepository
 import app.vimusic.android.repositories.PlaylistRepository
@@ -110,7 +106,6 @@ import app.vimusic.android.repositories.QueueRepository
 import app.vimusic.android.repositories.SearchResultRepository
 import app.vimusic.android.repositories.SongsRepository
 import app.vimusic.android.repositories.SponsorBlockRepository
-import app.vimusic.android.repositories.SyncSettingsRepository
 import app.vimusic.android.repositories.YoutubeMusicInnertubeDeepLinkRepository
 import app.vimusic.android.repositories.YoutubeMusicInnertubeMoodRepository
 import app.vimusic.android.repositories.YoutubeMusicInnertubeSearchResultRepository
@@ -274,7 +269,6 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
                 LocalPlayerServiceBinder provides vm.binder,
                 LocalPlaybackActions provides playbackActions,
                 LocalAppContainer provides appContainer,
-                LocalCredentialManager provides appContainer.credentialManager,
                 LocalIndication provides ripple(),
                 LocalRippleConfiguration provides rippleConfiguration(appearance = appearance),
                 LocalShimmerTheme provides shimmerTheme(),
@@ -550,15 +544,11 @@ val LocalPlayerAwareWindowInsets =
 val LocalAppContainer = staticCompositionLocalOf<AppContainer> {
     error("LocalAppContainer is not provided")
 }
-val LocalCredentialManager = staticCompositionLocalOf<CredentialManager> {
-    error("LocalCredentialManager is not provided")
-}
 
 class AppContainer(
     val application: MainApplication
 ) {
     val databaseScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    val credentialManager: CredentialManager by lazy { CredentialManager.create(application) }
     val songsRepository: SongsRepository by lazy { DatabaseSongsRepository }
     val searchResultRepository: SearchResultRepository by lazy { YoutubeMusicInnertubeSearchResultRepository }
     val artistRepository: ArtistRepository by lazy { DatabaseArtistRepository }
@@ -568,10 +558,8 @@ class AppContainer(
     val builtInPlaylistRepository: BuiltInPlaylistRepository by lazy { DatabaseBuiltInPlaylistRepository }
     val albumRepository: AlbumRepository by lazy { DatabaseAlbumRepository }
     val playlistRepository: PlaylistRepository by lazy { DatabasePlaylistRepository }
-    val pipedPlaylistRepository: PipedPlaylistRepository by lazy { ApiPipedPlaylistRepository }
     val moodRepository: MoodRepository by lazy { YoutubeMusicInnertubeMoodRepository }
     val localPlaylistRepository: LocalPlaylistRepository by lazy { DatabaseLocalPlaylistRepository }
-    val syncSettingsRepository: SyncSettingsRepository by lazy { DatabaseSyncSettingsRepository }
     val playerRepository: PlayerRepository by lazy { DatabasePlayerRepository }
     val queueRepository: QueueRepository by lazy { DatabaseQueueRepository }
     val databaseSettingsRepository: DatabaseSettingsRepository by lazy { DefaultDatabaseSettingsRepository }

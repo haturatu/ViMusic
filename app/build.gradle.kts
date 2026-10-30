@@ -189,9 +189,6 @@ dependencies {
     implementation(libs.workmanager)
     implementation(libs.workmanager.ktx)
 
-    implementation(libs.credentials)
-    implementation(libs.credentials.play)
-
     implementation(libs.kotlin.coroutines)
     implementation(libs.kotlin.immutable)
     implementation(libs.kotlin.datetime)
@@ -218,7 +215,6 @@ dependencies {
     implementation(projects.providers.youtubeMusic)
     implementation(projects.providers.kugou)
     implementation(projects.providers.lrclib)
-    implementation(projects.providers.piped)
     implementation(projects.providers.sponsorblock)
     implementation(projects.providers.translate)
     implementation(projects.providers.common)

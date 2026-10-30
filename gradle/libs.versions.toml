@@ -12,7 +12,6 @@ teamnewpipe_nanojson = "e9d656ddb49a412a5a0a5d5ef20ca7ef09549996"
 ktor = "3.6.0"
 detekt = "1.23.8"
 workmanager = "2.12.0"
-credentials = "1.6.0"
 coil = "3.6.3"
 okhttp = "5.5.1"
 re2j = "1.8"
@@ -70,10 +69,6 @@ media3_datasource_okhttp = { module = "androidx.media3:media3-datasource-okhttp"
 
 workmanager = { module = "androidx.work:work-runtime", version.ref = "workmanager" }
 workmanager_ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workmanager" }
-
-#noinspection CredentialDependency ==> thank you Android Lint, I added the dependency and this still flags!
-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
-credentials_play = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
 
 ktor_http = { module = "io.ktor:ktor-http", version.ref = "ktor" }
 

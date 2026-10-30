@@ -2,7 +2,6 @@ package app.vimusic.android.ui.screens
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerServiceBinder
@@ -12,7 +11,6 @@ import app.vimusic.android.models.Mood
 import app.vimusic.android.preferences.DataPreferences
 import app.vimusic.android.ui.screens.album.AlbumScreen
 import app.vimusic.android.ui.screens.artist.ArtistScreen
-import app.vimusic.android.ui.screens.pipedplaylist.PipedPlaylistScreen
 import app.vimusic.android.ui.screens.playlist.PlaylistScreen
 import app.vimusic.android.ui.screens.search.SearchScreen
 import app.vimusic.android.ui.screens.searchresult.SearchResultScreen
@@ -22,12 +20,9 @@ import app.vimusic.android.utils.launchDatabaseAction
 import app.vimusic.android.utils.toast
 import app.vimusic.compose.routing.Route0
 import app.vimusic.compose.routing.Route1
-import app.vimusic.compose.routing.Route3
 import app.vimusic.compose.routing.Route4
 import app.vimusic.compose.routing.RouteHandlerScope
 import app.vimusic.core.data.enums.BuiltInPlaylist
-import io.ktor.http.Url
-import java.util.UUID
 
 /**
  * Marker class for linters that a composable is a route and should not be handled like a regular
@@ -42,7 +37,6 @@ val artistRoute = Route1<String>("artistRoute")
 val builtInPlaylistRoute = Route1<BuiltInPlaylist>("builtInPlaylistRoute")
 val localPlaylistRoute = Route1<Long>("localPlaylistRoute")
 val logsRoute = Route0("logsRoute")
-val pipedPlaylistRoute = Route3<String, String, String>("pipedPlaylistRoute")
 val playlistRoute = Route4<String, String?, Int?, Boolean>("playlistRoute")
 val moodRoute = Route1<Mood>("moodRoute")
 val searchResultRoute = Route1<String>("searchResultRoute")
@@ -52,8 +46,6 @@ val settingsRoute = Route0("settingsRoute")
 @Composable
 fun RouteHandlerScope.GlobalRoutes() {
     val context = LocalContext.current
-    val errorMessage = stringResource(R.string.error_message)
-    val errorUrlPattern = stringResource(R.string.error_url, "%s")
     val binder = LocalPlayerServiceBinder.current
     val container = LocalAppContainer.current
     val onlineSearchRepository = container.onlineSearchRepository
@@ -68,24 +60,6 @@ fun RouteHandlerScope.GlobalRoutes() {
 
     logsRoute {
         LogsScreen()
-    }
-
-    pipedPlaylistRoute { apiBaseUrl, sessionToken, playlistId ->
-        val safeApiBaseUrl = runCatching { Url(apiBaseUrl) }.getOrNull()
-        if (safeApiBaseUrl == null) {
-            context.toast(errorUrlPattern.format(apiBaseUrl))
-            return@pipedPlaylistRoute
-        }
-        val safePlaylistId = runCatching { UUID.fromString(playlistId) }.getOrNull()
-        if (safePlaylistId == null) {
-            context.toast(errorMessage)
-            return@pipedPlaylistRoute
-        }
-        PipedPlaylistScreen(
-            apiBaseUrl = safeApiBaseUrl,
-            sessionToken = sessionToken,
-            playlistId = safePlaylistId
-        )
     }
 
     playlistRoute { browseId, params, maxDepth, shouldDedup ->

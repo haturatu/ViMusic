@@ -45,7 +45,6 @@ import app.vimusic.android.models.EventWithSong
 import app.vimusic.android.models.Format
 import app.vimusic.android.models.Info
 import app.vimusic.android.models.Lyrics
-import app.vimusic.android.models.PipedSession
 import app.vimusic.android.models.Playlist
 import app.vimusic.android.models.PlaylistPreview
 import app.vimusic.android.models.PlaylistWithSongs
@@ -65,7 +64,6 @@ import app.vimusic.core.data.enums.PlaylistSortBy
 import app.vimusic.core.data.enums.SongSortBy
 import app.vimusic.core.data.enums.SortOrder
 import app.vimusic.core.ui.utils.songBundle
-import io.ktor.http.Url
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -418,9 +416,6 @@ interface DatabaseDao {
     @Query("UPDATE Song SET totalPlayTimeMs = totalPlayTimeMs + :addition WHERE id = :id")
     suspend fun incrementTotalPlayTimeMs(id: String, addition: Long)
 
-    @Query("SELECT * FROM PipedSession")
-    fun pipedSessions(): Flow<List<PipedSession>>
-
     @Query("SELECT * FROM Playlist WHERE id = :id")
     fun playlist(id: Long): Flow<Playlist?>
 
@@ -772,9 +767,6 @@ interface DatabaseDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insert(artists: List<Artist>, songArtistMaps: List<SongArtistMap>)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(pipedSession: PipedSession)
-
     @Transaction
     suspend fun insert(mediaItem: MediaItem, block: (Song) -> Song = { it }) {
         val extras = mediaItem.mediaMetadata.extras?.songBundle
@@ -864,9 +856,6 @@ interface DatabaseDao {
     @Delete
     fun delete(songPlaylistMap: SongPlaylistMap)
 
-    @Delete
-    fun delete(pipedSession: PipedSession)
-
     @RawQuery
     fun raw(supportSQLiteQuery: SupportSQLiteQuery): Int
 
@@ -892,11 +881,10 @@ object Database : DatabaseDao by DatabaseInitializer.instance.database
         QueuedMediaItem::class,
         Format::class,
         Event::class,
-        Lyrics::class,
-        PipedSession::class
+        Lyrics::class
     ],
     views = [SortedSongPlaylistMap::class],
-    version = 31,
+    version = 32,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
@@ -923,7 +911,8 @@ object Database : DatabaseDao by DatabaseInitializer.instance.database
         AutoMigration(from = 26, to = 27),
         AutoMigration(from = 27, to = 28),
         AutoMigration(from = 28, to = 29),
-        AutoMigration(from = 29, to = 30)
+        AutoMigration(from = 29, to = 30),
+        AutoMigration(from = 31, to = 32, spec = DatabaseInitializer.From31To32Migration::class)
     ]
 )
 @TypeConverters(Converters::class)
@@ -1220,6 +1209,9 @@ abstract class DatabaseInitializer protected constructor() : RoomDatabase() {
             )
         }
     }
+
+    @DeleteTable.Entries(DeleteTable(tableName = "PipedSession"))
+    class From31To32Migration : AutoMigrationSpec
 }
 
 @Suppress("unused")
@@ -1255,12 +1247,6 @@ object Converters {
             parcel.recycle()
         }
     }
-
-    @TypeConverter
-    fun urlToString(url: Url) = url.toString()
-
-    @TypeConverter
-    fun stringToUrl(string: String) = Url(string)
 }
 
 @Suppress("UnusedReceiverParameter")

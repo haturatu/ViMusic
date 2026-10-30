@@ -97,7 +97,6 @@
     <string name="hide_from_quick_picks">Auf Startseite verstecken</string>
     <string name="confirm_hide_song">Möchten Sie dieses Lied wirklich löschen? Die Wiedergabezeit und der Cache werden gelöscht. Diese Aktion ist nicht umkehrbar.</string>
     <string name="confirm_delete_playlist">Willst du diese Playlist wirklich löschen?</string>
-    <string name="confirm_delete_piped_session">Willst du diese Piped-Sitzung wirklich löschen?</string>
     
     <string name="other_versions">Andere Versionen</string>
     <string name="no_alternative_version">Dieses Album hat keine anderen Versionen</string>
@@ -122,8 +121,6 @@
     <string name="error_server_restrictions">Dieses Lied kann aufgrund von Serverbeschränkungen nicht abgespielt werden</string>
     <string name="error_id_mismatch">Die zurückgegebene Video-ID stimmt nicht mit der angeforderten überein</string>
     <string name="error_unknown_playback">Ein unbekannter Wiedergabefehler ist aufgetreten</string>
-    <string name="error_piped_link">Bei der Verknüpfung Ihres Piped-Kontos ist ein unbekannter Fehler aufgetreten. Bitte versuchen Sie es erneut.</string>
-    <string name="error_piped_instances_unavailable">Liste der Piped-Instanzen ist derzeit nicht verfügbar.</string>
     <string name="error_pre_cache">Beim Caching ist ein unbekannter Fehler aufgetreten. Bitte versuchen Sie es erneut.</string>
     <string name="error_url">Kann die URL %1$s nicht öffnen</string>
     
@@ -353,21 +350,6 @@
     <string name="classic_player_layout_name">Klassisch</string>
     <string name="new_player_layout_name">Modern (neu)</string>
 
-    <string name="piped">Piped</string>
-    <string name="instance">Instanz</string>
-    <string name="click_to_select">Zum Auswählen anklicken</string>
-    <string name="username">Benutzername</string>
-    <string name="password">Passwort</string>
-    <string name="login">Anmelden</string>
-    <string name="sync_description">Sie können Wiedergabelisten hosten und mit ViMusic synchronisieren. Derzeit wird nur Piped unterstützt.</string>
-    <string name="add_account">Account hinzufügen</string>
-    <string name="add_account_description">Verknüpfen Sie ein Piped-Konto mit Ihrer Instanz, Ihrem Benutzernamen und Ihrem Passwort.</string>
-    <string name="learn_more">Mehr erfahren</string>
-    <string name="learn_more_description">Sie wissen nicht, was Piped ist oder haben noch kein Account? Klicken Sie hier, um zu den Dokumentationen weitergeleitet zu werden.</string>
-    <string name="piped_sessions">Piped-Sitzungen</string>
-    <string name="custom_instance">Benutzerdefinierte Instanz verwenden</string>
-    <string name="base_api_url">Instanz-API-URL</string>
-    <string name="piped_session_created_successfully">Piped Sitzung erfolgreich erstellt</string>
     
     <string name="seek_bar_style">Fortschrittsbalkenstil</string>
     <string name="static_seek_bar_name">Statisch</string>

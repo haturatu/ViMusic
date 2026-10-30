@@ -27,7 +27,6 @@ import app.vimusic.core.ui.utils.SongBundleAccessor
 import app.vimusic.providers.youtubemusic.innertube.YoutubeMusicInnertube
 import app.vimusic.providers.youtubemusic.innertube.models.bodies.ContinuationBody
 import app.vimusic.providers.youtubemusic.innertube.requests.playlistPage
-import app.vimusic.providers.piped.models.Playlist
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -240,33 +239,6 @@ val YoutubeMusicInnertube.VideoItem.asMediaItem: MediaItem
                 .build()
         )
         .build()
-
-val Playlist.Video.asMediaItem: MediaItem?
-    get() {
-        val key = id ?: return null
-
-        return MediaItem.Builder()
-            .setMediaId(key)
-            .setUri(key)
-            .setCustomCacheKey(key)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setTitle(title)
-                    .setArtist(uploaderName)
-                    .setArtworkUri(thumbnailUrl.toString().toUri())
-                    .setExtras(
-                        SongBundleAccessor.bundle {
-                            durationText = duration.toComponents { minutes, seconds, _ ->
-                                "$minutes:${seconds.toString().padStart(2, '0')}"
-                            }
-                            artistNames = listOf(uploaderName)
-                            artistIds = uploaderId?.let { listOf(it) }
-                        }
-                    )
-                    .build()
-            )
-            .build()
-    }
 
 val Song.asMediaItem: MediaItem
     get() = MediaItem.Builder()

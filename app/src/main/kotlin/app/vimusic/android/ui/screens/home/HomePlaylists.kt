@@ -32,7 +32,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.vimusic.android.LocalAppContainer
 import app.vimusic.android.LocalPlayerAwareWindowInsets
 import app.vimusic.android.R
-import app.vimusic.android.models.PipedSession
 import app.vimusic.android.models.Playlist
 import app.vimusic.android.models.PlaylistPreview
 import app.vimusic.android.preferences.DataPreferences
@@ -44,26 +43,20 @@ import app.vimusic.android.ui.components.themed.SecondaryTextButton
 import app.vimusic.android.ui.components.themed.TextFieldDialog
 import app.vimusic.android.ui.items.PlaylistItem
 import app.vimusic.android.ui.screens.Route
-import app.vimusic.android.ui.screens.settings.SettingsEntryGroupText
-import app.vimusic.android.ui.screens.settings.SettingsGroupSpacer
 import app.vimusic.android.ui.viewmodels.HomePlaylistsViewModel
-import app.vimusic.compose.persist.persist
 import app.vimusic.compose.persist.persistList
 import app.vimusic.core.data.enums.BuiltInPlaylist
 import app.vimusic.core.data.enums.PlaylistSortBy
 import app.vimusic.core.data.enums.SortOrder
 import app.vimusic.core.ui.Dimensions
 import app.vimusic.core.ui.LocalAppearance
-import app.vimusic.providers.piped.models.Session
 import kotlinx.collections.immutable.toImmutableList
-import app.vimusic.providers.piped.models.PlaylistPreview as PipedPlaylistPreview
 
 @Route
 @Composable
 fun HomePlaylists(
     onBuiltInPlaylist: (BuiltInPlaylist) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
-    onPipedPlaylistClick: (Session, PipedPlaylistPreview) -> Unit,
     onSearchClick: () -> Unit
 ) = with(OrderPreferences) {
     val viewModel: HomePlaylistsViewModel = viewModel(
@@ -79,16 +72,11 @@ fun HomePlaylists(
         onAccept = viewModel::createPlaylist
     )
     var items by persistList<PlaylistPreview>("home/playlists")
-    var pipedSessions by persist<Map<PipedSession, List<PipedPlaylistPreview>?>>("home/piped")
 
     LaunchedEffect(playlistSortBy, playlistSortOrder) {
         viewModel
             .observePlaylistPreviews(playlistSortBy, playlistSortOrder)
             .collect { items = it.toImmutableList() }
-    }
-
-    LaunchedEffect(Unit) {
-        viewModel.observePipedPlaylists().collect { pipedSessions = it }
     }
 
     val sortOrderIconRotation by animateFloatAsState(
@@ -213,44 +201,6 @@ fun HomePlaylists(
                         .animateItem(fadeInSpec = null, fadeOutSpec = null)
                 )
             }
-
-            pipedSessions
-                ?.ifEmpty { null }
-                ?.filter { it.value?.isNotEmpty() == true }
-                ?.forEach { (session, playlists) ->
-                    item(
-                        key = "piped-header-${session.username}",
-                        contentType = 0,
-                        span = { GridItemSpan(maxLineSpan) }
-                    ) {
-                        SettingsGroupSpacer()
-                        SettingsEntryGroupText(title = session.username)
-                    }
-
-                    playlists?.let {
-                        items(
-                            items = playlists,
-                            key = { "piped-${session.username}-${it.id}" }
-                        ) { playlist ->
-                            PlaylistItem(
-                                name = playlist.name,
-                                songCount = playlist.videoCount,
-                                channelName = null,
-                                thumbnailUrl = playlist.thumbnailUrl.toString(),
-                                thumbnailSize = Dimensions.thumbnails.playlist,
-                                alternative = true,
-                                modifier = Modifier
-                                    .clickable(onClick = {
-                                        onPipedPlaylistClick(
-                                            session.toApiSession(),
-                                            playlist
-                                        )
-                                    })
-                                    .animateItem(fadeInSpec = null, fadeOutSpec = null)
-                            )
-                        }
-                    }
-                }
         }
 
         FloatingActionsContainerWithScrollToTop(
