@@ -1,12 +1,11 @@
 package app.vimusic.providers.github.models
 
-import app.vimusic.providers.utils.SerializableUrl
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Reactions(
-    val url: SerializableUrl,
+    val url: String,
     @SerialName("total_count")
     val count: Int,
     @SerialName("+1")

@@ -1,7 +1,6 @@
 package app.vimusic.providers.github.models
 
 import app.vimusic.providers.utils.SerializableIso8601Date
-import app.vimusic.providers.utils.SerializableUrl
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -10,11 +9,11 @@ data class Release(
     val id: Int,
     @SerialName("node_id")
     val nodeId: String,
-    val url: SerializableUrl,
+    val url: String,
     @SerialName("html_url")
-    val frontendUrl: SerializableUrl,
+    val frontendUrl: String,
     @SerialName("assets_url")
-    val assetsUrl: SerializableUrl,
+    val assetsUrl: String,
     @SerialName("tag_name")
     val tag: String,
     val name: String? = null,
@@ -34,14 +33,14 @@ data class Release(
     @SerialName("body_text")
     val text: String? = null,
     @SerialName("discussion_url")
-    val discussionUrl: SerializableUrl? = null,
+    val discussionUrl: String? = null,
     val reactions: Reactions? = null
 ) {
     @Serializable
     data class Asset(
-        val url: SerializableUrl,
+        val url: String,
         @SerialName("browser_download_url")
-        val downloadUrl: SerializableUrl,
+        val downloadUrl: String,
         val id: Int,
         @SerialName("node_id")
         val nodeId: String,

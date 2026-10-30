@@ -7,12 +7,11 @@ dependencies {
     implementation(libs.kotlin.coroutines)
     api(libs.kotlin.datetime)
 
-    implementation(libs.ktor.http)
-    implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.okhttp)
-    implementation(libs.ktor.serialization.json)
+    api(libs.okhttp)
+    api(libs.kotlin.serialization.json)
     implementation(libs.okhttp.brotli)
 
+    testImplementation(libs.junit)
 }
 
 kotlin {

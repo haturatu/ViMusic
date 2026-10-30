@@ -1,51 +1,15 @@
 package app.vimusic.providers.sponsorblock
 
 import app.vimusic.providers.utils.ProviderHttpClient
-import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.request.accept
-import io.ktor.client.request.header
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.json.Json
-import java.io.IOException
 
 object SponsorBlock {
     internal val httpClient by lazy {
-        ProviderHttpClient.create {
-            install(ContentNegotiation) {
-                json(
-                    Json {
-                        ignoreUnknownKeys = true
-                    }
-                )
-            }
-
-            defaultRequest {
-                url("https://sponsor.ajay.app")
-
-                accept(ContentType.Application.Json)
-                contentType(ContentType.Application.Json)
-                header("Connection", "close")
-                header("Cache-Control", "no-cache")
-            }
-
-            install(HttpRequestRetry) {
-                retryOnExceptionIf { _, cause -> cause is IOException }
-                retryOnServerErrors()
-                constantDelay()
-                maxRetries = 3
-                modifyRequest {
-                    it.headers.remove("Connection")
-                    it.headers.remove("Cache-Control")
-                    it.headers.append("Connection", "close")
-                    it.headers.append("Cache-Control", "no-cache")
-                }
-            }
-
-            expectSuccess = true
-        }
+        ProviderHttpClient(
+            baseUrl = "https://sponsor.ajay.app",
+            headers = mapOf(
+                "Accept" to "application/json",
+                "Content-Type" to "application/json",
+            ),
+        )
     }
 }

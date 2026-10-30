@@ -120,7 +120,7 @@ class VersionCheckWorker(
                         pendingIntent(
                             Intent(
                                 /* action = */ Intent.ACTION_VIEW,
-                                /* uri = */ release.frontendUrl.toString().toUri()
+                                /* uri = */ release.frontendUrl.toUri()
                             )
                         )
                     )
@@ -276,7 +276,7 @@ fun About() = SettingsCategoryScreen(
 
             SecondaryTextButton(
                 text = stringResource(R.string.more_information),
-                onClick = { uriHandler.openUri(it.frontendUrl.toString()) }
+                onClick = { uriHandler.openUri(it.frontendUrl) }
             )
         } ?: newerVersion?.exceptionOrNull()?.let {
             BasicText(

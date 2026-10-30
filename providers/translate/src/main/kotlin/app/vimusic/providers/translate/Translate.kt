@@ -1,62 +1,22 @@
 package app.vimusic.providers.translate
 
 import app.vimusic.providers.utils.ProviderHttpClient
-import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.UserAgent
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.request.accept
-import io.ktor.client.request.header
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.json.Json
-import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 object Translate {
     internal val client by lazy {
-        ProviderHttpClient.create {
-            install(ContentNegotiation) {
-                json(
-                    Json {
-                        isLenient = true
-                        ignoreUnknownKeys = true
-                    }
-                )
-            }
-
-            install(HttpRequestRetry) {
-                retryOnExceptionIf { _, cause -> cause is IOException }
-                retryOnServerErrors()
-                constantDelay()
-                maxRetries = 3
-                modifyRequest {
-                    it.headers.remove("Connection")
-                    it.headers.remove("Cache-Control")
-                    it.headers.append("Connection", "close")
-                    it.headers.append("Cache-Control", "no-cache")
-                }
-            }
-
-            install(HttpTimeout) {
-                connectTimeoutMillis = 1000L
-                requestTimeoutMillis = 5000L
-            }
-
-            expectSuccess = true
-
-            defaultRequest {
-                accept(ContentType.Application.Json)
-                contentType(ContentType.Application.Json)
-                header("Connection", "close")
-                header("Cache-Control", "no-cache")
-            }
-
-            install(UserAgent) {
-                agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-            }
-        }
+        ProviderHttpClient(
+            baseUrl = "https://translate.googleapis.com",
+            headers = mapOf(
+                "Accept" to "application/json",
+                "Content-Type" to "application/json",
+                "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            ),
+            client = ProviderHttpClient.defaultClient.newBuilder()
+                .connectTimeout(1_000, TimeUnit.MILLISECONDS)
+                .callTimeout(5_000, TimeUnit.MILLISECONDS)
+                .build(),
+        )
     }
 
     internal val dt = listOf("at", "bd", "ex", "ld", "md", "qca", "rw", "rm", "ss", "t")

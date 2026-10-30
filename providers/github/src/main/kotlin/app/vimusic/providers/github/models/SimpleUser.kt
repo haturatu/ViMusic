@@ -1,6 +1,5 @@
 package app.vimusic.providers.github.models
 
-import app.vimusic.providers.utils.SerializableUrl
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -13,30 +12,30 @@ data class SimpleUser(
     @SerialName("node_id")
     val nodeId: String,
     @SerialName("avatar_url")
-    val avatarUrl: SerializableUrl,
+    val avatarUrl: String,
     @SerialName("gravatar_id")
     val gravatarId: String? = null,
-    val url: SerializableUrl,
+    val url: String,
     @SerialName("html_url")
-    val frontendUrl: SerializableUrl,
+    val frontendUrl: String,
     @SerialName("followers_url")
-    val followersUrl: SerializableUrl,
+    val followersUrl: String,
     @SerialName("following_url")
-    val followingUrl: SerializableUrl,
+    val followingUrl: String,
     @SerialName("gists_url")
-    val gistsUrl: SerializableUrl,
+    val gistsUrl: String,
     @SerialName("starred_url")
-    val starredUrl: SerializableUrl,
+    val starredUrl: String,
     @SerialName("subscriptions_url")
-    val subscriptionsUrl: SerializableUrl,
+    val subscriptionsUrl: String,
     @SerialName("organizations_url")
-    val organizationsUrl: SerializableUrl,
+    val organizationsUrl: String,
     @SerialName("repos_url")
-    val reposUrl: SerializableUrl,
+    val reposUrl: String,
     @SerialName("events_url")
-    val eventsUrl: SerializableUrl,
+    val eventsUrl: String,
     @SerialName("received_events_url")
-    val receivedEventsUrl: SerializableUrl,
+    val receivedEventsUrl: String,
     val type: String,
     @SerialName("site_admin")
     val admin: Boolean

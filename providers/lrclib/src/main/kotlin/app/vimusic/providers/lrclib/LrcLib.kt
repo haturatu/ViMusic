@@ -4,19 +4,9 @@ import app.vimusic.providers.lrclib.models.Track
 import app.vimusic.providers.lrclib.models.bestMatchingFor
 import app.vimusic.providers.utils.runCatchingCancellable
 import app.vimusic.providers.utils.ProviderHttpClient
-import io.ktor.client.call.body
-import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.UserAgent
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.client.request.parameter
-import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
-import java.io.IOException
+import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -26,61 +16,32 @@ private const val AGENT = "ViMusic (https://github.com/haturatu/ViMusic)"
 
 object LrcLib {
     private val client by lazy {
-        ProviderHttpClient.create {
-            install(ContentNegotiation) {
-                json(
-                    Json {
-                        isLenient = true
-                        ignoreUnknownKeys = true
-                    }
-                )
-            }
-
-            defaultRequest {
-                url("https://lrclib.net")
-                header("Lrclib-Client", AGENT)
-                header("Connection", "close")
-                header("Cache-Control", "no-cache")
-            }
-
-            install(UserAgent) {
-                agent = AGENT
-            }
-
-            install(HttpRequestRetry) {
-                retryOnExceptionIf { _, cause -> cause is IOException }
-                retryOnServerErrors()
-                constantDelay()
-                maxRetries = 3
-                modifyRequest {
-                    it.headers.remove("Connection")
-                    it.headers.remove("Cache-Control")
-                    it.headers.append("Connection", "close")
-                    it.headers.append("Cache-Control", "no-cache")
-                }
-            }
-
-            install(HttpTimeout) {
-                connectTimeoutMillis = 500
-            }
-
-            expectSuccess = true
-        }
+        ProviderHttpClient(
+            baseUrl = "https://lrclib.net",
+            json = Json {
+                isLenient = true
+                ignoreUnknownKeys = true
+            },
+            headers = mapOf("Lrclib-Client" to AGENT, "User-Agent" to AGENT),
+            client = ProviderHttpClient.defaultClient.newBuilder()
+                .connectTimeout(500, TimeUnit.MILLISECONDS)
+                .build(),
+        )
     }
 
     private suspend fun queryLyrics(
         artist: String,
         title: String,
         album: String? = null
-    ) = client.get("/api/search") {
-        parameter("track_name", title)
-        parameter("artist_name", artist)
-        if (album != null) parameter("album_name", album)
-    }.body<List<Track>>()
+    ) = client.getJson<List<Track>>("/api/search") {
+        addQueryParameter("track_name", title)
+        addQueryParameter("artist_name", artist)
+        if (album != null) addQueryParameter("album_name", album)
+    }
 
-    private suspend fun queryLyrics(query: String) = client.get("/api/search") {
-        parameter("q", query)
-    }.body<List<Track>>()
+    private suspend fun queryLyrics(query: String) = client.getJson<List<Track>>("/api/search") {
+        addQueryParameter("q", query)
+    }
 
     suspend fun lyrics(
         artist: String,

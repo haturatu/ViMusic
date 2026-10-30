@@ -63,7 +63,7 @@ import app.vimusic.android.utils.medium
 import app.vimusic.android.utils.secondary
 import app.vimusic.compose.persist.persistList
 import app.vimusic.core.ui.LocalAppearance
-import io.ktor.http.Url
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.delay
 
@@ -98,10 +98,11 @@ fun OnlineSearch(
 
     val playlistId = remember(textFieldValue.text) {
         runCatching {
-            Url(textFieldValue.text).takeIf {
-                it.host.endsWith("youtube.com", ignoreCase = true) &&
-                        it.segments.lastOrNull()?.equals("playlist", ignoreCase = true) == true
-            }?.parameters?.get("list")
+            textFieldValue.text.toHttpUrlOrNull()?.takeIf {
+                (it.host.equals("youtube.com", ignoreCase = true) ||
+                        it.host.endsWith(".youtube.com", ignoreCase = true)) &&
+                        it.pathSegments.lastOrNull()?.equals("playlist", ignoreCase = true) == true
+            }?.queryParameter("list")
         }.getOrNull()
     }
 

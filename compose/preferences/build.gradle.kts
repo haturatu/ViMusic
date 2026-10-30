@@ -24,6 +24,6 @@ dependencies {
     implementation(libs.core.ktx)
 
     implementation(libs.kotlin.coroutines)
-    api(libs.ktor.serialization.json)
+    api(libs.kotlin.serialization.json)
 
 }

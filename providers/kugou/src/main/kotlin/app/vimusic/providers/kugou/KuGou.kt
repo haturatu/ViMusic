@@ -5,67 +5,26 @@ import app.vimusic.providers.kugou.models.SearchLyricsResponse
 import app.vimusic.providers.kugou.models.SearchSongResponse
 import app.vimusic.providers.utils.runCatchingCancellable
 import app.vimusic.providers.utils.ProviderHttpClient
-import io.ktor.client.call.body
-import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.BrowserUserAgent
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.client.request.parameter
-import io.ktor.http.ContentType
-import io.ktor.http.encodeURLParameter
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.util.decodeBase64String
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
-import java.io.IOException
+import java.util.concurrent.TimeUnit
+import kotlin.io.encoding.Base64
 
 object KuGou {
     @OptIn(ExperimentalSerializationApi::class)
     private val client by lazy {
-        ProviderHttpClient.create {
-
-            BrowserUserAgent()
-
-            expectSuccess = true
-
-            install(ContentNegotiation) {
-                val feature = Json {
-                    ignoreUnknownKeys = true
-                    explicitNulls = false
-                    encodeDefaults = true
-                }
-
-                json(feature)
-                json(feature, ContentType.Text.Html)
-                json(feature, ContentType.Text.Plain)
-            }
-
-            install(HttpRequestRetry) {
-                retryOnExceptionIf { _, cause -> cause is IOException }
-                retryOnServerErrors()
-                constantDelay()
-                maxRetries = 3
-                modifyRequest {
-                    it.headers.remove("Connection")
-                    it.headers.remove("Cache-Control")
-                    it.headers.append("Connection", "close")
-                    it.headers.append("Cache-Control", "no-cache")
-                }
-            }
-
-            install(HttpTimeout) {
-                connectTimeoutMillis = 500
-            }
-
-            defaultRequest {
-                url("https://krcs.kugou.com")
-                header("Connection", "close")
-                header("Cache-Control", "no-cache")
-            }
-        }
+        ProviderHttpClient(
+            baseUrl = "https://krcs.kugou.com",
+            json = Json {
+                ignoreUnknownKeys = true
+                explicitNulls = false
+                encodeDefaults = true
+            },
+            headers = mapOf("User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"),
+            client = ProviderHttpClient.defaultClient.newBuilder()
+                .connectTimeout(500, TimeUnit.MILLISECONDS)
+                .build(),
+        )
     }
 
     suspend fun lyrics(artist: String, title: String, duration: Long) = runCatchingCancellable {
@@ -101,37 +60,37 @@ object KuGou {
         null
     }
 
-    private suspend fun downloadLyrics(id: Long, accessKey: String) = client.get("/download") {
-        parameter("ver", 1)
-        parameter("man", "yes")
-        parameter("client", "pc")
-        parameter("fmt", "lrc")
-        parameter("id", id)
-        parameter("accesskey", accessKey)
-    }.body<DownloadLyricsResponse>().content.decodeBase64String().let(KuGou::Lyrics)
+    private suspend fun downloadLyrics(id: Long, accessKey: String) = client.getJson<DownloadLyricsResponse>("/download") {
+        addQueryParameter("ver", "1")
+        addQueryParameter("man", "yes")
+        addQueryParameter("client", "pc")
+        addQueryParameter("fmt", "lrc")
+        addQueryParameter("id", id.toString())
+        addQueryParameter("accesskey", accessKey)
+    }.content.let { Base64.Mime.decode(it).decodeToString() }.let(KuGou::Lyrics)
 
-    private suspend fun searchLyricsByHash(hash: String) = client.get("/search") {
-        parameter("ver", 1)
-        parameter("man", "yes")
-        parameter("client", "mobi")
-        parameter("hash", hash)
-    }.body<SearchLyricsResponse>().candidates
+    private suspend fun searchLyricsByHash(hash: String) = client.getJson<SearchLyricsResponse>("/search") {
+        addQueryParameter("ver", "1")
+        addQueryParameter("man", "yes")
+        addQueryParameter("client", "mobi")
+        addQueryParameter("hash", hash)
+    }.candidates
 
-    private suspend fun searchLyricsByKeyword(keyword: String) = client.get("/search") {
-        parameter("ver", 1)
-        parameter("man", "yes")
-        parameter("client", "mobi")
-        url.encodedParameters.append("keyword", keyword.encodeURLParameter(spaceToPlus = false))
-    }.body<SearchLyricsResponse>().candidates
+    private suspend fun searchLyricsByKeyword(keyword: String) = client.getJson<SearchLyricsResponse>("/search") {
+        addQueryParameter("ver", "1")
+        addQueryParameter("man", "yes")
+        addQueryParameter("client", "mobi")
+        addQueryParameter("keyword", keyword)
+    }.candidates
 
     private suspend fun searchSong(keyword: String) =
-        client.get("https://mobileservice.kugou.com/api/v3/search/song") {
-            parameter("version", 9108)
-            parameter("plat", 0)
-            parameter("pagesize", 8)
-            parameter("showtype", 0)
-            url.encodedParameters.append("keyword", keyword.encodeURLParameter(spaceToPlus = false))
-        }.body<SearchSongResponse>().data.info
+        client.getJson<SearchSongResponse>("https://mobileservice.kugou.com/api/v3/search/song") {
+            addQueryParameter("version", "9108")
+            addQueryParameter("plat", "0")
+            addQueryParameter("pagesize", "8")
+            addQueryParameter("showtype", "0")
+            addQueryParameter("keyword", keyword)
+        }.data.info
 
     private fun keyword(artist: String, title: String): String {
         val (newTitle, featuring) = title.extract(" (feat. ", ')')
