@@ -384,4 +384,37 @@
     <plurals name="song_count_plural">
         <item quantity="other">%1$d 曲</item>
     </plurals>
+
+    <string name="auto_home">ホーム</string>
+    <string name="auto_resume">前回の続き</string>
+    <string name="auto_recent">最近再生した曲</string>
+    <string name="auto_top">よく聴く曲</string>
+    <string name="auto_recommended">おすすめ</string>
+    <string name="auto_related">関連曲</string>
+    <string name="auto_radio">ラジオを開始</string>
+    <string name="auto_new_albums">新しいアルバム</string>
+    <string name="auto_downloads">ダウンロード済み</string>
+    <string name="auto_offline_playlists">オフラインプレイリスト</string>
+    <string name="auto_play_all">全曲再生</string>
+    <string name="auto_add_queue">キューの最後に追加</string>
+    <string name="auto_repeat">リピート</string>
+    <string name="auto_queue">再生キュー</string>
+    <string name="auto_now_playing">再生中</string>
+    <string name="auto_search">検索</string>
+    <string name="auto_empty">表示できる項目がありません</string>
+    <string name="auto_error">読み込めませんでした。もう一度お試しください。</string>
+    <string name="auto_grid">グリッド</string>
+    <string name="auto_list">リスト</string>
+    <string name="auto_remove">キューから削除</string>
+    <string name="auto_move_up">ひとつ前に移動</string>
+    <string name="auto_move_down">ひとつ後に移動</string>
+    <string name="auto_options">曲の操作</string>
+    <string name="auto_disabled">スマートフォンの設定で Android Auto を有効にしてください。</string>
+    <string name="auto_retry">再試行</string>
+    <string name="auto_loading">読み込み中…</string>
+    <string name="auto_queue_changed">キューが変更されました。開き直してください。</string>
+    <string name="auto_previous">前へ</string>
+    <string name="auto_next">次へ</string>
+    <string name="auto_pause">一時停止</string>
+    <string name="auto_play">再生</string>
 </resources>

@@ -37,6 +37,7 @@ object PlayerPreferences : GlobalPreferencesHolder() {
     var pitch by pitchProperty
     var minimumSilence by long(2_000_000L)
     var persistentQueue by boolean(true)
+    var shuffleModeEnabled by boolean(false)
     var stopWhenClosed by boolean(false)
 
     var isShowingLyrics by boolean(false)

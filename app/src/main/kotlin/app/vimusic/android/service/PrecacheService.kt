@@ -112,6 +112,18 @@ private fun processDownloadManager(context: Context): DownloadManager =
     }
 
 @OptIn(UnstableApi::class)
+internal suspend fun completedDownloadIds(context: Context): Set<String> {
+    val index = kotlinx.coroutines.withContext(Dispatchers.Main.immediate) { processDownloadManager(context).downloadIndex }
+    return kotlinx.coroutines.withContext(Dispatchers.IO) {
+        buildSet {
+            index.getDownloads(Download.STATE_COMPLETED).use { cursor ->
+                while (cursor.moveToNext()) add(cursor.download.request.id)
+            }
+        }
+    }
+}
+
+@OptIn(UnstableApi::class)
 class PrecacheService : DownloadService(
     /* foregroundNotificationId             = */ ServiceNotifications.download.notificationId!!,
     /* foregroundNotificationUpdateInterval = */ DOWNLOAD_NOTIFICATION_UPDATE_INTERVAL,
