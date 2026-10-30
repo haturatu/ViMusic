@@ -35,10 +35,16 @@ internal object CarUi {
                 .setOnClickListener { CarNavigation.search(screen, client) }.build(),
         )
     }
-    fun header(screen: Screen, title: String, toggle: (() -> Unit)? = null, page: (() -> Unit)? = null): Header = Header.Builder()
+    fun header(screen: Screen, title: String, toggle: (() -> Unit)? = null): Header = Header.Builder()
         .setTitle(title.take(80)).setStartHeaderAction(Action.BACK)
         .apply { if (toggle != null) addEndHeaderAction(action(screen.carContext, R.drawable.shapes, toggle)) }
-        .apply { if (page != null) addEndHeaderAction(action(screen.carContext, R.drawable.chevron_forward, page)) }
+        .build()
+    fun pageHeader(screen: Screen, title: String, pages: CarPagination): Header = Header.Builder()
+        .setTitle(title.take(80)).setStartHeaderAction(Action.BACK)
+        .addEndHeaderAction(Action.Builder().setIcon(icon(screen.carContext, R.drawable.chevron_back))
+            .setEnabled(pages.page > 0).setOnClickListener(pages::previous).build())
+        .addEndHeaderAction(Action.Builder().setIcon(icon(screen.carContext, R.drawable.chevron_forward))
+            .setEnabled(pages.page + 1 < pages.pageCount).setOnClickListener(pages::next).build())
         .build()
     fun limit(context: CarContext, grid: Boolean = false): Int = context.getCarService(ConstraintManager::class.java)
         .getContentLimit(if (grid) ConstraintManager.CONTENT_LIMIT_TYPE_GRID else ConstraintManager.CONTENT_LIMIT_TYPE_LIST)
@@ -52,12 +58,12 @@ internal object CarUi {
             setOnClickListener(click)
             if (options != null) addAction(action(context, R.drawable.ellipsis_horizontal, options))
         }.build()
-    fun section(context: CarContext, title: String, items: List<MediaItem>, grid: Boolean, click: (MediaItem) -> Unit, options: (MediaItem) -> Unit): Section<*> =
+    fun section(context: CarContext, title: String, items: List<MediaItem>, grid: Boolean, click: (MediaItem) -> Unit, visibility: ((Int, Int) -> Unit)? = null, options: (MediaItem) -> Unit): Section<*> =
         if (grid) GridSection.Builder().setTitle(title).setItems(items.map { item ->
             GridItem.Builder().setTitle(item.mediaMetadata.title?.toString()?.take(100).orEmpty().ifBlank { "ViMusic" })
                 .setImage(icon(context, if (item.mediaMetadata.isBrowsable == true) R.drawable.playlist else R.drawable.musical_notes))
                 .setOnClickListener { click(item) }.build()
-        }).build() else RowSection.Builder().setTitle(title).setItems(items.map { item ->
+        }).apply { if (visibility != null) setOnItemVisibilityChangedListener(visibility) }.build() else RowSection.Builder().setTitle(title).setItems(items.map { item ->
             row(context, item, { click(item) }, if (item.mediaMetadata.isPlayable == true) ({ options(item) }) else null)
-        }).build()
+        }).apply { if (visibility != null) setOnItemVisibilityChangedListener(visibility) }.build()
 }

@@ -84,7 +84,7 @@ internal class CarHomeScreen(context: CarContext, private val client: CarMediaCl
             CarNavigation.push(this, when (AutoMediaId.parse(item.mediaId)?.kind) {
                 "discover" -> CarDiscoverScreen(carContext, client)
                 "offline" -> CarOfflineScreen(carContext, client)
-                else -> CarLibraryScreen(carContext, client, item.mediaId, title)
+                else -> CarLibraryScreen(carContext, client, item.mediaId, title, grid)
             }, client)
         } else scope.launch {
             try { client.play(item); CarNavigation.playback(this@CarHomeScreen, client) }

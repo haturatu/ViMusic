@@ -29,7 +29,7 @@ internal class CarQueueScreen(context: CarContext, private val client: CarMediaC
     private var items: List<MediaItem>? = null
     private var signature = ""
     private var warned = false
-    private var page = 0
+    private val pages = CarPagination { invalidate() }
     private fun snapshot() {
         client.browser?.let { player ->
             items = List(player.mediaItemCount, player::getMediaItemAt)
@@ -52,18 +52,18 @@ internal class CarQueueScreen(context: CarContext, private val client: CarMediaC
     override fun onStop(owner: LifecycleOwner) { client.stopObserving(changed) }
     override fun onGetTemplate(): Template {
         val size = CarUi.limit(carContext)
-        val pageCount = (((items?.size ?: 0) + size - 1) / size).coerceAtLeast(1)
-        page = page.coerceIn(0, pageCount - 1)
-        val header = Header.Builder().setTitle(carContext.getString(R.string.auto_queue)).setStartHeaderAction(Action.BACK)
-            .addEndHeaderAction(CarUi.action(carContext, R.drawable.ellipsis_horizontal) { CarNavigation.push(this, CarQueueModesScreen(carContext, client), client) })
-            .apply { if (pageCount > 1) addEndHeaderAction(CarUi.action(carContext, R.drawable.chevron_forward) {
-                CarNavigation.page(this@CarQueueScreen, client, page, pageCount) { page = it; invalidate() }
-            }) }.build()
+        pages.update(items?.size ?: 0, size)
+        val header = if (pages.pageCount > 1) CarUi.pageHeader(this, carContext.getString(R.string.auto_queue), pages)
+        else Header.Builder().setTitle(carContext.getString(R.string.auto_queue)).setStartHeaderAction(Action.BACK)
+            .addEndHeaderAction(CarUi.action(carContext, R.drawable.ellipsis_horizontal) { CarNavigation.push(this, CarQueueModesScreen(carContext, client), client) }).build()
         val template = SectionedItemTemplate.Builder().setHeader(header).setActions(CarUi.browseActions(this, client))
         val queue = items ?: return template.setLoading(true).build()
         val count = queue.size
         val expectedSignature = signature
+        val page = pages.page
+        val generation = pages.generation
         val list = RowSection.Builder().setNoItemsMessage(carContext.getString(R.string.auto_empty))
+            .setOnItemVisibilityChangedListener { start, end -> pages.onVisible(generation, start, end) }
         for (index in page * size until minOf(count, (page + 1) * size)) {
             val item = queue[index]
             val label = "${index + 1}. ${item.mediaMetadata.title?.toString().orEmpty()}"

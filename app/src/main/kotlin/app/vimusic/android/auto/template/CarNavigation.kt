@@ -14,7 +14,7 @@ internal object CarNavigation {
     fun push(from: Screen, destination: Screen, client: CarMediaClient) {
         val manager = from.screenManager
         if (manager.top !== from) return
-        if (manager.stackSize >= MAX_BROWSE_DEPTH && !(manager.stackSize == MAX_BROWSE_DEPTH && destination is CarPagerScreen)) {
+        if (manager.stackSize >= MAX_BROWSE_DEPTH) {
             if (manager.stackSize == MAX_BROWSE_DEPTH) manager.push(CarBrowseLimitScreen(from, client))
             else CarToast.makeText(from.carContext, R.string.auto_navigation_limit, CarToast.LENGTH_SHORT).show()
             return
@@ -44,20 +44,6 @@ internal object CarNavigation {
         root.startFlow { CarSearchScreen(from.carContext, client) }
     }
 
-    fun page(from: Screen, client: CarMediaClient, current: Int, count: Int, select: (Int) -> Unit) {
-        push(from, CarPagerScreen(from, current, count, select), client)
-    }
-}
-
-/** Return to the same browse template ID, so page changes do not exhaust task steps. */
-private class CarPagerScreen(from: Screen, private val current: Int, private val count: Int, private val select: (Int) -> Unit) : Screen(from.carContext) {
-    override fun onGetTemplate(): Template = MessageTemplate.Builder(carContext.getString(R.string.auto_page, current + 1, count))
-        .setHeader(CarUi.header(this, carContext.getString(R.string.auto_pages)))
-        .addAction(Action.Builder().setTitle(carContext.getString(R.string.auto_previous)).setEnabled(current > 0)
-            .setOnClickListener { select(current - 1); screenManager.pop() }.build())
-        .addAction(Action.Builder().setTitle(carContext.getString(R.string.auto_next)).setEnabled(current + 1 < count)
-            .setOnClickListener { select(current + 1); screenManager.pop() }.build())
-        .build()
 }
 
 private class CarBrowseLimitScreen(from: Screen, private val client: CarMediaClient) : Screen(from.carContext) {

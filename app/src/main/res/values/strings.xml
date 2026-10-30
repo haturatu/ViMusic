@@ -448,6 +448,4 @@
     <string name="auto_play">Play</string>
     <string name="auto_navigation_limit">Open this item from Home or Search to continue browsing.</string>
     <string name="auto_back">Back</string>
-    <string name="auto_pages">Pages</string>
-    <string name="auto_page">Page %1$d of %2$d</string>
 </resources>
