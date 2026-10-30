@@ -143,7 +143,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import java.io.ByteArrayOutputStream
 import java.io.IOException
-import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 import android.os.Binder as AndroidBinder
 
@@ -246,16 +245,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
 
         bitmapProvider = BitmapProvider(
             context = this,
-            getBitmapSize = {
-                (512 * resources.displayMetrics.density)
-                    .roundToInt()
-                    .coerceAtMost(
-                        minOf(
-                            AppearancePreferences.maxThumbnailSize,
-                            PLAYER_ARTWORK_MAX_PIXELS,
-                        )
-                    )
-            },
+            getBitmapSize = { playerArtworkSize(this) },
             getColor = { isSystemInDarkMode ->
                 if (isSystemInDarkMode) Color.BLACK else Color.WHITE
             }
@@ -326,6 +316,7 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
             coroutineScope, autoTree, autoResolver, autoCommands, autoResumption, binder::stopRadio,
         )
         mediaSession = MediaLibraryService.MediaLibrarySession.Builder(this, player, sessionCallback)
+            .setBitmapLoader(CoilBitmapLoader(this, coroutineScope))
             .setSessionActivity(activityPendingIntent<MainActivity>())
             .setMediaButtonPreferences(AutoCommandHandler.buttons(this).filter {
                 it.sessionCommand?.customAction in listOf(AutoCommandHandler.FAVORITE, AutoCommandHandler.RADIO, AutoCommandHandler.SHUFFLE, AutoCommandHandler.REPEAT)
@@ -1379,7 +1370,6 @@ class PlayerService : InvincibleService(), Player.Listener, PlaybackStatsListene
         private const val PLAYBACK_REBUFFER_MS = 5_000
         private const val ARTWORK_JPEG_QUALITY = 85
         private const val SYSTEM_ARTWORK_MAX_PIXELS = 320
-        private const val PLAYER_ARTWORK_MAX_PIXELS = 768
         private val youtubeIdRegex = Regex("^[A-Za-z0-9_-]{11}$")
 
         fun extractYouTubeVideoId(raw: String): String {
