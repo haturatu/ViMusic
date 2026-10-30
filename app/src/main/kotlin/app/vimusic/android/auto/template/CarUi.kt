@@ -4,6 +4,7 @@ import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
 import androidx.car.app.model.CarIcon
+import androidx.car.app.model.CarColor
 import androidx.car.app.model.Header
 import androidx.car.app.model.Row
 import androidx.car.app.model.GridItem
@@ -18,9 +19,18 @@ import app.vimusic.android.R
 internal object CarUi {
     fun icon(context: CarContext, drawable: Int): CarIcon = CarIcon.Builder(IconCompat.createWithResource(context, drawable)).build()
     fun action(context: CarContext, drawable: Int, click: () -> Unit) = Action.Builder().setIcon(icon(context, drawable)).setOnClickListener(click).build()
-    fun header(screen: Screen, title: String, client: CarMediaClient, toggle: (() -> Unit)? = null): Header = Header.Builder()
+    fun browseActions(screen: Screen, client: CarMediaClient): List<Action> = listOf(
+        Action.Builder(Action.MEDIA_PLAYBACK).setOnClickListener {
+            val playback = screen.screenManager.screenStack.firstOrNull { it is CarPlaybackScreen }
+                ?: CarPlaybackScreen(screen.carContext, client)
+            screen.screenManager.push(playback)
+        }.build(),
+        Action.Builder().setIcon(icon(screen.carContext, R.drawable.search))
+            .setBackgroundColor(CarColor.SECONDARY)
+            .setOnClickListener { screen.screenManager.push(CarSearchScreen(screen.carContext, client)) }.build(),
+    )
+    fun header(screen: Screen, title: String, toggle: (() -> Unit)? = null): Header = Header.Builder()
         .setTitle(title.take(80)).setStartHeaderAction(Action.BACK)
-        .addEndHeaderAction(action(screen.carContext, R.drawable.play) { screen.screenManager.push(CarPlaybackScreen(screen.carContext, client)) })
         .apply { if (toggle != null) addEndHeaderAction(action(screen.carContext, R.drawable.shapes, toggle)) }
         .build()
     fun limit(context: CarContext, grid: Boolean = false): Int = context.getCarService(ConstraintManager::class.java)

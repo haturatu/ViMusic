@@ -37,6 +37,8 @@ internal class CarSongOptionsScreen(context: CarContext, private val client: Car
                 } catch (error: CancellationException) { throw error } catch (_: Exception) { CarToast.makeText(carContext, R.string.auto_error, CarToast.LENGTH_SHORT).show() }
             }
         }.build()) }
-        return ListTemplate.Builder().setHeader(CarUi.header(this, item.mediaMetadata.title?.toString() ?: carContext.getString(R.string.auto_options), client)).setSingleList(list.build()).build()
+        return ListTemplate.Builder().setHeader(CarUi.header(this, item.mediaMetadata.title?.toString() ?: carContext.getString(R.string.auto_options)))
+            .apply { CarUi.browseActions(this@CarSongOptionsScreen, client).forEach { addAction(it) } }
+            .setSingleList(list.build()).build()
     }
 }

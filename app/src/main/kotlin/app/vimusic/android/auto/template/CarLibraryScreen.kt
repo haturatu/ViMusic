@@ -60,8 +60,8 @@ internal open class CarLibraryScreen(
         }
     }
     override fun onGetTemplate(): Template {
-        val header = CarUi.header(this, title, client) { grid = !grid; page = 0; invalidate() }
-        val template = SectionedItemTemplate.Builder().setHeader(header)
+        val header = CarUi.header(this, title) { grid = !grid; page = 0; invalidate() }
+        val template = SectionedItemTemplate.Builder().setHeader(header).setActions(CarUi.browseActions(this, client))
         // Loading and results belong to one host step. Switching template types spends
         // another step and can exceed the car host's task limit while browsing.
         if (loading) return template.setLoading(true).build()

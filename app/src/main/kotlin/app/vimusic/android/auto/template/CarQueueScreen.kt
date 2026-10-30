@@ -34,15 +34,14 @@ internal class CarQueueScreen(context: CarContext, private val client: CarMediaC
         val header = Header.Builder().setTitle(carContext.getString(R.string.auto_queue)).setStartHeaderAction(Action.BACK)
             .addEndHeaderAction(CarUi.action(carContext, R.drawable.shuffle) { client.scope.launch { runCatching { client.command(AutoCommandHandler.SHUFFLE) } } })
             .addEndHeaderAction(CarUi.action(carContext, R.drawable.infinite) { client.scope.launch { runCatching { client.command(AutoCommandHandler.REPEAT) } } }).build()
-        if (player == null) return ListTemplate.Builder().setHeader(header).setLoading(true).build()
+        val template = ListTemplate.Builder().setHeader(header)
+            .apply { CarUi.browseActions(this@CarQueueScreen, client).forEach { addAction(it) } }
+        if (player == null) return template.setLoading(true).build()
         val count = player.mediaItemCount
-        val size = (CarUi.limit(carContext) - 3).coerceAtLeast(1)
+        val size = (CarUi.limit(carContext) - 2).coerceAtLeast(1)
         page = page.coerceIn(0, ((count - 1).coerceAtLeast(0)) / size)
         val signature = AutoQueueController.signature(player)
         val list = ItemList.Builder().setNoItemsMessage(carContext.getString(R.string.auto_empty))
-        list.addItem(Row.Builder().setTitle(carContext.getString(R.string.auto_now_playing)).setOnClickListener {
-            screenManager.push(CarPlaybackScreen(carContext, client))
-        }.build())
         for (index in page * size until minOf(count, (page + 1) * size)) {
             val item = player.getMediaItemAt(index)
             val label = "${if (index == player.currentMediaItemIndex) "▶ " else ""}${index + 1}. ${item.mediaMetadata.title?.toString().orEmpty()}"
@@ -53,7 +52,7 @@ internal class CarQueueScreen(context: CarContext, private val client: CarMediaC
         }
         if (page > 0) list.addItem(Row.Builder().setTitle(carContext.getString(R.string.auto_previous)).setOnClickListener { page--; invalidate() }.build())
         if ((page + 1) * size < count) list.addItem(Row.Builder().setTitle(carContext.getString(R.string.auto_next)).setOnClickListener { page++; invalidate() }.build())
-        return ListTemplate.Builder().setHeader(header).setSingleList(list.build()).build()
+        return template.setSingleList(list.build()).build()
     }
 }
 
@@ -77,6 +76,8 @@ private class CarQueueItemScreen(context: CarContext, private val client: CarMed
                 } catch (error: CancellationException) { throw error } catch (_: Exception) { CarToast.makeText(carContext, R.string.auto_queue_changed, CarToast.LENGTH_SHORT).show() }
             }
         }.build()) }
-        return ListTemplate.Builder().setHeader(CarUi.header(this, item.mediaMetadata.title?.toString().orEmpty(), client)).setSingleList(list.build()).build()
+        return ListTemplate.Builder().setHeader(CarUi.header(this, item.mediaMetadata.title?.toString().orEmpty()))
+            .apply { CarUi.browseActions(this@CarQueueItemScreen, client).forEach { addAction(it) } }
+            .setSingleList(list.build()).build()
     }
 }

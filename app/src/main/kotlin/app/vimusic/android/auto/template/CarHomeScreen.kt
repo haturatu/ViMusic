@@ -5,9 +5,8 @@ package app.vimusic.android.auto.template
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
-import androidx.car.app.model.CarColor
-import androidx.car.app.model.Header
-import androidx.car.app.model.Section
+import androidx.car.app.model.Row
+import androidx.car.app.model.RowSection
 import androidx.car.app.model.SectionedItemTemplate
 import androidx.car.app.model.Tab
 import androidx.car.app.model.TabContents
@@ -56,7 +55,7 @@ internal class CarHomeScreen(context: CarContext, private val client: CarMediaCl
                 val updated = children.map { it to emptyList<MediaItem>() }.toMutableList()
                 client.subscribe(selected)
                 if (selected != AutoMediaId.LIBRARY) {
-                    val quota = ((CarUi.limit(carContext, grid) - children.size) / children.size.coerceAtLeast(1)).coerceIn(0, 3)
+                    val quota = ((CarUi.limit(carContext, grid) - children.size - 1) / children.size.coerceAtLeast(1)).coerceIn(0, 3)
                     children.forEachIndexed { index, folder ->
                         val entries = try { client.children(folder.mediaId).take(quota) } catch (error: CancellationException) { throw error } catch (_: Exception) { emptyList() }
                         updated[index] = folder to entries
@@ -84,11 +83,8 @@ internal class CarHomeScreen(context: CarContext, private val client: CarMediaCl
         }
     }
     override fun onGetTemplate(): Template {
-        val title = carContext.getString(tabs.first { it.first == selected }.second)
-        val header = Header.Builder().setTitle(title)
-            .addEndHeaderAction(CarUi.action(carContext, R.drawable.search) { screenManager.push(CarSearchScreen(carContext, client)) })
-            .addEndHeaderAction(CarUi.action(carContext, R.drawable.play) { screenManager.push(CarPlaybackScreen(carContext, client)) }).build()
-        val contents = SectionedItemTemplate.Builder().setHeader(header)
+        // Tab contents ignore header actions; template actions remain visible on every tab.
+        val contents = SectionedItemTemplate.Builder().setActions(CarUi.browseActions(this, client))
         if (!PlayerPreferences.isAndroidAutoEnabled || failed) {
             contents.addSection(androidx.car.app.model.RowSection.Builder().setItems(listOf(
                 androidx.car.app.model.Row.Builder().setTitle(carContext.getString(if (failed) R.string.auto_error else R.string.auto_disabled))
@@ -102,11 +98,10 @@ internal class CarHomeScreen(context: CarContext, private val client: CarMediaCl
                     screenManager.push(CarSongOptionsScreen(carContext, client, it))
                 })
             }
-            contents.addAction(Action.Builder()
-                .setIcon(CarUi.icon(carContext, R.drawable.shapes))
-                .setBackgroundColor(CarColor.BLUE)
-                .setOnClickListener { grid = !grid; load(); invalidate() }
-                .build())
+            contents.addSection(RowSection.Builder().setItems(listOf(Row.Builder()
+                .setTitle(carContext.getString(if (grid) R.string.auto_list else R.string.auto_grid))
+                .setImage(CarUi.icon(carContext, R.drawable.shapes))
+                .setOnClickListener { grid = !grid; load(); invalidate() }.build())).build())
         }
         return TabTemplate.Builder(object : TabTemplate.TabCallback {
             override fun onTabSelected(tabContentId: String) { if (selected != tabContentId) { selected = tabContentId; loading = true; sections = emptyList(); load(); invalidate() } }
