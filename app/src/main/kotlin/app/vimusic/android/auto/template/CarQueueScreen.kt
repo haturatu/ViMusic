@@ -26,33 +26,48 @@ import kotlinx.coroutines.launch
 
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 internal class CarQueueScreen(context: CarContext, private val client: CarMediaClient) : Screen(context), DefaultLifecycleObserver {
-    private var page = 0
-    private val changed: () -> Unit = { invalidate() }
+    private var items: List<MediaItem>? = null
+    private var signature = ""
+    private var warned = false
+    private fun snapshot() {
+        client.browser?.let { player ->
+            items = List(player.mediaItemCount, player::getMediaItemAt)
+            signature = AutoQueueController.signature(player)
+            warned = false
+        }
+    }
+    private val changed: () -> Unit = {
+        if (items == null) snapshot()
+        else client.browser?.let { player ->
+            if (!warned && signature != AutoQueueController.signature(player)) {
+                warned = true
+                CarToast.makeText(carContext, R.string.auto_queue_changed, CarToast.LENGTH_SHORT).show()
+            }
+        }
+        invalidate()
+    }
     init { lifecycle.addObserver(this) }
-    override fun onStart(owner: LifecycleOwner) { client.observe(changed) }
+    override fun onStart(owner: LifecycleOwner) { snapshot(); client.observe(changed) }
     override fun onStop(owner: LifecycleOwner) { client.stopObserving(changed) }
     override fun onGetTemplate(): Template {
-        val player = client.browser
         val header = Header.Builder().setTitle(carContext.getString(R.string.auto_queue)).setStartHeaderAction(Action.BACK)
             .addEndHeaderAction(CarUi.action(carContext, R.drawable.shuffle) { client.scope.launch { runCatching { client.command(AutoCommandHandler.SHUFFLE) } } })
             .addEndHeaderAction(CarUi.action(carContext, R.drawable.infinite) { client.scope.launch { runCatching { client.command(AutoCommandHandler.REPEAT) } } }).build()
         val template = SectionedItemTemplate.Builder().setHeader(header).setActions(CarUi.browseActions(this, client))
-        if (player == null) return template.setLoading(true).build()
-        val count = player.mediaItemCount
-        val size = CarUi.BROWSE_PAGE_SIZE
-        page = page.coerceIn(0, ((count - 1).coerceAtLeast(0)) / size)
-        val signature = AutoQueueController.signature(player)
+        val queue = items ?: return template.setLoading(true).build()
+        val count = queue.size
+        val expectedSignature = signature
         val list = RowSection.Builder().setNoItemsMessage(carContext.getString(R.string.auto_empty))
-        for (index in page * size until minOf(count, (page + 1) * size)) {
-            val item = player.getMediaItemAt(index)
-            val label = "${if (index == player.currentMediaItemIndex) "▶ " else ""}${index + 1}. ${item.mediaMetadata.title?.toString().orEmpty()}"
+        for ((index, item) in queue.withIndex()) {
+            val label = "${index + 1}. ${item.mediaMetadata.title?.toString().orEmpty()}"
             list.addItem(CarUi.row(carContext, item.buildUpon().setMediaMetadata(item.mediaMetadata.buildUpon().setTitle(label).build()).build(), {
-                player.seekTo(index, C.TIME_UNSET); player.prepare(); player.play()
-                screenManager.push(CarPlaybackScreen(carContext, client))
-            }, { screenManager.push(CarQueueItemScreen(carContext, client, item, index, count, signature)) }))
+                val player = client.browser
+                if (player != null && AutoQueueController.signature(player) == expectedSignature) {
+                    player.seekTo(index, C.TIME_UNSET); player.prepare(); player.play()
+                    CarNavigation.playback(this, client)
+                } else CarToast.makeText(carContext, R.string.auto_queue_changed, CarToast.LENGTH_SHORT).show()
+            }, { CarNavigation.push(this, CarQueueItemScreen(carContext, client, item, index, count, expectedSignature), client) }))
         }
-        if (page > 0) list.addItem(Row.Builder().setTitle(carContext.getString(R.string.auto_previous)).setOnClickListener { page--; invalidate() }.build())
-        if ((page + 1) * size < count) list.addItem(Row.Builder().setTitle(carContext.getString(R.string.auto_next)).setOnClickListener { page++; invalidate() }.build())
         return template.addSection(list.build()).build()
     }
 }

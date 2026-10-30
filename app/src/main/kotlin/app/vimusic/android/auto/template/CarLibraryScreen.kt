@@ -25,15 +25,14 @@ internal open class CarLibraryScreen(
     protected val client: CarMediaClient,
     private val parent: String,
     private val title: String,
+    private val grid: Boolean = false,
 ) : Screen(context), DefaultLifecycleObserver {
     protected val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var job: Job? = null
     private var items: List<MediaItem> = emptyList()
     private var loading = true
     private var failed = false
-    private var grid = false
-    private var page = 0
-    private val changed: () -> Unit = { if (lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) reload() }
+    private val changed: (String) -> Unit = { changedParent -> if (changedParent == parent && lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) reload() }
     private val playbackChanged: () -> Unit = { invalidate() }
 
     init { lifecycle.addObserver(this) }
@@ -53,15 +52,15 @@ internal open class CarLibraryScreen(
         }
     }
     protected fun open(item: MediaItem) {
-        if (item.mediaMetadata.isBrowsable == true) screenManager.push(CarLibraryScreen(carContext, client, item.mediaId, item.mediaMetadata.title.toString()))
+        if (item.mediaMetadata.isBrowsable == true) CarNavigation.push(this, CarLibraryScreen(carContext, client, item.mediaId, item.mediaMetadata.title.toString()), client)
         else scope.launch {
-            try { client.play(item); screenManager.push(CarPlaybackScreen(carContext, client)) }
+            try { client.play(item); CarNavigation.playback(this@CarLibraryScreen, client) }
             catch (error: CancellationException) { throw error }
             catch (error: Exception) { android.util.Log.w("ViMusicCar", "Unable to play selection", error); androidx.car.app.CarToast.makeText(carContext, R.string.auto_error, androidx.car.app.CarToast.LENGTH_SHORT).show() }
         }
     }
     override fun onGetTemplate(): Template {
-        val header = CarUi.header(this, title) { grid = !grid; page = 0; invalidate() }
+        val header = CarUi.header(this, title) { CarNavigation.push(this, CarLibraryScreen(carContext, client, parent, title, !grid), client) }
         val template = SectionedItemTemplate.Builder().setHeader(header).setActions(CarUi.browseActions(this, client))
         // Loading and results belong to one host step. Switching template types spends
         // another step and can exceed the car host's task limit while browsing.
@@ -70,16 +69,9 @@ internal open class CarLibraryScreen(
             Row.Builder().setTitle(carContext.getString(if (failed) R.string.auto_error else R.string.auto_empty))
                 .apply { if (failed) setOnClickListener { loading = true; reload(); invalidate() } }.build(),
         )).build()).build()
-        val size = CarUi.BROWSE_PAGE_SIZE
-        page = page.coerceIn(0, (items.size - 1) / size)
-        val visible = items.drop(page * size).take(size)
-        val sections = mutableListOf(CarUi.section(carContext, title, visible, grid, ::open) {
-            screenManager.push(CarSongOptionsScreen(carContext, client, it))
-        })
-        val navigation = mutableListOf<Row>()
-        if (page > 0) navigation += Row.Builder().setTitle(carContext.getString(R.string.auto_previous)).setOnClickListener { page--; invalidate() }.build()
-        if ((page + 1) * size < items.size) navigation += Row.Builder().setTitle(carContext.getString(R.string.auto_next)).setOnClickListener { page++; invalidate() }.build()
-        if (navigation.isNotEmpty()) sections += androidx.car.app.model.RowSection.Builder().setItems(navigation).build()
-        return template.setSections(sections).build()
+        val section = CarUi.section(carContext, title, items, grid, ::open) {
+            CarNavigation.push(this, CarSongOptionsScreen(carContext, client, it), client)
+        }
+        return template.addSection(section).build()
     }
 }

@@ -446,4 +446,6 @@
     <string name="auto_next">Next</string>
     <string name="auto_pause">Pause</string>
     <string name="auto_play">Play</string>
+    <string name="auto_navigation_limit">Open this item from Home or Search to continue browsing.</string>
+    <string name="auto_back">Back</string>
 </resources>

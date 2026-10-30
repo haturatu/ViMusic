@@ -34,14 +34,14 @@ import kotlin.coroutines.resumeWithException
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 internal class CarMediaClient(val context: CarContext, lifecycle: Lifecycle) : DefaultLifecycleObserver {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private val libraryListeners = mutableSetOf<() -> Unit>()
+    private val libraryListeners = mutableSetOf<(String) -> Unit>()
     private val subscriptions = mutableSetOf<String>()
     var nativePlaybackAvailable = false
         private set
     private val future = MediaBrowser.Builder(context, SessionToken(context, ComponentName(context, PlayerService::class.java)))
         .setListener(object : MediaBrowser.Listener {
             override fun onChildrenChanged(browser: MediaBrowser, parentId: String, itemCount: Int, params: androidx.media3.session.MediaLibraryService.LibraryParams?) {
-                libraryListeners.toList().forEach { it() }
+                libraryListeners.toList().forEach { it(parentId) }
             }
         }).buildAsync()
     var browser: MediaBrowser? = null
@@ -70,7 +70,7 @@ internal class CarMediaClient(val context: CarContext, lifecycle: Lifecycle) : D
         }, ContextCompat.getMainExecutor(context))
     }
 
-    fun observeLibrary(listener: () -> Unit, observe: Boolean) {
+    fun observeLibrary(listener: (String) -> Unit, observe: Boolean) {
         if (observe) libraryListeners += listener else libraryListeners -= listener
     }
     suspend fun subscribe(parent: String) {
@@ -80,10 +80,21 @@ internal class CarMediaClient(val context: CarContext, lifecycle: Lifecycle) : D
     fun observe(listener: () -> Unit) { listeners += listener }
     fun stopObserving(listener: () -> Unit) { listeners -= listener }
     suspend fun connected(): MediaBrowser = browser ?: await(future)
-    suspend fun children(parent: String): List<MediaItem> {
-        val result = await(connected().getChildren(parent, 0, AutoLibraryTree.PAGE_SIZE, null))
-        if (result.resultCode < 0) throw IOException("Library unavailable")
-        return result.value?.toList().orEmpty()
+    suspend fun children(parent: String, limit: Int = Int.MAX_VALUE): List<MediaItem> {
+        val controller = connected()
+        val params = androidx.media3.session.MediaLibraryService.LibraryParams.Builder().setExtras(Bundle().apply {
+            putBoolean(AutoLibraryTree.FLAT_BROWSE, true)
+        }).build()
+        val items = mutableListOf<MediaItem>()
+        var page = 0
+        do {
+            val result = await(controller.getChildren(parent, page++, AutoLibraryTree.FLAT_PAGE_SIZE, params))
+            if (result.resultCode < 0) throw IOException("Library unavailable")
+            val batch = result.value.orEmpty()
+            items += batch
+            val total = result.params?.extras?.getInt(AutoLibraryTree.TOTAL_ITEMS, items.size) ?: items.size
+        } while (batch.isNotEmpty() && items.size < minOf(total, limit))
+        return items.take(limit)
     }
     suspend fun search(query: String): List<MediaItem> {
         val controller = connected()

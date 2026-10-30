@@ -15,15 +15,16 @@ import app.vimusic.android.auto.AutoCommandHandler
 import kotlinx.coroutines.launch
 
 internal class CarPlaybackScreen(context: CarContext, private val client: CarMediaClient) : Screen(context), DefaultLifecycleObserver {
+    private val useNativePlayback = client.nativePlaybackAvailable && carContext.carAppApiLevel >= 8
     private val changed: () -> Unit = { invalidate() }
     init { lifecycle.addObserver(this) }
     override fun onStart(owner: LifecycleOwner) { client.observe(changed) }
     override fun onStop(owner: LifecycleOwner) { client.stopObserving(changed) }
     override fun onGetTemplate(): Template {
         val header = Header.Builder().setTitle(carContext.getString(R.string.auto_now_playing)).setStartHeaderAction(androidx.car.app.model.Action.BACK)
-            .addEndHeaderAction(CarUi.action(carContext, R.drawable.playlist) { screenManager.push(CarQueueScreen(carContext, client)) })
-            .addEndHeaderAction(CarUi.action(carContext, R.drawable.search) { screenManager.push(CarSearchScreen(carContext, client)) }).build()
-        if (client.nativePlaybackAvailable && carContext.carAppApiLevel >= 8) return MediaPlaybackTemplate.Builder().setHeader(header).build()
+            .addEndHeaderAction(CarUi.action(carContext, R.drawable.playlist) { CarNavigation.push(this, CarQueueScreen(carContext, client), client) })
+            .addEndHeaderAction(CarUi.action(carContext, R.drawable.search) { CarNavigation.search(this, client) }).build()
+        if (useNativePlayback) return MediaPlaybackTemplate.Builder().setHeader(header).build()
         val player = client.browser ?: return ListTemplate.Builder().setHeader(header).setLoading(true).build()
         val list = ItemList.Builder().setNoItemsMessage(carContext.getString(R.string.auto_empty))
         list.addItem(Row.Builder().setTitle(player.mediaMetadata.title?.toString().orEmpty().ifBlank { carContext.getString(R.string.auto_now_playing) })

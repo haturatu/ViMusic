@@ -18,8 +18,6 @@ import androidx.media3.common.Player
 import app.vimusic.android.R
 
 internal object CarUi {
-    // SectionedItemTemplate uses a lazy list delegate, unlike the legacy ListTemplate.
-    const val BROWSE_PAGE_SIZE = 50
     fun icon(context: CarContext, drawable: Int): CarIcon = CarIcon.Builder(IconCompat.createWithResource(context, drawable)).build()
     fun action(context: CarContext, drawable: Int, click: () -> Unit) = Action.Builder().setIcon(icon(context, drawable)).setOnClickListener(click).build()
     fun browseActions(screen: Screen, client: CarMediaClient): List<Action> {
@@ -30,13 +28,11 @@ internal object CarUi {
         } else Action.Builder().setIcon(icon(screen.carContext, R.drawable.equalizer)).setBackgroundColor(CarColor.PRIMARY)
         return listOf(
             playback.setOnClickListener {
-                val playbackScreen = screen.screenManager.screenStack.firstOrNull { it is CarPlaybackScreen }
-                    ?: CarPlaybackScreen(screen.carContext, client)
-                screen.screenManager.push(playbackScreen)
+                CarNavigation.playback(screen, client)
             }.build(),
             Action.Builder().setIcon(icon(screen.carContext, R.drawable.search))
                 .setBackgroundColor(CarColor.SECONDARY)
-                .setOnClickListener { screen.screenManager.push(CarSearchScreen(screen.carContext, client)) }.build(),
+                .setOnClickListener { CarNavigation.search(screen, client) }.build(),
         )
     }
     fun header(screen: Screen, title: String, toggle: (() -> Unit)? = null): Header = Header.Builder()

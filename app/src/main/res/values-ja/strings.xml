@@ -417,4 +417,6 @@
     <string name="auto_next">次へ</string>
     <string name="auto_pause">一時停止</string>
     <string name="auto_play">再生</string>
+    <string name="auto_navigation_limit">ホームまたは検索から開き直して、続きを表示してください。</string>
+    <string name="auto_back">戻る</string>
 </resources>

@@ -27,7 +27,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-internal class CarHomeScreen(context: CarContext, private val client: CarMediaClient) : Screen(context), DefaultLifecycleObserver {
+internal class CarHomeScreen(context: CarContext, private val client: CarMediaClient, private val grid: Boolean = false, initialTab: String = AutoMediaId.HOME) : Screen(context), DefaultLifecycleObserver {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val tabs = listOf(
         Triple(AutoMediaId.HOME, R.string.auto_home, R.drawable.musical_notes),
@@ -35,19 +35,26 @@ internal class CarHomeScreen(context: CarContext, private val client: CarMediaCl
         Triple(AutoMediaId.DISCOVER, R.string.discover, R.drawable.trending),
         Triple(AutoMediaId.OFFLINE, R.string.offline, R.drawable.airplane),
     )
-    private var selected = AutoMediaId.HOME
-    private var grid = false
+    private var selected = initialTab
+    private var nextFlow: (() -> Screen)? = null
     private var job: Job? = null
     private var sections = emptyList<Pair<MediaItem, List<MediaItem>>>()
     private var loading = true
     private var failed = false
-    private val changed: () -> Unit = { if (lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) load() }
+    private val changed: (String) -> Unit = { parent -> if (parent == selected && lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) load() }
     private val playbackChanged: () -> Unit = { invalidate() }
 
     init { lifecycle.addObserver(this) }
     override fun onStart(owner: LifecycleOwner) { client.observeLibrary(changed, true); client.observe(playbackChanged); load() }
     override fun onStop(owner: LifecycleOwner) { client.observeLibrary(changed, false); client.stopObserving(playbackChanged); job?.cancel() }
     override fun onDestroy(owner: LifecycleOwner) { scope.cancel() }
+    fun startFlow(destination: () -> Screen) {
+        if (screenManager.top === this) CarNavigation.push(this, destination(), client)
+        else {
+            nextFlow = destination
+            screenManager.popToRoot()
+        }
+    }
     private fun load() {
         job?.cancel()
         job = scope.launch {
@@ -58,7 +65,9 @@ internal class CarHomeScreen(context: CarContext, private val client: CarMediaCl
                 if (selected != AutoMediaId.LIBRARY) {
                     val quota = 3
                     children.forEachIndexed { index, folder ->
-                        val entries = try { client.children(folder.mediaId).take(quota) } catch (error: CancellationException) { throw error } catch (_: Exception) { emptyList() }
+                        val entries = try { client.children(folder.mediaId, quota + 2).filter {
+                            AutoMediaId.parse(it.mediaId)?.kind !in listOf("play-all", "shuffle")
+                        }.take(quota) } catch (error: CancellationException) { throw error } catch (_: Exception) { emptyList() }
                         updated[index] = folder to entries
                     }
                 }
@@ -72,18 +81,27 @@ internal class CarHomeScreen(context: CarContext, private val client: CarMediaCl
     private fun open(item: MediaItem) {
         if (item.mediaMetadata.isBrowsable == true) {
             val title = item.mediaMetadata.title.toString()
-            screenManager.push(when (AutoMediaId.parse(item.mediaId)?.kind) {
+            CarNavigation.push(this, when (AutoMediaId.parse(item.mediaId)?.kind) {
                 "discover" -> CarDiscoverScreen(carContext, client)
                 "offline" -> CarOfflineScreen(carContext, client)
                 else -> CarLibraryScreen(carContext, client, item.mediaId, title)
-            })
+            }, client)
         } else scope.launch {
-            try { client.play(item); screenManager.push(CarPlaybackScreen(carContext, client)) }
+            try { client.play(item); CarNavigation.playback(this@CarHomeScreen, client) }
             catch (error: CancellationException) { throw error }
             catch (_: Exception) { androidx.car.app.CarToast.makeText(carContext, R.string.auto_error, androidx.car.app.CarToast.LENGTH_SHORT).show() }
         }
     }
     override fun onGetTemplate(): Template {
+        nextFlow?.let { destination ->
+            nextFlow = null
+            // Deliver the actual back template before beginning the next task.
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                if (screenManager.top === this && lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) {
+                    CarNavigation.push(this, destination(), client)
+                }
+            }
+        }
         // Tab contents ignore header actions; template actions remain visible on every tab.
         val contents = SectionedItemTemplate.Builder().setActions(CarUi.browseActions(this, client))
         if (!PlayerPreferences.isAndroidAutoEnabled || failed) {
@@ -96,13 +114,13 @@ internal class CarHomeScreen(context: CarContext, private val client: CarMediaCl
             sections.forEach { (folder, previews) ->
                 val entries = previews + folder
                 contents.addSection(CarUi.section(carContext, folder.mediaMetadata.title.toString(), entries, grid, ::open) {
-                    screenManager.push(CarSongOptionsScreen(carContext, client, it))
+                    CarNavigation.push(this, CarSongOptionsScreen(carContext, client, it), client)
                 })
             }
             contents.addSection(RowSection.Builder().setItems(listOf(Row.Builder()
                 .setTitle(carContext.getString(if (grid) R.string.auto_list else R.string.auto_grid))
                 .setImage(CarUi.icon(carContext, R.drawable.shapes))
-                .setOnClickListener { grid = !grid; load(); invalidate() }.build())).build())
+                .setOnClickListener { CarNavigation.push(this, CarHomeScreen(carContext, client, !grid, selected), client) }.build())).build())
         }
         return TabTemplate.Builder(object : TabTemplate.TabCallback {
             override fun onTabSelected(tabContentId: String) { if (selected != tabContentId) { selected = tabContentId; loading = true; sections = emptyList(); load(); invalidate() } }
