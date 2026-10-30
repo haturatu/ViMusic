@@ -68,10 +68,17 @@ class AutoLibraryTree(
     private fun named(kind: String, resource: Int) = folder(kind, title = context.getString(resource))
     private fun icon(drawable: Int): Uri = Uri.parse("android.resource://${context.packageName}/$drawable")
 
-    suspend fun children(parent: String): List<MediaItem> {
+    suspend fun children(parent: String, flat: Boolean = false): List<MediaItem> {
         val id = requireNotNull(AutoMediaId.parse(parent)) { "Unknown parent" }
+        if (flat && id.kind == "artist") {
+            // CAL can show albums and songs directly instead of adding selector screens.
+            return rawChildren(AutoMediaId("artist-songs", id.key).encoded) +
+                rawChildren(AutoMediaId("artist-albums", id.key).encoded) +
+                radioItem("artist", id.key, title(parent))
+        }
         val source = if (id.kind == "page") id.key else parent
         val all = rawChildren(source)
+        if (flat && id.kind != "page") return all
         val actionCount = all.takeWhile { AutoMediaId.parse(it.mediaId)?.kind in listOf("play-all", "shuffle") }.size
         val actions = if (id.kind == "page") emptyList() else all.take(actionCount)
         val start = if (id.kind == "page") id.offset.coerceAtMost(all.size) else actionCount
@@ -272,5 +279,10 @@ class AutoLibraryTree(
     } catch (error: CancellationException) { throw error } catch (error: Exception) {
         android.util.Log.w("AutoLibrary", "Using local library after network failure", error); local()
     }
-    companion object { const val PAGE_SIZE = 50 }
+    companion object {
+        const val PAGE_SIZE = 50
+        const val FLAT_PAGE_SIZE = 500
+        const val FLAT_BROWSE = "app.vimusic.auto.FLAT_BROWSE"
+        const val TOTAL_ITEMS = "app.vimusic.auto.TOTAL_ITEMS"
+    }
 }

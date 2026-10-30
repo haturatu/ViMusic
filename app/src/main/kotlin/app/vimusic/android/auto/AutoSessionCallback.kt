@@ -63,8 +63,12 @@ class AutoSessionCallback(
 
     override fun onGetChildren(session: MediaLibraryService.MediaLibrarySession, controller: MediaSession.ControllerInfo, parentId: String, page: Int, pageSize: Int, params: MediaLibraryService.LibraryParams?): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = library {
         require(page >= 0 && pageSize > 0)
-        val items = tree.children(parentId)
-        LibraryResult.ofItemList(slice(items, page, pageSize), params)
+        val flat = controller.packageName == context.packageName && params?.extras?.getBoolean(AutoLibraryTree.FLAT_BROWSE) == true
+        val items = tree.children(parentId, flat)
+        val resultParams = if (flat) MediaLibraryService.LibraryParams.Builder().setExtras(Bundle(params?.extras ?: Bundle.EMPTY).apply {
+            putInt(AutoLibraryTree.TOTAL_ITEMS, items.size)
+        }).build() else params
+        LibraryResult.ofItemList(slice(items, page, pageSize, if (flat) AutoLibraryTree.FLAT_PAGE_SIZE else AutoLibraryTree.PAGE_SIZE), resultParams)
     }
 
     override fun onGetItem(session: MediaLibraryService.MediaLibrarySession, controller: MediaSession.ControllerInfo, mediaId: String): ListenableFuture<LibraryResult<MediaItem>> = library {
@@ -135,8 +139,8 @@ class AutoSessionCallback(
         return result
     }
 
-    private fun <T> slice(items: List<T>, page: Int, pageSize: Int): List<T> {
+    private fun <T> slice(items: List<T>, page: Int, pageSize: Int, maxPageSize: Int = AutoLibraryTree.PAGE_SIZE): List<T> {
         val start = (page.toLong() * pageSize).coerceAtMost(items.size.toLong()).toInt()
-        return items.subList(start, (start.toLong() + pageSize.coerceAtMost(AutoLibraryTree.PAGE_SIZE)).coerceAtMost(items.size.toLong()).toInt())
+        return items.subList(start, (start.toLong() + pageSize.coerceAtMost(maxPageSize)).coerceAtMost(items.size.toLong()).toInt())
     }
 }
