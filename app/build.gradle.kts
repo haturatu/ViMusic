@@ -184,6 +184,9 @@ dependencies {
     implementation(libs.exoplayer.dash)
     implementation(libs.exoplayer.workmanager)
     implementation(libs.media3.session)
+    implementation(libs.car.app)
+    implementation(libs.car.projected)
+    implementation(libs.media.compat)
     implementation(libs.media3.datasource.okhttp)
 
     implementation(libs.workmanager)

@@ -412,4 +412,40 @@
         <item quantity="one">%1$d song</item>
         <item quantity="other">%1$d songs</item>
     </plurals>
+
+    <!-- Android Auto -->
+    <string name="auto_home">Home</string>
+    <string name="auto_resume">Continue listening</string>
+    <string name="auto_recent">Recently played</string>
+    <string name="auto_top">Most played</string>
+    <string name="auto_recommended">Recommended</string>
+    <string name="auto_related">Related songs</string>
+    <string name="auto_radio">Start radio</string>
+    <string name="auto_new_albums">New albums</string>
+    <string name="auto_downloads">Downloaded</string>
+    <string name="auto_offline_playlists">Offline playlists</string>
+    <string name="auto_play_all">Play all</string>
+    <string name="auto_add_queue">Add to queue</string>
+    <string name="auto_repeat">Repeat</string>
+    <string name="auto_queue">Queue</string>
+    <string name="auto_now_playing">Now playing</string>
+    <string name="auto_search">Search</string>
+    <string name="auto_empty">No items available</string>
+    <string name="auto_error">Unable to load. Try again.</string>
+    <string name="auto_grid">Grid</string>
+    <string name="auto_list">List</string>
+    <string name="auto_remove">Remove from queue</string>
+    <string name="auto_move_up">Move earlier</string>
+    <string name="auto_move_down">Move later</string>
+    <string name="auto_options">Song options</string>
+    <string name="auto_disabled">Enable Android Auto in the phone app settings.</string>
+    <string name="auto_retry">Retry</string>
+    <string name="auto_loading">Loading…</string>
+    <string name="auto_queue_changed">The queue changed. Open it again.</string>
+    <string name="auto_previous">Previous</string>
+    <string name="auto_next">Next</string>
+    <string name="auto_pause">Pause</string>
+    <string name="auto_play">Play</string>
+    <string name="auto_navigation_limit">Open this item from Home or Search to continue browsing.</string>
+    <string name="auto_back">Back</string>
 </resources>

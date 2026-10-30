@@ -884,7 +884,7 @@ object Database : DatabaseDao by DatabaseInitializer.instance.database
         Lyrics::class
     ],
     views = [SortedSongPlaylistMap::class],
-    version = 32,
+    version = 33,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
@@ -912,7 +912,8 @@ object Database : DatabaseDao by DatabaseInitializer.instance.database
         AutoMigration(from = 27, to = 28),
         AutoMigration(from = 28, to = 29),
         AutoMigration(from = 29, to = 30),
-        AutoMigration(from = 31, to = 32, spec = DatabaseInitializer.From31To32Migration::class)
+        AutoMigration(from = 31, to = 32, spec = DatabaseInitializer.From31To32Migration::class),
+        AutoMigration(from = 32, to = 33)
     ]
 )
 @TypeConverters(Converters::class)

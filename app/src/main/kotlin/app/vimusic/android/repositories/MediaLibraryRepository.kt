@@ -25,7 +25,7 @@ interface MediaLibraryRepository {
 
 object DatabaseMediaLibraryRepository : MediaLibraryRepository {
     override suspend fun getRecentSongs(limit: Int): List<Song> =
-        Database.songsByPlayTimeDesc(limit = limit).first()
+        Database.events().first().map { it.song }.distinctBy { it.id }.take(limit)
 
     override suspend fun getPlaylistPreviewsByDateAddedDesc(): List<PlaylistPreview> =
         Database.playlistPreviewsByDateAddedDesc().first()

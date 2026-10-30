@@ -30,6 +30,7 @@ interface PlayerRepository {
     suspend fun saveStreamMetadata(mediaItem: MediaItem?, format: Format, durationText: String?)
     fun observeLikedAt(songId: String): Flow<Long?>
     suspend fun setLikedAt(songId: String, likedAt: Long?)
+    suspend fun toggleFavorite(mediaItem: MediaItem)
     fun observeLoudnessDb(songId: String): Flow<Float?>
     fun observeFormat(songId: String): Flow<Format?>
     suspend fun refreshFormat(songId: String, mediaItem: MediaItem?)
@@ -67,6 +68,13 @@ object DatabasePlayerRepository : PlayerRepository {
     }
 
     override fun saveQueue(queue: List<QueuedMediaItem>) {
+        if (queue.isEmpty()) {
+            queueScope.launch {
+                transaction { Database.clearQueue() }
+                savedQueue = emptyList()
+            }
+            return
+        }
         val currentItem = queue.firstOrNull { it.position != null } ?: return
         val currentPosition = currentItem.position ?: return
         queueScope.launch {
@@ -76,7 +84,9 @@ object DatabasePlayerRepository : PlayerRepository {
                     val sameItems = previous != null && previous.size == queue.size &&
                         queue.indices.all { index ->
                             previous[index].id == queue[index].id &&
-                                previous[index].mediaItem === queue[index].mediaItem
+                                previous[index].mediaItem === queue[index].mediaItem &&
+                                previous[index].repeatMode == queue[index].repeatMode &&
+                                previous[index].shuffleModeEnabled == queue[index].shuffleModeEnabled
                         }
                     val updated = if (sameItems) {
                         Database.updateQueuePosition(currentItem.id, currentPosition)
@@ -115,6 +125,14 @@ object DatabasePlayerRepository : PlayerRepository {
 
     override suspend fun setLikedAt(songId: String, likedAt: Long?) {
         query { Database.like(songId, likedAt) }
+    }
+
+    override suspend fun toggleFavorite(mediaItem: MediaItem) {
+        transaction {
+            Database.insert(mediaItem)
+            val liked = Database.likedAtNow(mediaItem.mediaId) != null
+            Database.like(mediaItem.mediaId, if (liked) null else System.currentTimeMillis())
+        }
     }
 
     override fun observeLoudnessDb(songId: String): Flow<Float?> = Database.loudnessDb(songId)

@@ -53,16 +53,7 @@ object DatabaseMediaItemMenuRepository : MediaItemMenuRepository {
     override fun observeLikedAt(mediaId: String): Flow<Long?> = Database.likedAt(mediaId)
 
     override suspend fun toggleLike(mediaItem: MediaItem, likedAt: Long?) {
-        transaction {
-            if (
-                Database.like(
-                    songId = mediaItem.mediaId,
-                    likedAt = if (likedAt == null) System.currentTimeMillis() else null
-                ) != 0
-            ) return@transaction
-
-            Database.insert(mediaItem, Song::toggleLike)
-        }
+        DatabasePlayerRepository.toggleFavorite(mediaItem)
     }
 
     override fun observeBlacklisted(mediaId: String): Flow<Boolean> = Database.blacklisted(mediaId)
