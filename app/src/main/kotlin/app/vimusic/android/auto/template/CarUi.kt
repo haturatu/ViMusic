@@ -35,9 +35,10 @@ internal object CarUi {
                 .setOnClickListener { CarNavigation.search(screen, client) }.build(),
         )
     }
-    fun header(screen: Screen, title: String, toggle: (() -> Unit)? = null): Header = Header.Builder()
+    fun header(screen: Screen, title: String, toggle: (() -> Unit)? = null, page: (() -> Unit)? = null): Header = Header.Builder()
         .setTitle(title.take(80)).setStartHeaderAction(Action.BACK)
         .apply { if (toggle != null) addEndHeaderAction(action(screen.carContext, R.drawable.shapes, toggle)) }
+        .apply { if (page != null) addEndHeaderAction(action(screen.carContext, R.drawable.chevron_forward, page)) }
         .build()
     fun limit(context: CarContext, grid: Boolean = false): Int = context.getCarService(ConstraintManager::class.java)
         .getContentLimit(if (grid) ConstraintManager.CONTENT_LIMIT_TYPE_GRID else ConstraintManager.CONTENT_LIMIT_TYPE_LIST)

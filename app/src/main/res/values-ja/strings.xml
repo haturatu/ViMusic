@@ -419,4 +419,6 @@
     <string name="auto_play">再生</string>
     <string name="auto_navigation_limit">ホームまたは検索から開き直して、続きを表示してください。</string>
     <string name="auto_back">戻る</string>
+    <string name="auto_pages">ページ切替</string>
+    <string name="auto_page">%2$d ページ中 %1$d ページ</string>
 </resources>

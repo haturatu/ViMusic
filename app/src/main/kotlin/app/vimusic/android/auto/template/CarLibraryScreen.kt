@@ -32,6 +32,7 @@ internal open class CarLibraryScreen(
     private var items: List<MediaItem> = emptyList()
     private var loading = true
     private var failed = false
+    private var page = 0
     private val changed: (String) -> Unit = { changedParent -> if (changedParent == parent && lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) reload() }
     private val playbackChanged: () -> Unit = { invalidate() }
 
@@ -60,7 +61,14 @@ internal open class CarLibraryScreen(
         }
     }
     override fun onGetTemplate(): Template {
-        val header = CarUi.header(this, title) { CarNavigation.push(this, CarLibraryScreen(carContext, client, parent, title, !grid), client) }
+        val size = CarUi.limit(carContext, grid)
+        val pageCount = ((items.size + size - 1) / size).coerceAtLeast(1)
+        page = page.coerceIn(0, pageCount - 1)
+        val label = if (pageCount > 1) "$title (${page + 1}/$pageCount)" else title
+        val header = CarUi.header(this, label,
+            toggle = { CarNavigation.push(this, CarLibraryScreen(carContext, client, parent, title, !grid), client) },
+            page = if (pageCount > 1) ({ CarNavigation.page(this, client, page, pageCount) { page = it; invalidate() } }) else null,
+        )
         val template = SectionedItemTemplate.Builder().setHeader(header).setActions(CarUi.browseActions(this, client))
         // Loading and results belong to one host step. Switching template types spends
         // another step and can exceed the car host's task limit while browsing.
@@ -69,7 +77,7 @@ internal open class CarLibraryScreen(
             Row.Builder().setTitle(carContext.getString(if (failed) R.string.auto_error else R.string.auto_empty))
                 .apply { if (failed) setOnClickListener { loading = true; reload(); invalidate() } }.build(),
         )).build()).build()
-        val section = CarUi.section(carContext, title, items, grid, ::open) {
+        val section = CarUi.section(carContext, title, items.drop(page * size).take(size), grid, ::open) {
             CarNavigation.push(this, CarSongOptionsScreen(carContext, client, it), client)
         }
         return template.addSection(section).build()

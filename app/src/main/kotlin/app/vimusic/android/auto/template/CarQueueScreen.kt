@@ -29,6 +29,7 @@ internal class CarQueueScreen(context: CarContext, private val client: CarMediaC
     private var items: List<MediaItem>? = null
     private var signature = ""
     private var warned = false
+    private var page = 0
     private fun snapshot() {
         client.browser?.let { player ->
             items = List(player.mediaItemCount, player::getMediaItemAt)
@@ -50,15 +51,21 @@ internal class CarQueueScreen(context: CarContext, private val client: CarMediaC
     override fun onStart(owner: LifecycleOwner) { snapshot(); client.observe(changed) }
     override fun onStop(owner: LifecycleOwner) { client.stopObserving(changed) }
     override fun onGetTemplate(): Template {
+        val size = CarUi.limit(carContext)
+        val pageCount = (((items?.size ?: 0) + size - 1) / size).coerceAtLeast(1)
+        page = page.coerceIn(0, pageCount - 1)
         val header = Header.Builder().setTitle(carContext.getString(R.string.auto_queue)).setStartHeaderAction(Action.BACK)
-            .addEndHeaderAction(CarUi.action(carContext, R.drawable.shuffle) { client.scope.launch { runCatching { client.command(AutoCommandHandler.SHUFFLE) } } })
-            .addEndHeaderAction(CarUi.action(carContext, R.drawable.infinite) { client.scope.launch { runCatching { client.command(AutoCommandHandler.REPEAT) } } }).build()
+            .addEndHeaderAction(CarUi.action(carContext, R.drawable.ellipsis_horizontal) { CarNavigation.push(this, CarQueueModesScreen(carContext, client), client) })
+            .apply { if (pageCount > 1) addEndHeaderAction(CarUi.action(carContext, R.drawable.chevron_forward) {
+                CarNavigation.page(this@CarQueueScreen, client, page, pageCount) { page = it; invalidate() }
+            }) }.build()
         val template = SectionedItemTemplate.Builder().setHeader(header).setActions(CarUi.browseActions(this, client))
         val queue = items ?: return template.setLoading(true).build()
         val count = queue.size
         val expectedSignature = signature
         val list = RowSection.Builder().setNoItemsMessage(carContext.getString(R.string.auto_empty))
-        for ((index, item) in queue.withIndex()) {
+        for (index in page * size until minOf(count, (page + 1) * size)) {
+            val item = queue[index]
             val label = "${index + 1}. ${item.mediaMetadata.title?.toString().orEmpty()}"
             list.addItem(CarUi.row(carContext, item.buildUpon().setMediaMetadata(item.mediaMetadata.buildUpon().setTitle(label).build()).build(), {
                 val player = client.browser
@@ -69,6 +76,18 @@ internal class CarQueueScreen(context: CarContext, private val client: CarMediaC
             }, { CarNavigation.push(this, CarQueueItemScreen(carContext, client, item, index, count, expectedSignature), client) }))
         }
         return template.addSection(list.build()).build()
+    }
+}
+
+private class CarQueueModesScreen(context: CarContext, private val client: CarMediaClient) : Screen(context) {
+    override fun onGetTemplate(): Template {
+        val list = ItemList.Builder()
+        listOf(R.string.shuffle to AutoCommandHandler.SHUFFLE, R.string.auto_repeat to AutoCommandHandler.REPEAT).forEach { (label, command) ->
+            list.addItem(Row.Builder().setTitle(carContext.getString(label)).setOnClickListener {
+                client.scope.launch { runCatching { client.command(command) }.onSuccess { screenManager.pop() } }
+            }.build())
+        }
+        return ListTemplate.Builder().setHeader(CarUi.header(this, carContext.getString(R.string.auto_queue))).setSingleList(list.build()).build()
     }
 }
 

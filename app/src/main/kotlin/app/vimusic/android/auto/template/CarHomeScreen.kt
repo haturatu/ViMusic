@@ -63,9 +63,9 @@ internal class CarHomeScreen(context: CarContext, private val client: CarMediaCl
                 val updated = children.map { it to emptyList<MediaItem>() }.toMutableList()
                 client.subscribe(selected)
                 if (selected != AutoMediaId.LIBRARY) {
-                    val quota = 3
+                    val quota = ((CarUi.limit(carContext, grid) - children.size - 1) / children.size.coerceAtLeast(1)).coerceIn(0, 3)
                     children.forEachIndexed { index, folder ->
-                        val entries = try { client.children(folder.mediaId, quota + 2).filter {
+                        val entries = if (quota == 0) emptyList() else try { client.children(folder.mediaId, quota + 2).filter {
                             AutoMediaId.parse(it.mediaId)?.kind !in listOf("play-all", "shuffle")
                         }.take(quota) } catch (error: CancellationException) { throw error } catch (_: Exception) { emptyList() }
                         updated[index] = folder to entries
@@ -117,7 +117,7 @@ internal class CarHomeScreen(context: CarContext, private val client: CarMediaCl
                     CarNavigation.push(this, CarSongOptionsScreen(carContext, client, it), client)
                 })
             }
-            contents.addSection(RowSection.Builder().setItems(listOf(Row.Builder()
+            if (sections.sumOf { it.second.size + 1 } < CarUi.limit(carContext, grid)) contents.addSection(RowSection.Builder().setItems(listOf(Row.Builder()
                 .setTitle(carContext.getString(if (grid) R.string.auto_list else R.string.auto_grid))
                 .setImage(CarUi.icon(carContext, R.drawable.shapes))
                 .setOnClickListener { CarNavigation.push(this, CarHomeScreen(carContext, client, !grid, selected), client) }.build())).build())
