@@ -13,8 +13,6 @@ class HomePlaylistsViewModel(
     fun observePlaylistPreviews(sortBy: PlaylistSortBy, sortOrder: SortOrder) =
         repository.observePlaylistPreviews(sortBy = sortBy, sortOrder = sortOrder)
 
-    fun observePipedPlaylists() = repository.observePipedPlaylists()
-
     fun createPlaylist(name: String) {
         viewModelScope.launchDatabaseAction {
             repository.createPlaylist(name)

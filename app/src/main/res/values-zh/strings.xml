@@ -97,7 +97,6 @@
     <string name="hide_from_quick_picks">从“快速选择”中隐藏</string>
     <string name="confirm_hide_song">您确定要隐藏这首歌吗？它的播放时间和缓存将被清除。\n此操作不可逆。</string>
     <string name="confirm_delete_playlist">您确定要删除此播放列表吗？</string>
-    <string name="confirm_delete_piped_session">您确定要删除此 Piped 会话吗？</string>
 
     <string name="other_versions">其他版本</string>
     <string name="no_alternative_version">此专辑没有其他版本</string>
@@ -122,8 +121,6 @@
     <string name="error_server_restrictions">由于服务器限制，此歌曲无法播放</string>
     <string name="error_id_mismatch">返回的视频 ID 与请求的 ID 不匹配</string>
     <string name="error_unknown_playback">发生未知播放错误</string>
-    <string name="error_piped_link">链接您的 Piped 帐户时发生未知错误。请再试一次。</string>
-    <string name="error_piped_instances_unavailable">当前不可用 Piped 实例列表</string>
     <string name="error_pre_cache">预缓存时发生未知错误。请再试一次。</string>
     <string name="error_url">无法打开网址 %1$s</string>
 
@@ -337,22 +334,6 @@
     <string name="player_layout">播放器布局</string>
     <string name="classic_player_layout_name">经典</string>
     <string name="new_player_layout_name">现代 (新)</string>
-
-    <string name="piped">Piped</string>
-    <string name="instance">实例</string>
-    <string name="click_to_select">点击选择</string>
-    <string name="username">用户名</string>
-    <string name="password">密码</string>
-    <string name="login">登录</string>
-    <string name="sync_description">您可以在其他地方托管播放列表，并与 ViMusic 同步。目前仅支持 Piped。</string>
-    <string name="add_account">添加账户</string>
-    <string name="add_account_description">链接一个 Piped 账户，输入您的实例、用户名和密码。</string>
-    <string name="learn_more">了解更多</string>
-    <string name="learn_more_description">不了解 Piped 是什么或者没有账户？点击这里查看相关文档。</string>
-    <string name="piped_sessions">Piped 会话</string>
-    <string name="custom_instance">使用自定义实例</string>
-    <string name="base_api_url">实例 API URL</string>
-    <string name="piped_session_created_successfully">Piped 会话创建成功</string>
 
     <string name="seek_bar_style">进度条样式</string>
     <string name="static_seek_bar_name">静态</string>

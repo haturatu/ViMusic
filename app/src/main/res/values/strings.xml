@@ -97,7 +97,6 @@
     <string name="hide_from_quick_picks">Hide from \"Quick picks\"</string>
     <string name="confirm_hide_song">Do you really want to hide this song? Its playback time and cache will be wiped.\nThis action is irreversible.</string>
     <string name="confirm_delete_playlist">Do you really want to delete this playlist?</string>
-    <string name="confirm_delete_piped_session">Do you really want to delete this Piped session?</string>
 
     <string name="other_versions">Other versions</string>
     <string name="no_alternative_version">This album doesn\'t have any alternative version</string>
@@ -122,8 +121,6 @@
     <string name="error_server_restrictions">This song cannot be played due to server restrictions</string>
     <string name="error_id_mismatch">The returned video ID doesn\'t match the requested one</string>
     <string name="error_unknown_playback">An unknown playback error has occurred</string>
-    <string name="error_piped_link">There was an unknown error linking your Piped account. Please try again.</string>
-    <string name="error_piped_instances_unavailable">Piped instance list currently unavailable</string>
     <string name="error_pre_cache">An unknown error occurred during pre-caching. Please try again.</string>
     <string name="error_url">Can\'t open url %1$s</string>
 
@@ -352,22 +349,6 @@
     <string name="player_layout">Player layout</string>
     <string name="classic_player_layout_name">Classic</string>
     <string name="new_player_layout_name">Modern (new)</string>
-
-    <string name="piped">Piped</string>
-    <string name="instance">Instance</string>
-    <string name="click_to_select">Click to select</string>
-    <string name="username">Username</string>
-    <string name="password">Password</string>
-    <string name="login">Login</string>
-    <string name="sync_description">You can host playlists elsewhere and synchronize them with ViMusic. Currently only supports Piped.</string>
-    <string name="add_account">Add account</string>
-    <string name="add_account_description">Link a Piped account with your instance, username and password.</string>
-    <string name="learn_more">Learn more</string>
-    <string name="learn_more_description">Don\'t know what Piped is or don\'t have an account? Click here to get redirected to their docs</string>
-    <string name="piped_sessions">Piped sessions</string>
-    <string name="custom_instance">Use Custom Instance</string>
-    <string name="base_api_url">Instance API URL</string>
-    <string name="piped_session_created_successfully">Piped session created successfully</string>
 
     <string name="seek_bar_style">Seek bar style</string>
     <string name="static_seek_bar_name">Static</string>

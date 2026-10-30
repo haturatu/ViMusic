@@ -77,9 +77,8 @@ fun SettingsScreen() {
                     tab(1, R.string.player, R.drawable.play, canHide = false)
                     tab(2, R.string.cache, R.drawable.server, canHide = false)
                     tab(3, R.string.database, R.drawable.server, canHide = false)
-                    tab(4, R.string.sync, R.drawable.sync, canHide = false)
-                    tab(5, R.string.other, R.drawable.shapes, canHide = false)
-                    tab(6, R.string.about, R.drawable.information, canHide = false)
+                    tab(4, R.string.other, R.drawable.shapes, canHide = false)
+                    tab(5, R.string.about, R.drawable.information, canHide = false)
                 }
             ) { currentTabIndex ->
                 saveableStateHolder.SaveableStateProvider(currentTabIndex) {
@@ -88,9 +87,8 @@ fun SettingsScreen() {
                         1 -> PlayerSettings()
                         2 -> CacheSettings()
                         3 -> DatabaseSettings()
-                        4 -> SyncSettings()
-                        5 -> OtherSettings()
-                        6 -> About()
+                        4 -> OtherSettings()
+                        5 -> About()
                     }
                 }
             }

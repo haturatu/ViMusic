@@ -96,7 +96,6 @@
     <string name="hide_from_quick_picks">おすすめから削除</string>
     <string name="confirm_hide_song">この曲を削除しますか？\n再生時間とキャッシュは消去されます\nこの操作は元に戻すことができません</string>
     <string name="confirm_delete_playlist">このプレイリストを削除しますか？</string>
-    <string name="confirm_delete_piped_session">この Piped セッションを削除しますか？</string>
 
     <string name="other_versions">ほかのバージョン</string>
     <string name="no_alternative_version">このアルバムには他のバージョンがありません</string>
@@ -121,8 +120,6 @@
     <string name="error_server_restrictions">この曲はサーバーの制限により再生できません</string>
     <string name="error_id_mismatch">Video ID が一致しませんでした</string>
     <string name="error_unknown_playback">不明な再生エラーが発生しました</string>
-    <string name="error_piped_link">Piped アカウントのリンク中に不明なエラーが発生しました\nもう一度試してください</string>
-    <string name="error_piped_instances_unavailable">Piped インスタンスのリストは現在利用できません</string>
     <string name="error_pre_cache">事前キャッシュ中に不明なエラーが発生しました\nもう一度試してください</string>
     <string name="error_url">%1$sを開けません</string>
 
@@ -330,22 +327,6 @@
     <string name="player_layout">プレーヤーのレイアウト</string>
     <string name="classic_player_layout_name">クラシック</string>
     <string name="new_player_layout_name">モダン (新しい)</string>
-
-    <string name="piped">Piped</string>
-    <string name="instance">一覧</string>
-    <string name="click_to_select">タップして選択してください</string>
-    <string name="username">ユーザーネーム</string>
-    <string name="password">パスワード</string>
-    <string name="login">ログイン</string>
-    <string name="sync_description">プレイリストを別の場所で保存し、ViMusic と同期することができます\n現在、Piped のみをサポートしています</string>
-    <string name="add_account">アカウントを追加する</string>
-    <string name="add_account_description">Piped アカウントにリンクします</string>
-    <string name="learn_more">もっと知る</string>
-    <string name="learn_more_description">Piped を知らない、またはアカウントをお持ちでない場合は、ここをクリックするとPiped のドキュメントを開きます</string>
-    <string name="piped_sessions">Piped セッション</string>
-    <string name="custom_instance">カスタムインスタンスを使用する</string>
-    <string name="base_api_url">インスタンスAPIのURL</string>
-    <string name="piped_session_created_successfully">Piped セッションが正常に作成されました</string>
 
     <string name="seek_bar_style">再生バーのスタイル</string>
     <string name="static_seek_bar_name">普通</string>

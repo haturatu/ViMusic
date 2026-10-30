@@ -97,7 +97,6 @@
     <string name="hide_from_quick_picks">Verberg van \"Snelle keuzes\"</string>
     <string name="confirm_hide_song">Wil je echt dit nummer verbergen? De afspeeltijd en cache worden weggegooid. Deze actie is onomkeerbaar.</string>
     <string name="confirm_delete_playlist">Wil je deze afspeellijst echt verwijderen?</string>
-    <string name="confirm_delete_piped_session">Wil je deze Piped sessie echt verwijderen?</string>
 
     <string name="other_versions">Overige versies</string>
     <string name="no_alternative_version">Dit album heeft geen alternatieve versies</string>
@@ -122,8 +121,6 @@
     <string name="error_server_restrictions">Dit nummer kan niet worden afgespeeld door server restricties</string>
     <string name="error_id_mismatch">De teruggegeven video ID is niet dezelfde als de gevraagde ID</string>
     <string name="error_unknown_playback">Een onbekende afspeelfout heeft zich voorgedaan</string>
-    <string name="error_piped_link">Het linken met je Piped account is mislukt. Probeer het opnieuw.</string>
-    <string name="error_piped_instances_unavailable">De lijst van Piped instanties is niet beschikbaar</string>
     <string name="error_pre_cache">Een onbekende error heeft zich voorgedaan bij het pre-cachen. Probeer het opnieuw.</string>
     <string name="error_url">Kon url %1$s niet openen</string>
 
@@ -338,22 +335,6 @@
     <string name="player_layout">Lay-out van de speler</string>
     <string name="classic_player_layout_name">Klassiek</string>
     <string name="new_player_layout_name">Modern (nieuw)</string>
-
-    <string name="piped">Piped</string>
-    <string name="instance">Instantie</string>
-    <string name="click_to_select">Klik om te selecteren</string>
-    <string name="username">Gebruikersnaam</string>
-    <string name="password">Wachtwoord</string>
-    <string name="login">Login</string>
-    <string name="sync_description">Je kan playlists elders bewaren en synchroniseren met ViMusic. Ondersteunt momenteel alleen Piped.</string>
-    <string name="add_account">Account toevoegen</string>
-    <string name="add_account_description">Link een Piped account met jouw instantie, gebruikersnaam en wachtwoord</string>
-    <string name="learn_more">Meer informatie</string>
-    <string name="learn_more_description">Geen idee wat Piped is of geen account? Klik hier om doorgestuurd te worden naar de documentatie</string>
-    <string name="piped_sessions">Piped sessies</string>
-    <string name="custom_instance">Gebruik andere instantie</string>
-    <string name="base_api_url">API URL van de instantie</string>
-    <string name="piped_session_created_successfully">Piped sessie succesvol gestart</string>
 
     <string name="seek_bar_style">Stijl van de zoekbalk</string>
     <string name="static_seek_bar_name">Statisch</string>

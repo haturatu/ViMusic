@@ -97,7 +97,6 @@
     <string name="hide_from_quick_picks">Masquer de la « Sélection Rapide »</string>
     <string name="confirm_hide_song">Voulez-vous vraiment masquer ce titre ? Son temps de lecture et son cache seront effacés. Cette action est irréversible.</string>
     <string name="confirm_delete_playlist">Voulez-vous vraiment supprimer cette playlist ?</string>
-    <string name="confirm_delete_piped_session">Voulez-vous vraiment supprimer cette session Piped ?</string>
     
     <string name="other_versions">Autres versions</string>
     <string name="no_alternative_version">Cet album n\'a pas de version alternative</string>
@@ -122,8 +121,6 @@
     <string name="error_server_restrictions">Ce titre ne peut pas être joué en raison de restrictions du serveur</string>
     <string name="error_id_mismatch">L\'ID vidéo renvoyé ne correspond pas à celui demandé</string>
     <string name="error_unknown_playback">Une erreur de lecture inconnue s\'est produite</string>
-    <string name="error_piped_link">Une erreur inconnue s\'est produite lors de la liaison de votre compte Piped. Veuillez réessayer.</string>
-    <string name="error_piped_instances_unavailable">La liste des instances Piped n\'est actuellement pas disponible</string>
     <string name="error_pre_cache">Une erreur inconnue s\'est produite lors de la pré-mise en cache. Veuillez réessayer.</string>
     <string name="error_url">Impossible d\'ouvrir l\'URL %1$s</string>
     
@@ -353,21 +350,6 @@
     <string name="classic_player_layout_name">Classique</string>
     <string name="new_player_layout_name">Moderne (nouveau)</string>
     
-    <string name="piped">Piped</string>
-    <string name="instance">Instance</string>
-    <string name="click_to_select">Cliquez pour sélectionner</string>
-    <string name="username">Nom d\'utilisateur</string>
-    <string name="password">Mot de passe</string>
-    <string name="login">Se connecter</string>
-    <string name="sync_description">Vous pouvez héberger des playlists ailleurs et les synchroniser avec ViMusic. Actuellement, seule la fonction Piped est prise en charge.</string>
-    <string name="add_account">Ajouter un compte</string>
-    <string name="add_account_description">Liez un compte Piped avec votre instance, votre nom d\'utilisateur et votre mot de passe.</string>
-    <string name="learn_more">En savoir plus</string>
-    <string name="learn_more_description">Vous ne savez pas ce qu\'est Piped ou vous n\'avez pas de compte ? Cliquez ici pour être redirigé vers leur documentation</string>
-    <string name="piped_sessions">Sessions Piped</string>
-    <string name="custom_instance">Utiliser une instance personnalisée</string>
-    <string name="base_api_url">Instance URL API</string>
-    <string name="piped_session_created_successfully">Session Piped créée avec succès</string>
     
     <string name="seek_bar_style">Style de barre de progression</string>
     <string name="static_seek_bar_name">Statique</string>

@@ -18,7 +18,6 @@ import app.vimusic.android.ui.screens.mood.MoodScreen
 import app.vimusic.android.ui.screens.mood.MoreAlbumsScreen
 import app.vimusic.android.ui.screens.mood.MoreMoodsScreen
 import app.vimusic.android.ui.screens.moodRoute
-import app.vimusic.android.ui.screens.pipedPlaylistRoute
 import app.vimusic.android.ui.screens.playlistRoute
 import app.vimusic.android.ui.screens.searchRoute
 import app.vimusic.android.ui.screens.settingsRoute
@@ -109,13 +108,6 @@ fun HomeScreen() {
                         3 -> HomePlaylists(
                             onBuiltInPlaylist = { builtInPlaylistRoute(it) },
                             onPlaylistClick = { localPlaylistRoute(it.id) },
-                            onPipedPlaylistClick = { session, playlist ->
-                                pipedPlaylistRoute(
-                                    p0 = session.apiBaseUrl.toString(),
-                                    p1 = session.token,
-                                    p2 = playlist.id.toString()
-                                )
-                            },
                             onSearchClick = onSearchClick
                         )
 

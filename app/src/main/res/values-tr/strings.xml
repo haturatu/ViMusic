@@ -119,8 +119,6 @@
     <string name="error_server_restrictions">Sunucu kısıtlamaları nedeniyle bu şarkı çalınamıyor</string>
     <string name="error_id_mismatch">Döndürülen video kimliği istenenle eşleşmiyor</string>
     <string name="error_unknown_playback">Bilinmeyen bir oynatma hatası oluştu</string>
-    <string name="error_piped_link">Piped hesabınız bağlanırken bilinmeyen bir hata oluştu. Lütfen tekrar deneyin.</string>
-    <string name="error_piped_instances_unavailable">Piped örnek listesi şu anda kullanılamıyor</string>
     <string name="error_pre_cache">Önbelleğe alma sırasında bilinmeyen bir hata oluştu. Lütfen tekrar deneyin.</string>
     <string name="error_url">%1$s bağlantısı açılamıyor</string>
 
@@ -318,21 +316,6 @@
     <string name="classic_player_layout_name">Klasik</string>
     <string name="new_player_layout_name">Modern (yeni)</string>
 
-    <string name="piped">Piped</string>
-    <string name="instance">Örnek</string>
-    <string name="click_to_select">Seçmek için tıklayın</string>
-    <string name="username">Kullanıcı adı</string>
-    <string name="password">Parola</string>
-    <string name="login">Giriş</string>
-    <string name="sync_description">Oynatma listelerini başka bir yerde barındırabilir ve bunları ViMusic ile senkronize edebilirsiniz. Şu anda yalnızca Piped\'ı destekliyor.</string>
-    <string name="add_account">Hesap ekle</string>
-    <string name="add_account_description">Piped hesabınızı oturumunuz, kullanıcı adınız ve şifrenizle bağlayın.</string>
-    <string name="learn_more">Daha fazla bilgi edinin</string>
-    <string name="learn_more_description">Piped\'ın ne olduğunu bilmiyor musunuz veya bir hesabınız yok mu? Dokümanlarına yönlendirilmek için buraya tıklayın</string>
-    <string name="piped_sessions">Piped oturumları</string>
-    <string name="custom_instance">Özel Örnek Kullan</string>
-    <string name="base_api_url">Örnek API Bağlantısı</string>
-
     <string name="seek_bar_style">Bar tarzı ara</string>
     <string name="static_seek_bar_name">Statik</string>
     <string name="wavy_seek_bar_name">Dalgalı</string>
@@ -398,9 +381,7 @@
     <string name="clear_image_cache_description">Tüm önbelleğe alınmış görselleri kaldır</string>
     <string name="clear_song_cache">Şarkı önbelleğini temizle</string>
     <string name="clear_song_cache_description">Tüm önbelleğe alınmış şarkıları kaldır</string>
-    <string name="confirm_delete_piped_session">Bu Piped oturumunu silmek istiyor musunuz?</string>
     <string name="lyrics_keep_screen_awake">Ekranı açık tut (şarkı sözleri)</string>
     <string name="lyrics_keep_screen_awake_description">Şarkı sözleri görüntülenirken ekranı açık tutar</string>
     <string name="more">Daha fazla</string>
-    <string name="piped_session_created_successfully">Piped oturumu başarıyla oluşturuldu</string>
 </resources>

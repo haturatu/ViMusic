@@ -118,8 +118,6 @@
     <string name="error_server_restrictions">Lagu ini tidak dapat diputar karena pembatasan server</string>
     <string name="error_id_mismatch">Id video yang dikembalikan tidak sesuai dengan yang diminta</string>
     <string name="error_unknown_playback">Terjadi kesalahan pemutaran yang tidak diketahui</string>
-    <string name="error_piped_link">Terjadi kesalahan yang tidak diketahui saat menautkan akun Piped Anda. Silakan coba lagi.</string>
-    <string name="error_piped_instances_unavailable">Daftar contoh Piped saat ini tidak tersedia</string>
     <string name="error_pre_cache">Terjadi kesalahan yang tidak diketahui selama pra-caching. Silakan coba lagi.</string>
     <string name="error_url">Tidak dapat membuka url %1$s</string>
 
@@ -311,21 +309,6 @@
     <string name="classic_player_layout_name">Klasik</string>
     <string name="new_player_layout_name">Modern (baru)</string>
 
-    <string name="piped">Piped</string>
-    <string name="instance">Instansi</string>
-    <string name="click_to_select">Klik untuk memilih</string>
-    <string name="username">Nama pengguna</string>
-    <string name="password">Kata sandi</string>
-    <string name="login">Masuk</string>
-    <string name="sync_description">Anda dapat menyimpan daftar putar di tempat lain dan menyinkronkannya dengan ViMusic. Saat ini hanya mendukung Piped.</string>
-    <string name="add_account">Tambahkan akun</string>
-    <string name="add_account_description">Hubungkan akun Piped dengan instansi Anda, nama pengguna, dan kata sandi.</string>
-    <string name="learn_more">Pelajari lebih lanjut</string>
-    <string name="learn_more_description">Tidak tahu apa itu Piped atau tidak memiliki akun? Klik di sini untuk diarahkan ke dokumennya</string>
-    <string name="piped_sessions">Sesi Piped</string>
-    <string name="custom_instance">Gunakan Instansi Kustom</string>
-    <string name="base_api_url">URL API Instansi</string>
-
     <string name="seek_bar_style">Gaya bar pencarian</string>
     <string name="static_seek_bar_name">Statis</string>
     <string name="wavy_seek_bar_name">Bergelombang</string>
@@ -383,7 +366,6 @@
     <string name="clear_image_cache_description">Hapus semua gambar yang dicache</string>
     <string name="clear_song_cache">Hapus cache lagu</string>
     <string name="clear_song_cache_description">Hapus semua lagu yang dicache</string>
-    <string name="confirm_delete_piped_session">Apakah kamu yakin ingin menghapus sesi Piped ini?</string>
     <string name="daily">Harian</string>
     <string name="format_subscribers">%s pelanggan</string>
     <string name="hourly">Per jam</string>
@@ -391,7 +373,6 @@
     <string name="lyrics_keep_screen_awake">Biarkan layar menyala (lirik)</string>
     <string name="lyrics_keep_screen_awake_description">Menjaga layar tetap menyala saat lirik ditampilkan</string>
     <string name="more">Lainnya</string>
-    <string name="piped_session_created_successfully">Sesi Piped berhasil dibuat</string>
     <string name="playback_pitch">Nada</string>
     <string name="playback_settings">Kecepatan &amp; nada</string>
     <string name="quick_picks_cache">Cache data pilihan cepat</string>

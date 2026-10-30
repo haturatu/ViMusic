@@ -23,11 +23,6 @@
     kotlinx.serialization.KSerializer serializer(...);
 }
 
--if class androidx.credentials.CredentialManager
--keep class androidx.credentials.playservices.** {
-  *;
-}
-
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
 
 -dontwarn org.bouncycastle.jsse.BCSSLParameters
