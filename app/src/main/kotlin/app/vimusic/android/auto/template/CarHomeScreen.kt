@@ -5,6 +5,7 @@ package app.vimusic.android.auto.template
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
+import androidx.car.app.model.CarColor
 import androidx.car.app.model.Header
 import androidx.car.app.model.Section
 import androidx.car.app.model.SectionedItemTemplate
@@ -99,7 +100,11 @@ internal class CarHomeScreen(context: CarContext, private val client: CarMediaCl
                     screenManager.push(CarSongOptionsScreen(carContext, client, it))
                 })
             }
-            contents.addAction(CarUi.action(carContext, R.drawable.shapes) { grid = !grid; load(); invalidate() })
+            contents.addAction(Action.Builder()
+                .setIcon(CarUi.icon(carContext, R.drawable.shapes))
+                .setBackgroundColor(CarColor.BLUE)
+                .setOnClickListener { grid = !grid; load(); invalidate() }
+                .build())
         }
         return TabTemplate.Builder(object : TabTemplate.TabCallback {
             override fun onTabSelected(tabContentId: String) { if (selected != tabContentId) { selected = tabContentId; loading = true; sections = emptyList(); load(); invalidate() } }
