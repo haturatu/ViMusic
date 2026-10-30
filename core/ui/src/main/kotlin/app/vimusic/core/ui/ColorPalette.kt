@@ -178,7 +178,11 @@ fun dynamicAccentColorOf(
     val palette = Palette
         .from(bitmap)
         .maximumColorCount(8)
-        .addFilter(if (isDark) ({ _, hsl -> hsl[0] !in 36f..100f }) else null)
+        .apply {
+            if (isDark) {
+                addFilter { _, hsl -> hsl[0] !in 36f..100f }
+            }
+        }
         .generate()
 
     val hsl = if (isDark) {
