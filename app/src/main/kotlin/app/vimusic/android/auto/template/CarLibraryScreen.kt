@@ -74,9 +74,7 @@ internal open class CarLibraryScreen(
                 .apply { if (failed) setOnClickListener { loading = true; reload(); invalidate() } }.build(),
         )).build()).build()
         val page = pages.page
-        val generation = pages.generation
-        val section = CarUi.section(carContext, title, items.drop(page * size).take(size), grid, ::open,
-            visibility = { start, end -> pages.onVisible(generation, start, end) }) {
+        val section = CarUi.section(carContext, title, items.drop(page * size).take(size), grid, ::open) {
             CarNavigation.push(this, CarSongOptionsScreen(carContext, client, it), client)
         }
         return template.addSection(section).build()

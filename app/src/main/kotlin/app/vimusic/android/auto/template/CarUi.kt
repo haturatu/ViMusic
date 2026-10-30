@@ -58,12 +58,12 @@ internal object CarUi {
             setOnClickListener(click)
             if (options != null) addAction(action(context, R.drawable.ellipsis_horizontal, options))
         }.build()
-    fun section(context: CarContext, title: String, items: List<MediaItem>, grid: Boolean, click: (MediaItem) -> Unit, visibility: ((Int, Int) -> Unit)? = null, options: (MediaItem) -> Unit): Section<*> =
+    fun section(context: CarContext, title: String, items: List<MediaItem>, grid: Boolean, click: (MediaItem) -> Unit, options: (MediaItem) -> Unit): Section<*> =
         if (grid) GridSection.Builder().setTitle(title).setItems(items.map { item ->
             GridItem.Builder().setTitle(item.mediaMetadata.title?.toString()?.take(100).orEmpty().ifBlank { "ViMusic" })
                 .setImage(icon(context, if (item.mediaMetadata.isBrowsable == true) R.drawable.playlist else R.drawable.musical_notes))
                 .setOnClickListener { click(item) }.build()
-        }).apply { if (visibility != null) setOnItemVisibilityChangedListener(visibility) }.build() else RowSection.Builder().setTitle(title).setItems(items.map { item ->
+        }).build() else RowSection.Builder().setTitle(title).setItems(items.map { item ->
             row(context, item, { click(item) }, if (item.mediaMetadata.isPlayable == true) ({ options(item) }) else null)
-        }).apply { if (visibility != null) setOnItemVisibilityChangedListener(visibility) }.build()
+        }).build()
 }

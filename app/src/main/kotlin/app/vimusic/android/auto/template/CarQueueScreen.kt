@@ -61,9 +61,7 @@ internal class CarQueueScreen(context: CarContext, private val client: CarMediaC
         val count = queue.size
         val expectedSignature = signature
         val page = pages.page
-        val generation = pages.generation
         val list = RowSection.Builder().setNoItemsMessage(carContext.getString(R.string.auto_empty))
-            .setOnItemVisibilityChangedListener { start, end -> pages.onVisible(generation, start, end) }
         for (index in page * size until minOf(count, (page + 1) * size)) {
             val item = queue[index]
             val label = "${index + 1}. ${item.mediaMetadata.title?.toString().orEmpty()}"
