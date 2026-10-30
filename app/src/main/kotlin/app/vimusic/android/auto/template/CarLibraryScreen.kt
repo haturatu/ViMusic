@@ -70,7 +70,7 @@ internal open class CarLibraryScreen(
             Row.Builder().setTitle(carContext.getString(if (failed) R.string.auto_error else R.string.auto_empty))
                 .apply { if (failed) setOnClickListener { loading = true; reload(); invalidate() } }.build(),
         )).build()).build()
-        val size = (CarUi.limit(carContext, grid) - 2).coerceAtLeast(1)
+        val size = CarUi.BROWSE_PAGE_SIZE
         page = page.coerceIn(0, (items.size - 1) / size)
         val visible = items.drop(page * size).take(size)
         val sections = mutableListOf(CarUi.section(carContext, title, visible, grid, ::open) {

@@ -56,7 +56,7 @@ internal class CarHomeScreen(context: CarContext, private val client: CarMediaCl
                 val updated = children.map { it to emptyList<MediaItem>() }.toMutableList()
                 client.subscribe(selected)
                 if (selected != AutoMediaId.LIBRARY) {
-                    val quota = ((CarUi.limit(carContext, grid) - children.size - 1) / children.size.coerceAtLeast(1)).coerceIn(0, 3)
+                    val quota = 3
                     children.forEachIndexed { index, folder ->
                         val entries = try { client.children(folder.mediaId).take(quota) } catch (error: CancellationException) { throw error } catch (_: Exception) { emptyList() }
                         updated[index] = folder to entries
@@ -94,7 +94,7 @@ internal class CarHomeScreen(context: CarContext, private val client: CarMediaCl
         } else if (loading) contents.setLoading(true)
         else {
             sections.forEach { (folder, previews) ->
-                val entries = (previews + folder).take(CarUi.limit(carContext, grid))
+                val entries = previews + folder
                 contents.addSection(CarUi.section(carContext, folder.mediaMetadata.title.toString(), entries, grid, ::open) {
                     screenManager.push(CarSongOptionsScreen(carContext, client, it))
                 })

@@ -11,6 +11,8 @@ import androidx.car.app.model.Action
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.ListTemplate
 import androidx.car.app.model.Row
+import androidx.car.app.model.RowSection
+import androidx.car.app.model.SectionedItemTemplate
 import androidx.car.app.model.Template
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -34,14 +36,13 @@ internal class CarQueueScreen(context: CarContext, private val client: CarMediaC
         val header = Header.Builder().setTitle(carContext.getString(R.string.auto_queue)).setStartHeaderAction(Action.BACK)
             .addEndHeaderAction(CarUi.action(carContext, R.drawable.shuffle) { client.scope.launch { runCatching { client.command(AutoCommandHandler.SHUFFLE) } } })
             .addEndHeaderAction(CarUi.action(carContext, R.drawable.infinite) { client.scope.launch { runCatching { client.command(AutoCommandHandler.REPEAT) } } }).build()
-        val template = ListTemplate.Builder().setHeader(header)
-            .apply { CarUi.browseActions(this@CarQueueScreen, client).forEach { addAction(it) } }
+        val template = SectionedItemTemplate.Builder().setHeader(header).setActions(CarUi.browseActions(this, client))
         if (player == null) return template.setLoading(true).build()
         val count = player.mediaItemCount
-        val size = (CarUi.limit(carContext) - 2).coerceAtLeast(1)
+        val size = CarUi.BROWSE_PAGE_SIZE
         page = page.coerceIn(0, ((count - 1).coerceAtLeast(0)) / size)
         val signature = AutoQueueController.signature(player)
-        val list = ItemList.Builder().setNoItemsMessage(carContext.getString(R.string.auto_empty))
+        val list = RowSection.Builder().setNoItemsMessage(carContext.getString(R.string.auto_empty))
         for (index in page * size until minOf(count, (page + 1) * size)) {
             val item = player.getMediaItemAt(index)
             val label = "${if (index == player.currentMediaItemIndex) "▶ " else ""}${index + 1}. ${item.mediaMetadata.title?.toString().orEmpty()}"
@@ -52,7 +53,7 @@ internal class CarQueueScreen(context: CarContext, private val client: CarMediaC
         }
         if (page > 0) list.addItem(Row.Builder().setTitle(carContext.getString(R.string.auto_previous)).setOnClickListener { page--; invalidate() }.build())
         if ((page + 1) * size < count) list.addItem(Row.Builder().setTitle(carContext.getString(R.string.auto_next)).setOnClickListener { page++; invalidate() }.build())
-        return template.setSingleList(list.build()).build()
+        return template.addSection(list.build()).build()
     }
 }
 
