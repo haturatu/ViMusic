@@ -14,13 +14,19 @@ import androidx.car.app.model.Section
 import androidx.car.app.constraints.ConstraintManager
 import androidx.core.graphics.drawable.IconCompat
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import app.vimusic.android.R
 
 internal object CarUi {
     fun icon(context: CarContext, drawable: Int): CarIcon = CarIcon.Builder(IconCompat.createWithResource(context, drawable)).build()
     fun action(context: CarContext, drawable: Int, click: () -> Unit) = Action.Builder().setIcon(icon(context, drawable)).setOnClickListener(click).build()
-    fun browseActions(screen: Screen, client: CarMediaClient): List<Action> = listOf(
-        Action.Builder(Action.MEDIA_PLAYBACK).setOnClickListener {
+    fun browseActions(screen: Screen, client: CarMediaClient): List<Action> {
+        // Hosts hide MEDIA_PLAYBACK while the restored player is still idle.
+        // Keep navigation available without preparing or starting playback.
+        val playback = if (client.nativePlaybackAvailable && client.browser?.playbackState != Player.STATE_IDLE) {
+            Action.Builder(Action.MEDIA_PLAYBACK)
+        } else Action.Builder().setIcon(icon(screen.carContext, R.drawable.equalizer)).setBackgroundColor(CarColor.PRIMARY)
+        return listOf(playback.setOnClickListener {
             val playback = screen.screenManager.screenStack.firstOrNull { it is CarPlaybackScreen }
                 ?: CarPlaybackScreen(screen.carContext, client)
             screen.screenManager.push(playback)
@@ -28,7 +34,8 @@ internal object CarUi {
         Action.Builder().setIcon(icon(screen.carContext, R.drawable.search))
             .setBackgroundColor(CarColor.SECONDARY)
             .setOnClickListener { screen.screenManager.push(CarSearchScreen(screen.carContext, client)) }.build(),
-    )
+        )
+    }
     fun header(screen: Screen, title: String, toggle: (() -> Unit)? = null): Header = Header.Builder()
         .setTitle(title.take(80)).setStartHeaderAction(Action.BACK)
         .apply { if (toggle != null) addEndHeaderAction(action(screen.carContext, R.drawable.shapes, toggle)) }

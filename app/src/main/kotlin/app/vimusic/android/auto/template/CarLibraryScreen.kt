@@ -34,10 +34,11 @@ internal open class CarLibraryScreen(
     private var grid = false
     private var page = 0
     private val changed: () -> Unit = { if (lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) reload() }
+    private val playbackChanged: () -> Unit = { invalidate() }
 
     init { lifecycle.addObserver(this) }
-    override fun onStart(owner: LifecycleOwner) { client.observeLibrary(changed, true); reload() }
-    override fun onStop(owner: LifecycleOwner) { client.observeLibrary(changed, false); job?.cancel() }
+    override fun onStart(owner: LifecycleOwner) { client.observeLibrary(changed, true); client.observe(playbackChanged); reload() }
+    override fun onStop(owner: LifecycleOwner) { client.observeLibrary(changed, false); client.stopObserving(playbackChanged); job?.cancel() }
     override fun onDestroy(owner: LifecycleOwner) { scope.cancel() }
     private fun reload() {
         job?.cancel()

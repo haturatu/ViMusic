@@ -42,10 +42,11 @@ internal class CarHomeScreen(context: CarContext, private val client: CarMediaCl
     private var loading = true
     private var failed = false
     private val changed: () -> Unit = { if (lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) load() }
+    private val playbackChanged: () -> Unit = { invalidate() }
 
     init { lifecycle.addObserver(this) }
-    override fun onStart(owner: LifecycleOwner) { client.observeLibrary(changed, true); load() }
-    override fun onStop(owner: LifecycleOwner) { client.observeLibrary(changed, false); job?.cancel() }
+    override fun onStart(owner: LifecycleOwner) { client.observeLibrary(changed, true); client.observe(playbackChanged); load() }
+    override fun onStop(owner: LifecycleOwner) { client.observeLibrary(changed, false); client.stopObserving(playbackChanged); job?.cancel() }
     override fun onDestroy(owner: LifecycleOwner) { scope.cancel() }
     private fun load() {
         job?.cancel()
