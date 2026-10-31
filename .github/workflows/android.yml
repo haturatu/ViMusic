@@ -3,7 +3,9 @@ name: CI
 on:
   push:
     paths-ignore:
-      - "README.md"
+      - "**/*.md"
+      - "docs/**"
+      - ".github/ISSUE_TEMPLATE/**"
 
 jobs:
   build:
