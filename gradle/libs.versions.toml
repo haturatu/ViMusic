@@ -29,9 +29,9 @@ detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 dependency_analysis = { id = "com.autonomousapps.dependency-analysis", version.ref = "dependency_analysis" }
 
 [libraries]
-media_compat = { module = "androidx.media:media", version = "1.7.0" }
-car_app = { module = "androidx.car.app:app", version = "1.8.0-rc01" }
-car_projected = { module = "androidx.car.app:app-projected", version = "1.8.0-rc01" }
+media_compat = { module = "androidx.media:media", version = "1.8.0" }
+car_app = { module = "androidx.car.app:app", version = "1.9.0-alpha03" }
+car_projected = { module = "androidx.car.app:app-projected", version = "1.9.0-alpha03" }
 core_ktx = { module = "androidx.core:core-ktx", version = "1.19.1" }
 
 kotlin_serialization_json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "1.12.0" }
