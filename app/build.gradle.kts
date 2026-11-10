@@ -16,6 +16,12 @@ android {
 
     val appId = "app.vimusic.android"
 
+    // Read API key from local.properties (not committed to git)
+    val localProperties = java.util.Properties().apply {
+        file("local.properties").inputStream().use { load(it) }
+    }
+    val ytmApiKey = localProperties.getProperty("YTM_API_KEY") ?: ""
+
     namespace = appId
     compileSdk = 37
 
@@ -97,14 +103,17 @@ android {
     }
 
     buildFeatures {
-        buildConfig = true
-    }
+            buildConfig = true
+        }
 
-    compileOptions {
-        isCoreLibraryDesugaringEnabled = true
-    }
+        // Expose YTM API key to BuildConfig
+        buildConfigField("String", "YTM_API_KEY", "\"$ytmApiKey\"")
 
-    packaging {
+        compileOptions {
+            isCoreLibraryDesugaringEnabled = true
+        }
+
+        packaging {
         // Keep native libraries uncompressed so AGP can place every .so on a 16 KiB ZIP boundary.
         jniLibs {
             useLegacyPackaging = false

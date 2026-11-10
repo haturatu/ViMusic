@@ -7,6 +7,7 @@ import app.vimusic.providers.youtubemusic.innertube.models.Thumbnail
 import app.vimusic.providers.youtubemusic.innertube.models.Context
 import app.vimusic.providers.youtubemusic.innertube.models.UserAgents
 import app.vimusic.providers.utils.runCatchingCancellable
+import app.vimusic.android.BuildConfig
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
 import java.net.URLDecoder
@@ -26,7 +27,7 @@ object YoutubeMusicInnertube {
         if (javascriptChallenge != null) return javascriptChallenge
 
         val iframe = javascriptClient.get("https://www.youtube.com/iframe_api")
-        val version = "player\\\\?/([0-9a-fA-F]{8})\\\\?/".toRegex()
+        val version = "player\\\\\\\\?/([0-9a-fA-F]{8})\\\\\\\\?/".toRegex()
             .find(iframe)
             ?.groups
             ?.get(1)
@@ -39,7 +40,7 @@ object YoutubeMusicInnertube {
                 .get("https://www.youtube.com/s/player/$version/player_ias.vflset/en_US/base.js")
             videoId != null -> {
                 val embed = javascriptClient.get("https://www.youtube.com/embed/$videoId")
-                val jsUrl = "\"jsUrl\":\"(/s/player/[A-Za-z0-9]+/player_ias\\.vflset/[A-Za-z_-]+/base\\.js)\""
+                val jsUrl = "\"jsUrl\\\":\\\"(/s/player/[A-Za-z0-9]+/player_ias\\\\.vflset/[A-Za-z_-]+/base\\\\.js)\""
                     .toRegex()
                     .find(embed)
                     ?.groups
@@ -52,7 +53,7 @@ object YoutubeMusicInnertube {
             else -> return null
         }
 
-        val timestamp = "(?:signatureTimestamp|sts):(\\d{5})".toRegex()
+        val timestamp = "(?:signatureTimestamp|sts):(\\\\d{5})".toRegex()
             .find(sourceFile)
             ?.groups
             ?.get(1)
@@ -61,8 +62,8 @@ object YoutubeMusicInnertube {
             ?.takeIf { it.isNotBlank() } ?: return null
 
         val functionName = listOf(
-            "(\\w+)=function\\(a\\)\\{a=a.split\\(\"\"\\);\\w+",
-            "function\\s+(\\w+)\\(a\\)\\{a=a\\.split\\(\"\"\\);\\w+"
+            "(\\\\w+)=function\\\\(a\\\\)\\\\{a=a.split\\\\(\\\"\\\"\\\\);\\\\w+",
+            "function\\\\s+(\\\\w+)\\\\(a\\\\)\\\\{a=a\\\\.split\\\\(\\\"\\\"\\\\);\\\\w+"
         ).asSequence()
             .map { it.toRegex().find(sourceFile) }
             .firstOrNull { it != null }
@@ -82,25 +83,26 @@ object YoutubeMusicInnertube {
     // TODO: not stable as of right now, is the implementation correct?
     suspend fun decodeSignatureCipher(cipher: String, videoId: String? = null): String? =
         runCatchingCancellable {
-        val params = cipher.split('&').associate { part ->
-            val key = part.substringBefore('=')
-            val value = part.substringAfter('=', "")
-            URLDecoder.decode(key, StandardCharsets.UTF_8) to URLDecoder.decode(value, StandardCharsets.UTF_8)
-        }
-        val signature = params["s"] ?: return@runCatchingCancellable null
-        val signatureParam = params["sp"] ?: "signature"
-        val url = params["url"] ?: return@runCatchingCancellable null
+            val params = cipher.split('&').associate { part ->
+                val key = part.substringBefore('=')
+                val value = part.substringAfter('=', "")
+                URLDecoder.decode(key, StandardCharsets.UTF_8) to URLDecoder.decode(value, StandardCharsets.UTF_8)
+            }
+            val signature = params["s"] ?: return@runCatchingCancellable null
+            val signatureParam = params["sp"] ?: "signature"
+            val url = params["url"] ?: return@runCatchingCancellable null
 
-        val actualSignature = getYoutubeJavaScriptChallenge(videoId)?.decode(signature)
-            ?: return@runCatchingCancellable null
-        "$url&$signatureParam=$actualSignature"
-    }?.onFailure { it.printStackTrace() }?.getOrNull()
+            val actualSignature = getYoutubeJavaScriptChallenge(videoId)?.decode(signature)
+                ?: return@runCatchingCancellable null
+            "$url&$signatureParam=$actualSignature"
+        }?.onFailure { it.printStackTrace() }?.getOrNull()
 
     suspend fun getSignatureTimestamp(videoId: String? = null): String? = runCatchingCancellable {
         getYoutubeJavaScriptChallenge(videoId)?.timestamp
     }?.onFailure { it.printStackTrace() }?.getOrNull()
 
-    internal const val API_KEY = "AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30"
+    internal val API_KEY: String
+        get() = BuildConfig.YTM_API_KEY
 
     private const val BASE = "/youtubei/v1"
     internal const val BROWSE = "$BASE/browse"
