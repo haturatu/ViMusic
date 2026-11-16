@@ -34,7 +34,7 @@ car_app = { module = "androidx.car.app:app", version = "1.9.0-alpha03" }
 car_projected = { module = "androidx.car.app:app-projected", version = "1.9.0-alpha03" }
 core_ktx = { module = "androidx.core:core-ktx", version = "1.19.1" }
 
-kotlin_serialization_json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "1.12.0" }
+kotlin_serialization_json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "1.13.0" }
 junit = { module = "junit:junit", version = "4.13.2" }
 
 kotlin_coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.11.0" }
