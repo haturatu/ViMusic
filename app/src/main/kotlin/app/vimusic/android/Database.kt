@@ -34,7 +34,6 @@ import androidx.room.Update
 import androidx.room.Upsert
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
-import androidx.room.withTransaction
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteQuery
@@ -752,7 +751,7 @@ interface DatabaseDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     fun insert(songArtistMap: SongArtistMap): Long
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(song: Song): Long
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
@@ -968,12 +967,10 @@ abstract class DatabaseInitializer protected constructor() : RoomDatabase() {
                     albumValues.put("title", cursor.getString(1))
                     db.insert("Album", CONFLICT_IGNORE, albumValues)
 
+                    // Use parameterized query to prevent SQL injection
                     db.execSQL(
-                        "UPDATE Song SET albumId = '${cursor.getString(0)}' WHERE albumId = ${
-                            cursor.getLong(
-                                2
-                            )
-                        }"
+                        "UPDATE Song SET albumId = ? WHERE albumId = ?",
+                        arrayOf(cursor.getString(0), cursor.getLong(2))
                     )
                 }
             }
@@ -1015,10 +1012,10 @@ abstract class DatabaseInitializer protected constructor() : RoomDatabase() {
                     artistValues.put("name", cursor.getString(1))
                     db.insert("Artist", CONFLICT_IGNORE, artistValues)
 
+                    // Use parameterized query to prevent SQL injection
                     db.execSQL(
-                        "UPDATE SongWithAuthors SET authorInfoId = '${cursor.getString(0)}' WHERE authorInfoId = ${
-                            cursor.getLong(2)
-                        }"
+                        "UPDATE SongWithAuthors SET authorInfoId = ? WHERE authorInfoId = ?",
+                        arrayOf(cursor.getString(0), cursor.getLong(2))
                     )
                 }
             }
