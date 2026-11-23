@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.nativePaint
 import androidx.compose.ui.graphics.toArgb
 
 fun DrawScope.drawCircle(
@@ -30,7 +31,7 @@ fun DrawScope.drawCircle(
         it.blendMode = blendMode
         it.colorFilter = colorFilter
         it.style = style
-    }.asFrameworkPaint().also {
+    }.nativePaint.also {
         if (shadow != Shadow.None) it.setShadowLayer(
             shadow.blurRadius,
             shadow.offset.x,
